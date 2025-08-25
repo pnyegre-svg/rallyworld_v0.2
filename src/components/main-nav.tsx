@@ -1,0 +1,71 @@
+'use client';
+
+import * as React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  BarChart3,
+  Car,
+  Flag,
+  LayoutDashboard,
+  Shield,
+  Users,
+} from 'lucide-react';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarFooter,
+} from '@/components/ui/sidebar';
+import { useUserStore } from '@/hooks/use-user';
+import { UserNav } from './user-nav';
+
+export function MainNav() {
+  const pathname = usePathname();
+  const { user } = useUserStore();
+
+  const menuItems = [
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/stages', label: 'Stages', icon: Flag, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/competitors', label: 'Competitors', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/leaderboard', label: 'Leaderboard', icon: BarChart3, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/admin', label: 'Admin', icon: Shield, roles: ['organizer'] },
+  ];
+
+  return (
+    <Sidebar>
+      <SidebarHeader className="p-4">
+        <div className="flex items-center gap-2">
+          <Car className="text-primary h-8 w-8" />
+          <h1 className="font-headline text-2xl font-bold">Rally World</h1>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map(
+            (item) =>
+              item.roles.includes(user.role) && (
+                <SidebarMenuItem key={item.href}>
+                  <Link href={item.href} legacyBehavior passHref>
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              )
+          )}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="p-4">
+        <UserNav />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
