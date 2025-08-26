@@ -26,12 +26,15 @@ export default function SignInPage() {
     const { signInUser } = useUserStore();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            signInUser(email);
+            // signInUser will now fetch/create the user from Firestore
+            await signInUser(email);
             router.push('/dashboard');
         } catch (error: any) {
             toast({
@@ -39,6 +42,8 @@ export default function SignInPage() {
                 description: error.message,
                 variant: 'destructive'
             });
+        } finally {
+            setIsLoading(false);
         }
     }
 
@@ -52,16 +57,16 @@ export default function SignInPage() {
         <CardContent className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-            Sign In
+          <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </Button>
           <div className="text-center text-sm">
             Don&apos;t have an account?{' '}

@@ -90,9 +90,11 @@ export default function ChooseRolePage() {
   const router = useRouter();
   const { setRole } = useUserStore();
   const [selectedRole, setSelectedRole] = useState<UserRole>('fan');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleContinue = () => {
-    setRole(selectedRole);
+  const handleContinue = async () => {
+    setIsLoading(true);
+    await setRole(selectedRole);
     if (selectedRole === 'organizer') {
       router.push('/organizer');
     } else {
@@ -146,7 +148,9 @@ export default function ChooseRolePage() {
         </RadioGroup>
       </CardContent>
       <CardFooter>
-        <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleContinue}>Continue</Button>
+        <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleContinue} disabled={isLoading}>
+            {isLoading ? 'Saving...' : 'Continue'}
+        </Button>
       </CardFooter>
     </Card>
   );

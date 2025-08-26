@@ -74,7 +74,7 @@ export default function OrganizerProfilePage() {
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: user.organizerProfile || {
+        defaultValues: user?.organizerProfile || {
             name: '',
             cis: '',
             cif: '',
@@ -91,7 +91,7 @@ export default function OrganizerProfilePage() {
     });
     
     React.useEffect(() => {
-        if(user.organizerProfile) {
+        if(user?.organizerProfile) {
             form.reset(user.organizerProfile);
             const existingClub = clubs.find(c => c.name === user.organizerProfile?.name);
             if (existingClub) {
@@ -102,8 +102,10 @@ export default function OrganizerProfilePage() {
                  setIsManualEntry(true);
             }
             setIsEditing(false);
+        } else {
+            setIsEditing(true);
         }
-    }, [user.organizerProfile, form]);
+    }, [user, form]);
 
 
     const handleClubChange = (clubId: string) => {
@@ -134,7 +136,7 @@ export default function OrganizerProfilePage() {
         }
     }
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         const organizerData: Organizer = {
             id: values.clubId || `org_${Date.now()}`,
             name: values.name,
@@ -154,7 +156,7 @@ export default function OrganizerProfilePage() {
             // Note: Profile picture handling would require actual upload logic
             profilePicture: values.profilePicture ? URL.createObjectURL(values.profilePicture) : undefined,
         }
-        updateOrganizerProfile(organizerData)
+        await updateOrganizerProfile(organizerData)
         toast({
             title: "Profile Saved",
             description: "Your club profile has been successfully updated.",
@@ -174,7 +176,7 @@ export default function OrganizerProfilePage() {
     };
     
     const TikTokIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04-.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04-.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11-2.7-1.65-4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
     )
 
     const XIcon = () => (
@@ -191,10 +193,10 @@ export default function OrganizerProfilePage() {
                     <div>
                         <CardTitle>Club Profile</CardTitle>
                         <CardDescription>
-                            {user.organizerProfile ? "View or edit your club's profile." : "Select your club from the list or add a new one."}
+                            {user?.organizerProfile ? "View or edit your club's profile." : "Select your club from the list or add a new one."}
                         </CardDescription>
                     </div>
-                    {!isEditing && (
+                    {!isEditing && user?.organizerProfile && (
                         <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
                             <PenSquare className="mr-2 h-4 w-4" /> Edit Profile
                         </Button>
@@ -512,7 +514,7 @@ export default function OrganizerProfilePage() {
                         {isEditing && (
                             <div className="flex gap-2">
                                 <Button type="submit" className="bg-accent hover:bg-accent/90">Save Profile</Button>
-                                {user.organizerProfile && (
+                                {user?.organizerProfile && (
                                      <Button variant="outline" onClick={() => {
                                         setIsEditing(false);
                                         form.reset(user.organizerProfile);

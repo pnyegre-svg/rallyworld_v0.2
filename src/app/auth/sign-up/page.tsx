@@ -27,12 +27,15 @@ export default function SignUpPage() {
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            signInUser(email, name);
+            // This will now create the user in Firestore via the hook
+            await signInUser(email, name);
             router.push('/auth/choose-role');
         } catch(error: any) {
             toast({
@@ -40,6 +43,7 @@ export default function SignUpPage() {
                 description: error.message,
                 variant: 'destructive'
             });
+            setIsLoading(false);
         }
     }
 
@@ -53,20 +57,20 @@ export default function SignUpPage() {
       <CardContent className="grid gap-4">
         <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} />
+            <Input id="name" placeholder="John Doe" required value={name} onChange={(e) => setName(e.target.value)} disabled={isLoading}/>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+          <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading}/>
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
-          Sign Up
+        <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
+          {isLoading ? 'Creating Account...' : 'Sign Up'}
         </Button>
         <div className="text-center text-sm">
           Already have an account?{' '}

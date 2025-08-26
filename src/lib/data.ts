@@ -81,14 +81,6 @@ export type LeaderboardEntry = {
     stageTimes: { stageId: string; time: string }[];
 };
 
-export const users: User[] = [
-  { id: 'usr_001', name: 'Rally Club Admin', email: 'admin@rally.world', avatar: '/avatars/01.png', roles: ['organizer', 'fan'], currentRole: 'organizer' },
-  { id: 'usr_002', name: 'Maria Garcia', email: 'maria.g@example.com', avatar: '/avatars/02.png', roles: ['timekeeper', 'fan'], currentRole: 'timekeeper' },
-  { id: 'usr_003', name: 'Kenji Tanaka', email: 'kenji.t@example.com', avatar: '/avatars/03.png', roles: ['competitor', 'fan'], currentRole: 'competitor' },
-  { id: 'usr_004', name: 'Chloe Dubois', email: 'chloe.d@example.com', avatar: '/avatars/04.png', roles: ['fan'], currentRole: 'fan' },
-  { id: 'usr_005', name: 'Ben Carter', email: 'ben.c@example.com', avatar: '/avatars/05.png', roles: ['fan'], currentRole: 'fan' },
-];
-
 export const clubs: Club[] = [
     { id: "club_1", name: "Club Sportiv AUTO SPORT FAIR PLAY", cis: "AB/A2/00115/2006", cif: "18624007", address: "Str. Tăbăcarilor nr. 3A, Abrud, jud. Alba, 515100" },
     { id: "club_2", name: "Asociatia Club Sportiv ALBA OFF ROAD", cis: "AB/A2/00185/2016", cif: "31626579", address: "Str. Moților nr. 117, Alba Iulia, jud. Alba" },

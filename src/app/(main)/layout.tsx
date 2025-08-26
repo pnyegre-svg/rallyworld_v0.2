@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
@@ -11,28 +11,33 @@ import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Loading from './loading';
 import { useUserStore } from '@/hooks/use-user';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
+
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useUserStore();
-  const [loading, setLoading] = React.useState(true);
+  const { user, isLoading, signInUser } = useUserStore();
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        router.push('/auth/sign-in');
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // If we have a firebase user but no user in the store, it means they re-opened the tab
+        // We need to fetch their data from Firestore.
+        if (!user) {
+            signInUser(firebaseUser.email!);
+        }
       } else {
-        setLoading(false);
+        router.push('/auth/sign-in');
       }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [router]);
+  }, [router, user, signInUser]);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
@@ -51,7 +56,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  if (loading) {
+  if (isLoading || !user) {
     return <Loading />;
   }
   
@@ -60,10 +65,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-screen w-full">
         <MainNav />
         <SidebarInset className="flex flex-col">
-          <PageHeader title={getTitle(pathname)}>
-             <div className="flex items-center gap-2">
+           <PageHeader title={getTitle(pathname)}>
+              <div className="flex items-center gap-2">
                  <SidebarTrigger className="md:hidden" />
-             </div>
+              </div>
              <div className="ml-auto flex items-center gap-4">
                <Button variant="ghost" size="icon" className="rounded-full hidden md:flex">
                 <Bell className="h-5 w-5" />

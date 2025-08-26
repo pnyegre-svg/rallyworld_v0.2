@@ -1,74 +1,86 @@
-
-
-
-
-
-import { users } from '@/lib/data';
-import type { User, UserRole, Organizer } from '@/lib/data';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import type { User, UserRole, Organizer } from '@/lib/data';
+import { getUser, createUser, updateUser } from '@/lib/users';
 
 type UserState = {
-  user: User;
-  signInUser: (email: string, name?: string) => void;
-  setRole: (role: UserRole) => void;
+  user: User | null;
+  isLoading: boolean;
+  signInUser: (email: string, name?: string) => Promise<void>;
+  setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => void;
-  updateOrganizerProfile: (profile: Organizer) => void;
+  updateOrganizerProfile: (profile: Organizer) => Promise<void>;
 };
 
-const defaultUser = {
-    id: 'usr_new',
+const defaultUser: User = {
+    id: '',
     name: 'Rally Fan',
     email: '',
     avatar: '/avatars/04.png',
     roles: ['fan'],
     currentRole: 'fan',
-} as User;
+};
 
 export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
-      user: defaultUser,
-      signInUser: (email, name) => {
-        const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      user: null,
+      isLoading: true,
+      signInUser: async (email, name) => {
+        set({ isLoading: true });
+        let userProfile = await getUser(email);
 
-        if (existingUser) {
-             // Special case for admin to ensure they always have the organizer role
-            if (existingUser.email === 'admin@rally.world' && !existingUser.roles.includes('organizer')) {
-                existingUser.roles.push('organizer');
-                existingUser.currentRole = 'organizer';
-            }
-            set({ user: existingUser });
-        } else {
-            const newUser: User = {
-                id: `usr_${Math.random().toString(36).substr(2, 9)}`,
+        if (!userProfile) {
+            // User doesn't exist, so create them
+            const newUser: Omit<User, 'id'> = {
                 name: name || 'New User',
                 email: email,
                 avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
                 roles: ['fan'],
                 currentRole: 'fan',
             };
-            set({ user: newUser });
+            const newUserId = await createUser(newUser);
+            userProfile = { ...newUser, id: newUserId };
         }
+        
+        // Special case for admin to ensure they always have the organizer role
+        if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {
+            userProfile.roles.push('organizer');
+            userProfile.currentRole = 'organizer';
+            await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
+        }
+
+        set({ user: userProfile, isLoading: false });
       },
-      setRole: (role: UserRole) => {
-        set((state) => {
-            const currentRoles = state.user.roles || [];
-            const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
-            return {
-                user: { ...state.user, roles: newRoles, currentRole: role }
-            }
-        });
+      setRole: async (role: UserRole) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
+        const currentRoles = currentUser.roles || [];
+        const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
+        
+        const updatedUser = { ...currentUser, roles: newRoles, currentRole: role };
+        
+        set({ user: updatedUser });
+        
+        await updateUser(currentUser.id, { roles: newRoles, currentRole: role });
       },
       switchRole: (role: UserRole) => {
-        set((state) => ({
-            user: { ...state.user, currentRole: role }
-        }));
+        const currentUser = get().user;
+        if (!currentUser) return;
+        
+        set({ user: { ...currentUser, currentRole: role } });
+        updateUser(currentUser.id, { currentRole: role });
       },
-      updateOrganizerProfile: (profile: Organizer) => {
+      updateOrganizerProfile: async (profile: Organizer) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
         set((state) => ({
-            user: { ...state.user, organizerProfile: profile }
-        }))
+            user: state.user ? { ...state.user, organizerProfile: profile } : null
+        }));
+
+        await updateUser(currentUser.id, { organizerProfile: profile });
       }
     }),
     {
