@@ -84,7 +84,7 @@ export function UserNav() {
             <DropdownMenuPortal>
                 <DropdownMenuSubContent>
                     <DropdownMenuRadioGroup value={user.currentRole} onValueChange={(role) => switchRole(role as UserRole)}>
-                        {user.roles.map((role) => (
+                        {user.roles && user.roles.map((role) => (
                             <DropdownMenuRadioItem key={role} value={role} className="capitalize">
                                 {role.replace(/_/g, " ")}
                             </DropdownMenuRadioItem>
