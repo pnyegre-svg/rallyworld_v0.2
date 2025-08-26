@@ -77,7 +77,7 @@ export default function DashboardPage() {
                         <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <CardTitle>Welcome, {user.name.split(' ')[0]}!</CardTitle>
+                        <h1 className="text-2xl font-bold font-headline">Welcome, {user.name.split(' ')[0]}!</h1>
                         <CardDescription>
                             Your role: <span className="font-semibold capitalize text-foreground">{user.currentRole.replace(/_/g, ' ')}</span>
                         </CardDescription>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
         {isOrganizer && (
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Calendar /> My Events</CardTitle>
+                    <CardTitle className="font-bold flex items-center gap-2"><Calendar /> My Events</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
@@ -209,7 +209,7 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Calendar /> Upcoming Stages</CardTitle>
+                    <CardTitle className="font-bold flex items-center gap-2"><Calendar /> Upcoming Stages</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -235,7 +235,7 @@ export default function DashboardPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Newspaper /> Recent News</CardTitle>
+                    <CardTitle className="font-bold flex items-center gap-2"><Newspaper /> Recent News</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {recentNews.map(post => (

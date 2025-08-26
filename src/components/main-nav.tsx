@@ -50,8 +50,8 @@ export function MainNav() {
 
   const isAdmin = user?.email === 'admin@rally.world';
   const logoSrc = '/RW_txt2.svg';
-  const logoWidth = 112;
-  const logoHeight = 30;
+  const logoWidth = 100;
+  const logoHeight = 26;
 
   return (
     <Sidebar>
