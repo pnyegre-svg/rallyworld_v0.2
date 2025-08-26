@@ -35,7 +35,6 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
@@ -47,10 +46,10 @@ const formSchema = z.object({
   hqLocation: z.string().min(3, { message: 'HQ Location is required.' }),
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
-  itineraryType: z.enum(['link', 'upload']).default('link'),
-  itineraryValue: z.union([z.string().url().optional().or(z.literal('')), z.any().optional()]),
-  docsType: z.enum(['link', 'upload']).default('link'),
-  docsValue: z.union([z.string().url().optional().or(z.literal('')), z.any().optional()]),
+  itineraryLink: z.string().url().optional().or(z.literal('')),
+  itineraryFile: z.any().optional(),
+  docsLink: z.string().url().optional().or(z.literal('')),
+  docsFile: z.any().optional(),
   stages: z.array(z.object({
     name: z.string().min(1, { message: 'Stage name is required.' }),
     location: z.string().min(1, { message: 'Location is required.' }),
@@ -75,10 +74,10 @@ export default function CreateEventPage() {
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
-      itineraryType: 'link',
-      itineraryValue: '',
-      docsType: 'link',
-      docsValue: '',
+      itineraryLink: '',
+      itineraryFile: undefined,
+      docsLink: '',
+      docsFile: undefined,
       stages: [],
     },
   });
@@ -96,29 +95,29 @@ export default function CreateEventPage() {
     });
     router.push('/dashboard');
   }
-  
-  const renderFileUpload = (field: any) => (
+
+  const renderFileUpload = (field: any, id: string) => (
     <div className="flex items-center gap-2">
-        <Label htmlFor={field.name} className="sr-only">Upload file</Label>
-        <Input
-            id={field.name}
-            type="file"
-            onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
-            className="flex-1"
-        />
-        {field.value && (
-            <Button variant="ghost" size="icon" onClick={() => field.onChange(null)}>
-                <Trash2 className="h-4 w-4" />
-            </Button>
-        )}
+      <Label htmlFor={id} className="sr-only">Upload file</Label>
+      <Input
+        id={id}
+        type="file"
+        onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+        className="flex-1"
+      />
+      {field.value && (
+        <Button variant="ghost" size="icon" onClick={() => field.onChange(null)}>
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 
   const renderLinkInput = (field: any, placeholder: string) => (
-      <div className="relative">
-          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input {...field} placeholder={placeholder} className="pl-9" />
-      </div>
+    <div className="relative">
+      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Input {...field} placeholder={placeholder} className="pl-9" />
+    </div>
   );
 
   return (
@@ -303,83 +302,69 @@ export default function CreateEventPage() {
             </div>
 
 
-            <div className="space-y-6 rounded-lg border p-4">
-                <FormField
-                    control={form.control}
-                    name="itineraryType"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel className="flex items-center gap-2"><FileText/>Itinerary (Optional)</FormLabel>
-                                <div className="flex items-center space-x-2">
-                                    <Globe className="h-4 w-4"/>
-                                    <Switch
-                                        checked={field.value === 'upload'}
-                                        onCheckedChange={(checked) => field.onChange(checked ? 'upload' : 'link')}
-                                    />
-                                    <Upload className="h-4 w-4"/>
-                                </div>
-                            </div>
-                            <FormDescription>Provide a link to the itinerary or upload a file.</FormDescription>
-                            <FormControl>
-                                <FormField
-                                    control={form.control}
-                                    name="itineraryValue"
-                                    render={({ field: valueField }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                {field.value === 'link' 
-                                                    ? renderLinkInput(valueField, "https://example.com/itinerary.pdf")
-                                                    : renderFileUpload(valueField)
-                                                }
-                                            </FormControl>
-                                            <FormMessage/>
-                                        </FormItem>
-                                    )}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+            <div className="space-y-4 rounded-lg border p-4">
+                <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
+                <FormDescription>Provide a link to the itinerary, upload a file, or both.</FormDescription>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="itineraryLink"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link</FormLabel>
+                                <FormControl>
+                                    {renderLinkInput(field, "https://example.com/itinerary.pdf")}
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="itineraryFile"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Itinerary Upload</FormLabel>
+                                <FormControl>
+                                    {renderFileUpload(field, "itinerary-file-upload")}
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             </div>
-             <div className="space-y-6 rounded-lg border p-4">
-                <FormField
-                    control={form.control}
-                    name="docsType"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex items-center justify-between">
-                                <FormLabel className="flex items-center gap-2"><FileText/>Documents (Optional)</FormLabel>
-                                <div className="flex items-center space-x-2">
-                                    <Globe className="h-4 w-4"/>
-                                    <Switch
-                                        checked={field.value === 'upload'}
-                                        onCheckedChange={(checked) => field.onChange(checked ? 'upload' : 'link')}
-                                    />
-                                    <Upload className="h-4 w-4"/>
-                                </div>
-                            </div>
-                            <FormDescription>Provide a link to a folder or upload documents.</FormDescription>
-                            <FormControl>
-                                <FormField
-                                    control={form.control}
-                                    name="docsValue"
-                                    render={({ field: valueField }) => (
-                                        <FormItem>
-                                            <FormControl>
-                                                {field.value === 'link' 
-                                                    ? renderLinkInput(valueField, "https://example.com/docs")
-                                                    : renderFileUpload(valueField)
-                                                }
-                                            </FormControl>
-                                            <FormMessage/>
-                                        </FormItem>
-                                    )}
-                                />
-                            </FormControl>
-                        </FormItem>
-                    )}
-                />
+             <div className="space-y-4 rounded-lg border p-4">
+                <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
+                <FormDescription>Provide a link to a folder, upload documents, or both.</FormDescription>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="docsLink"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link</FormLabel>
+                                <FormControl>
+                                    {renderLinkInput(field, "https://example.com/docs")}
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="docsFile"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Documents Upload</FormLabel>
+                                <FormControl>
+                                    {renderFileUpload(field, "docs-file-upload")}
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             </div>
 
             <Button type="submit" className="bg-accent hover:bg-accent/90">Create Event</Button>
@@ -389,5 +374,3 @@ export default function CreateEventPage() {
     </Card>
   );
 }
-
-    
