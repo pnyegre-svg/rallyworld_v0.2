@@ -168,7 +168,7 @@ export default function CreateEventPage() {
   const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
     <Button
       variant="ghost"
-      className="w-full justify-start px-2 py-1.5"
+      className="w-full justify-start px-2 py-1.5 text-left h-auto font-normal"
       onClick={() => setRange(range)}
     >
       {label}
@@ -233,7 +233,7 @@ export default function CreateEventPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0" align="start">
                                 <div className="flex">
-                                    <div className="flex-col space-y-2 border-r p-3">
+                                    <div className="flex flex-col space-y-1 p-3 pr-2 border-r">
                                         <DatePresetButton label="Today" range={{ from: new Date(), to: new Date() }} setRange={field.onChange} />
                                         <DatePresetButton label="This Week" range={{ from: startOfWeek(new Date()), to: endOfWeek(new Date()) }} setRange={field.onChange} />
                                         <DatePresetButton label="This Month" range={{ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }} setRange={field.onChange} />
