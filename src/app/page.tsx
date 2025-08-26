@@ -8,16 +8,33 @@ import Image from 'next/image';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { UserNav } from '@/components/user-nav';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
   const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const router = useRouter();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      if (currentUser) {
+        router.push('/dashboard');
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
+
+  if (loading) {
+    return (
+        <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
+            {/* You can add a more sophisticated loader here if you wish */}
+            <p className="text-muted-foreground">Loading...</p>
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
@@ -27,18 +44,14 @@ export default function LandingPage() {
           <span className="sr-only">Rally World</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          {user ? (
-            <UserNav />
-          ) : (
-            <>
+          
               <Button asChild variant="ghost">
                 <Link href="/auth/sign-in">Sign In</Link>
               </Button>
               <Button asChild className="bg-accent hover:bg-accent/90">
                 <Link href="/auth/sign-up">Sign Up</Link>
               </Button>
-            </>
-          )}
+            
         </nav>
       </header>
       <main className="flex-1">
@@ -64,7 +77,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Button asChild size="lg" className="bg-accent hover:bg-accent/90">
-                    <Link href="/dashboard" prefetch={false}>
+                    <Link href="/auth/sign-up" prefetch={false}>
                       Get Started
                     </Link>
                   </Button>
