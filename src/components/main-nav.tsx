@@ -29,6 +29,7 @@ import {
 import { useUserStore } from '@/hooks/use-user';
 import { UserNav } from './user-nav';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export function MainNav() {
   const pathname = usePathname();
@@ -50,14 +51,14 @@ export function MainNav() {
 
   const isAdmin = user?.email === 'admin@rally.world';
   const logoSrc = '/RW_txt2.svg';
-  const logoWidth = 100;
-  const logoHeight = 26;
+  const logoWidth = 85;
+  const logoHeight = 22;
 
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
         <Link href="/" className="flex items-center gap-2">
-            <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto transition-all"/>
+            <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto transition-all hover:scale-105 active:scale-100"/>
         </Link>
       </SidebarHeader>
       <SidebarContent>
