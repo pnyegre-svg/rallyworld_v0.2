@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
@@ -61,7 +61,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <MainNav />
         <SidebarInset className="flex flex-col">
           <PageHeader title={getTitle(pathname)} role={user.currentRole}>
-            <div className="hidden md:flex items-center gap-4">
+            <SidebarTrigger className="hidden md:flex" />
+            <div className="ml-auto hidden md:flex items-center gap-4">
                <Button variant="ghost" size="icon" className="rounded-full">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Notifications</span>
@@ -69,6 +70,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <UserNav />
               <ThemeToggle />
             </div>
+             <div className="ml-auto flex md:hidden items-center gap-2">
+                 <SidebarTrigger />
+                 <UserNav />
+             </div>
           </PageHeader>
           <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
         </SidebarInset>
