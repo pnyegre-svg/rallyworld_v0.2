@@ -1,12 +1,14 @@
 
+
 import { users } from '@/lib/data';
-import type { User } from '@/lib/data';
+import type { User, UserRole } from '@/lib/data';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 type UserState = {
   user: User;
   signInUser: (email: string, name?: string) => void;
+  setRole: (role: UserRole) => void;
 };
 
 const defaultUser = {
@@ -36,6 +38,11 @@ export const useUserStore = create<UserState>()(
             set({ user: newUser });
         }
       },
+      setRole: (role: UserRole) => {
+        set((state) => ({
+            user: { ...state.user, role }
+        }));
+      }
     }),
     {
       name: 'user-storage',
