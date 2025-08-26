@@ -93,7 +93,11 @@ export default function ChooseRolePage() {
 
   const handleContinue = () => {
     setRole(selectedRole);
-    router.push('/dashboard');
+    if (selectedRole === 'organizer') {
+      router.push('/organizer');
+    } else {
+      router.push('/dashboard');
+    }
   };
   
   const renderRole = (role: any) => {
