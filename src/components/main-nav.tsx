@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   Store,
   Users,
+  PlusSquare,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -42,7 +43,8 @@ export function MainNav() {
     { href: '/stages', label: 'Stages', icon: Flag, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/competitors', label: 'Competitors', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/leaderboard', label: 'Leaderboard', icon: BarChart3, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
-    { href: '/organizer', label: 'Organizer', icon: Building, roles: ['organizer'] },
+    { href: '/organizer', label: 'Club Profile', icon: Building, roles: ['organizer'] },
+    { href: '/organizer/create-event', label: 'Create Event', icon: PlusSquare, roles: ['organizer'] },
     { href: '/admin', label: 'Admin', icon: Shield, roles: ['organizer'] },
   ];
 

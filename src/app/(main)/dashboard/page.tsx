@@ -25,7 +25,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, BarChart3, Flag } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, BarChart3, Flag, PlusSquare } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -43,11 +43,12 @@ export default function DashboardPage() {
   const upcomingStages = stages.filter(s => s.status === 'upcoming').slice(0, 3);
   const topCompetitor = leaderboard[0];
   const recentNews = newsPosts.slice(0, 2);
+  const isOrganizer = user.currentRole === 'organizer';
 
   return (
     <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="lg:col-span-1">
+             <Card className="lg:col-span-1">
                 <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarImage src={user.avatar} alt={user.name} />
@@ -67,7 +68,28 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            {liveStage && (
+            {isOrganizer && (
+                 <Card className="lg:col-span-2 bg-accent/20 border-accent/50 hover:bg-accent/30 transition-colors">
+                    <Link href="/organizer/create-event" className="h-full flex flex-col">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-accent">
+                                    <PlusSquare />
+                                    Organizer Action
+                                </CardTitle>
+                                <ArrowRight className="text-accent"/>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex-1 flex flex-col justify-center">
+                            <h2 className="text-2xl font-headline text-foreground">Create New Rally Event</h2>
+                            <p className="text-muted-foreground mt-2">Define stages, manage competitors, and kick off your next competition.</p>
+                        </CardContent>
+                    </Link>
+                </Card>
+            )}
+
+
+            {!isOrganizer && liveStage && (
                  <Card className="lg:col-span-2 bg-accent/20 border-accent/50">
                     <CardHeader>
                         <div className="flex items-center justify-between">
@@ -95,7 +117,7 @@ export default function DashboardPage() {
                 </Card>
             )}
 
-            {!liveStage && topCompetitor && (
+            {!isOrganizer && !liveStage && topCompetitor && (
                  <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Trophy className="text-primary"/> Current Leader</CardTitle>
