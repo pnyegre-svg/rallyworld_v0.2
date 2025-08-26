@@ -68,9 +68,11 @@ export function UserNav() {
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>
-            <p className="text-xs leading-none text-muted-foreground capitalize pt-1">
-              ({user.currentRole.replace(/_/g, " ")})
-            </p>
+            {user.currentRole && (
+                <p className="text-xs leading-none text-muted-foreground capitalize pt-1">
+                ({user.currentRole.replace(/_/g, " ")})
+                </p>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
