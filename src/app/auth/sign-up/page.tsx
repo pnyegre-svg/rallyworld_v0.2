@@ -65,8 +65,8 @@ export default function SignUpPage() {
     }
 
     const handleGoogleSignUp = async () => {
+        const provider = new GoogleAuthProvider();
         try {
-            const provider = new GoogleAuthProvider();
             await signInWithRedirect(auth, provider);
         } catch (error: any) {
              toast({
