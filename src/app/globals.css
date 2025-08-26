@@ -46,7 +46,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 279 100% 15%;
     --popover-foreground: 210 40% 98%;
-    --primary: 281 100% 23%; /* #500073 */
+    --primary: 211 69% 19%; /* #102E50 */
     --primary-foreground: 210 40% 98%;
     --secondary: 281 100% 20%;
     --secondary-foreground: 210 40% 98%;
@@ -67,7 +67,7 @@
     --chart-5: 340 75% 55%;
     --sidebar-background: 279 100% 18%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 281 100% 23%;
+    --sidebar-primary: 211 69% 19%; /* #102E50 */
     --sidebar-primary-foreground: 210 40% 98%;
     --sidebar-accent: 11 100% 39%;
     --sidebar-accent-foreground: 210 40% 98%;
