@@ -44,7 +44,7 @@ export default function SignUpPage() {
 
     const handleSignUp = (e: React.FormEvent) => {
         e.preventDefault();
-        router.push('/dashboard');
+        router.push('/auth/choose-role');
     }
 
   return (
