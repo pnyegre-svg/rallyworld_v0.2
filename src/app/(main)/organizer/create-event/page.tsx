@@ -3,11 +3,10 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { addDays, format } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, MapPin, Flag, PlusCircle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -52,6 +51,11 @@ const formSchema = z.object({
   itineraryValue: z.union([z.string().url().optional().or(z.literal('')), z.any().optional()]),
   docsType: z.enum(['link', 'upload']).default('link'),
   docsValue: z.union([z.string().url().optional().or(z.literal('')), z.any().optional()]),
+  stages: z.array(z.object({
+    name: z.string().min(1, { message: 'Stage name is required.' }),
+    location: z.string().min(1, { message: 'Location is required.' }),
+    distance: z.coerce.number().min(0.1, { message: 'Distance must be positive.' }),
+  })).optional().default([]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -75,7 +79,13 @@ export default function CreateEventPage() {
       itineraryValue: '',
       docsType: 'link',
       docsValue: '',
+      stages: [],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "stages"
   });
 
   function onSubmit(values: FormValues) {
@@ -226,6 +236,73 @@ export default function CreateEventPage() {
                 </div>
             </div>
             
+             <div className="space-y-6 rounded-lg border p-4">
+                 <h3 className="text-lg font-medium">Event Stages</h3>
+                <div className="space-y-4">
+                    {fields.map((item, index) => (
+                        <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-2 p-2 rounded-md border">
+                            <FormField
+                                control={form.control}
+                                name={`stages.${index}.name`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Stage Name</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="e.g. Col de Turini" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`stages.${index}.location`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Location</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="e.g. Monte Carlo" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name={`stages.${index}.distance`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Distance (km)</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" {...field} placeholder="15.31" className="w-28"/>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className={cn(index !== 0 ? "mt-8" : "self-center")}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ name: '', location: '', distance: 0 })}
+                >
+                   <PlusCircle className="mr-2 h-4 w-4"/> Add Stage
+                </Button>
+            </div>
+
+
             <div className="space-y-6 rounded-lg border p-4">
                 <FormField
                     control={form.control}
@@ -312,3 +389,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
