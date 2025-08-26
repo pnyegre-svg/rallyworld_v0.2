@@ -35,6 +35,7 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useEventStore, Event } from '@/hooks/use-event-store';
 
 const linkSchema = z.object({
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
@@ -69,6 +70,7 @@ type FormValues = z.infer<typeof formSchema>;
 export default function CreateEventPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { addEvent } = useEventStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -116,7 +118,12 @@ export default function CreateEventPage() {
 
 
   function onSubmit(values: FormValues) {
-    console.log(values);
+    const newEvent: Event = {
+      id: `evt_${Date.now()}`,
+      ...values,
+    };
+    addEvent(newEvent);
+
     toast({
       title: "Event Created Successfully!",
       description: `The event "${values.title}" has been created.`,

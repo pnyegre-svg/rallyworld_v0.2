@@ -24,12 +24,15 @@ import {
   } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
+import { useEventStore } from '@/hooks/use-event-store';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, BarChart3, Flag, PlusSquare } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare } from 'lucide-react';
 import Link from 'next/link';
+import { format } from 'date-fns';
 
 export default function DashboardPage() {
   const { user } = useUserStore();
+  const { events } = useEventStore();
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -44,6 +47,7 @@ export default function DashboardPage() {
   const topCompetitor = leaderboard[0];
   const recentNews = newsPosts.slice(0, 2);
   const isOrganizer = user.currentRole === 'organizer';
+  const organizerEvents = events.slice(0, 3); // Show latest 3 events
 
   return (
     <div className="space-y-6">
@@ -143,6 +147,36 @@ export default function DashboardPage() {
             )}
         </div>
         
+        {isOrganizer && events.length > 0 && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Calendar /> My Events</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Event Title</TableHead>
+                                <TableHead>Dates</TableHead>
+                                <TableHead className="text-right">Stages</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {organizerEvents.map(event => (
+                                <TableRow key={event.id}>
+                                    <TableCell className="font-medium">{event.title}</TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                        {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
+                                    </TableCell>
+                                    <TableCell className="text-right font-mono">{event.stages.length}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="lg:col-span-2">
                 <CardHeader>
