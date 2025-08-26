@@ -35,10 +35,13 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { Label } from '@/components/ui/label';
 
 const linkSchema = z.object({
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
+});
+
+const fileSchema = z.object({
+  value: z.any().optional(),
 });
 
 const formSchema = z.object({
@@ -51,9 +54,9 @@ const formSchema = z.object({
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
   itineraryLinks: z.array(linkSchema).optional(),
-  itineraryFile: z.any().optional(),
+  itineraryFiles: z.array(fileSchema).optional(),
   docsLinks: z.array(linkSchema).optional(),
-  docsFile: z.any().optional(),
+  docsFiles: z.array(fileSchema).optional(),
   stages: z.array(z.object({
     name: z.string().min(1, { message: 'Stage name is required.' }),
     location: z.string().min(1, { message: 'Location is required.' }),
@@ -79,9 +82,9 @@ export default function CreateEventPage() {
       whatsappLink: '',
       livestreamLink: '',
       itineraryLinks: [],
-      itineraryFile: undefined,
+      itineraryFiles: [],
       docsLinks: [],
-      docsFile: undefined,
+      docsFiles: [],
       stages: [],
     },
   });
@@ -96,9 +99,19 @@ export default function CreateEventPage() {
     name: "itineraryLinks"
   });
 
+  const { fields: itineraryFileFields, append: appendItineraryFile, remove: removeItineraryFile } = useFieldArray({
+    control: form.control,
+    name: "itineraryFiles"
+  });
+
   const { fields: docsLinkFields, append: appendDocsLink, remove: removeDocsLink } = useFieldArray({
     control: form.control,
     name: "docsLinks"
+  });
+
+  const { fields: docsFileFields, append: appendDocsFile, remove: removeDocsFile } = useFieldArray({
+    control: form.control,
+    name: "docsFiles"
   });
 
 
@@ -111,43 +124,13 @@ export default function CreateEventPage() {
     router.push('/dashboard');
   }
 
-  const renderFileUpload = (field: any, id: string, isMultiple = false) => {
-    const fileValue = field.value;
-    const fileCount = fileValue?.length;
-
-    return (
-        <div className="flex items-center gap-2">
-        <Label htmlFor={id} className="sr-only">Upload file</Label>
-        <div className="relative w-full">
-            <Input
-                id={id}
-                type="file"
-                multiple={isMultiple}
-                onChange={(e) => field.onChange(isMultiple ? e.target.files : e.target.files?.[0] || null)}
-                className="flex-1"
-            />
-             {fileValue && (
-                <div className="absolute top-0 right-10 h-full flex items-center pr-3 pointer-events-none text-sm text-muted-foreground">
-                    {fileCount ? `${fileCount} file${fileCount > 1 ? 's' : ''}` : (fileValue?.name ? '1 file' : 'No file')} selected
-                </div>
-            )}
-        </div>
-        {fileValue && (
-            <Button variant="ghost" size="icon" onClick={() => field.onChange(null)}>
-            <Trash2 className="h-4 w-4" />
-            </Button>
-        )}
-        </div>
-    );
-  };
-
-  const renderLinkInputs = (fields: any, remove: any, append: any) => (
+  const renderLinkInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryLinks' | 'docsLinks') => (
     <div className="space-y-2">
       {fields.map((field: any, index: number) => (
          <FormField
             key={field.id}
             control={form.control}
-            name={`docsLinks.${index}.value`}
+            name={`${namePrefix}.${index}.value`}
             render={({ field: formField }) => (
                 <FormItem>
                     <div className="flex items-center gap-2">
@@ -166,6 +149,37 @@ export default function CreateEventPage() {
       ))}
       <Button type="button" variant="outline" size="sm" onClick={() => append({ value: "" })}>
         <PlusCircle className="mr-2 h-4 w-4"/> Add Link
+      </Button>
+    </div>
+  );
+
+  const renderFileInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryFiles' | 'docsFiles') => (
+    <div className="space-y-2">
+      {fields.map((field: any, index: number) => (
+        <FormField
+          key={field.id}
+          control={form.control}
+          name={`${namePrefix}.${index}.value`}
+          render={({ field: formField }) => (
+            <FormItem>
+              <div className="flex items-center gap-2">
+                <FormControl>
+                  <Input 
+                    type="file" 
+                    onChange={(e) => formField.onChange(e.target.files?.[0] || null)}
+                  />
+                </FormControl>
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: null })}>
+        <PlusCircle className="mr-2 h-4 w-4" /> Add File
       </Button>
     </div>
   );
@@ -355,28 +369,19 @@ export default function CreateEventPage() {
 
             <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
-                <FormDescription>Provide links to the itinerary, upload a file, or both.</FormDescription>
+                <FormDescription>Provide links to the itinerary, upload files, or both.</FormDescription>
                 <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
                     <div className="space-y-2">
                         <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
-                        {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink)}
+                        {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
                     </div>
                     <div className="flex flex-col items-center self-center pt-8">
                         <span className="text-sm text-muted-foreground">OR</span>
                     </div>
-                     <FormField
-                        control={form.control}
-                        name="itineraryFile"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Itinerary Upload</FormLabel>
-                                <FormControl>
-                                    {renderFileUpload(field, "itinerary-file-upload")}
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                     <div className="space-y-2">
+                        <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Itinerary Upload(s)</FormLabel>
+                        {renderFileInputs(itineraryFileFields, removeItineraryFile, appendItineraryFile, 'itineraryFiles')}
+                    </div>
                 </div>
             </div>
              <div className="space-y-4 rounded-lg border p-4">
@@ -385,24 +390,15 @@ export default function CreateEventPage() {
                 <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
                      <div className="space-y-2">
                         <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
-                        {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink)}
+                        {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
                     </div>
                      <div className="flex flex-col items-center self-center pt-8">
                         <span className="text-sm text-muted-foreground">OR</span>
                     </div>
-                     <FormField
-                        control={form.control}
-                        name="docsFile"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Documents Upload</FormLabel>
-                                <FormControl>
-                                    {renderFileUpload(field, "docs-file-upload", true)}
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <div className="space-y-2">
+                        <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Documents Upload(s)</FormLabel>
+                        {renderFileInputs(docsFileFields, removeDocsFile, appendDocsFile, 'docsFiles')}
+                    </div>
                 </div>
             </div>
 
@@ -413,5 +409,3 @@ export default function CreateEventPage() {
     </Card>
   );
 }
-
-    
