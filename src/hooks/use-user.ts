@@ -1,3 +1,4 @@
+
 import { users } from '@/lib/data';
 import type { User } from '@/lib/data';
 import { create } from 'zustand';
@@ -12,7 +13,7 @@ type UserState = {
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      user: users.find(u => u.role === 'organizer')!,
+      user: users.find(u => u.role === 'fan')!,
       setUser: (user) => set({ user }),
       setRole: (role) =>
         set((state) => {

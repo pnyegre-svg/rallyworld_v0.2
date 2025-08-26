@@ -10,20 +10,16 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/hooks/use-user';
-import type { User } from '@/lib/data';
 import Link from 'next/link';
 
 export function UserNav() {
-  const { user, setRole } = useUserStore();
+  const { user } = useUserStore();
   
   if (!user) return null;
 
@@ -57,16 +53,6 @@ export function UserNav() {
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Switch Role (Demo)</DropdownMenuLabel>
-          <DropdownMenuRadioGroup value={user.role} onValueChange={(value) => setRole(value as User['role'])}>
-            <DropdownMenuRadioItem value="fan">Fan</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="competitor">Competitor</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="timekeeper">Timekeeper</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="organizer">Organizer</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/auth/sign-in">Log out</Link>

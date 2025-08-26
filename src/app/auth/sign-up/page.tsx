@@ -18,10 +18,12 @@ import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/hooks/use-user';
 
 export default function SignUpPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const { setRole } = useUserStore();
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
@@ -30,7 +32,8 @@ export default function SignUpPage() {
         e.preventDefault();
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            router.push('/auth/choose-role');
+            setRole('fan');
+            router.push('/dashboard');
         } catch(error: any) {
             toast({
                 title: 'Sign up failed',
