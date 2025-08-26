@@ -16,12 +16,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Input } from '@/components/ui/input';
 import {
   Card,
@@ -31,10 +37,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Facebook, Instagram, PenSquare, Youtube } from 'lucide-react';
+import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club } from '@/lib/data';
+import { cn } from "@/lib/utils"
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -56,8 +63,9 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
-    const [selectedClub, setSelectedClub] = React.useState<string>('');
+    const [selectedClubId, setSelectedClubId] = React.useState<string>('');
     const [isManualEntry, setIsManualEntry] = React.useState(false);
+    const [popoverOpen, setPopoverOpen] = React.useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -78,11 +86,15 @@ export default function OrganizerProfilePage() {
     });
 
     const handleClubChange = (clubId: string) => {
-        setSelectedClub(clubId);
+        form.setValue("clubId", clubId)
+        setSelectedClubId(clubId);
+        setPopoverOpen(false)
+
         if (clubId === 'new') {
             setIsManualEntry(true);
             form.reset({
                 ...form.getValues(),
+                clubId: 'new',
                 name: '',
                 cis: '',
                 cif: '',
@@ -117,7 +129,7 @@ export default function OrganizerProfilePage() {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     )
 
-    const fieldsDisabled = !isManualEntry && selectedClub !== '';
+    const fieldsDisabled = !isManualEntry && selectedClubId !== '' && selectedClubId !== 'new';
 
     return (
         <Card>
@@ -128,31 +140,81 @@ export default function OrganizerProfilePage() {
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                        <FormField
+                         <FormField
                             control={form.control}
                             name="clubId"
                             render={({ field }) => (
-                                <FormItem>
+                                <FormItem className="flex flex-col">
                                 <FormLabel>Select Your Club</FormLabel>
-                                <Select onValueChange={handleClubChange} defaultValue={field.value}>
+                                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                                    <PopoverTrigger asChild>
                                     <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Choose your organization" />
-                                    </SelectTrigger>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                                "w-full justify-between",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            {field.value && field.value !== 'new'
+                                                ? clubs.find(
+                                                    (club) => club.id === field.value
+                                                )?.name
+                                                : field.value === 'new' ? 'My club is not listed' : 'Choose your organization'}
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
                                     </FormControl>
-                                    <SelectContent>
-                                    {clubs.map((club) => (
-                                        <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
-                                    ))}
-                                    <SelectItem value="new">My club is not listed</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Search clubs..." />
+                                        <CommandEmpty>No club found.</CommandEmpty>
+                                        <CommandList>
+                                            <CommandGroup>
+                                                {clubs.map((club) => (
+                                                <CommandItem
+                                                    value={club.name}
+                                                    key={club.id}
+                                                    onSelect={() => {
+                                                        handleClubChange(club.id)
+                                                    }}
+                                                >
+                                                    <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        club.id === field.value
+                                                        ? "opacity-100"
+                                                        : "opacity-0"
+                                                    )}
+                                                    />
+                                                    {club.name}
+                                                </CommandItem>
+                                                ))}
+                                                 <CommandItem
+                                                    value="new"
+                                                    key="new"
+                                                    onSelect={() => handleClubChange('new')}
+                                                >
+                                                     <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            'new' === field.value ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    My club is not listed
+                                                </CommandItem>
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                    </PopoverContent>
+                                </Popover>
                                 <FormMessage />
                                 </FormItem>
                             )}
-                        />
+                            />
 
-                        { (selectedClub) && <>
+                        { (selectedClubId) && <>
                         <div className="flex items-center gap-4">
                             <FormField
                                 control={form.control}
