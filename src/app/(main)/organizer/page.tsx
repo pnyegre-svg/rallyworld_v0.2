@@ -37,7 +37,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube } from 'lucide-react';
+import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club } from '@/lib/data';
@@ -123,6 +123,15 @@ export default function OrganizerProfilePage() {
         });
         setIsEditing(false);
     }
+    
+    const copyToClipboard = (text: string, fieldName: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            toast({
+                title: 'Copied to clipboard',
+                description: `${fieldName} has been copied.`,
+            });
+        });
+    };
     
     const TikTokIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04-.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
@@ -266,11 +275,16 @@ export default function OrganizerProfilePage() {
                                         name="cis"
                                         render={({ field }) => (
                                             <FormItem>
-                                            <FormLabel>Club CIS</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Club's Sport Identity Card" {...field} disabled={fieldsDisabled} />
-                                            </FormControl>
-                                            <FormMessage />
+                                                <FormLabel>Club CIS</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <FormControl>
+                                                        <Input placeholder="Club's Sport Identity Card" {...field} disabled={fieldsDisabled} />
+                                                    </FormControl>
+                                                    <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIS')}>
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -279,11 +293,16 @@ export default function OrganizerProfilePage() {
                                         name="cif"
                                         render={({ field }) => (
                                             <FormItem>
-                                            <FormLabel>Club CIF</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Club's Fiscal ID Code" {...field} disabled={fieldsDisabled}/>
-                                            </FormControl>
-                                            <FormMessage />
+                                                <FormLabel>Club CIF</FormLabel>
+                                                <div className="flex items-center gap-2">
+                                                    <FormControl>
+                                                        <Input placeholder="Club's Fiscal ID Code" {...field} disabled={fieldsDisabled}/>
+                                                    </FormControl>
+                                                    <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIF')}>
+                                                        <Copy className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                                <FormMessage />
                                             </FormItem>
                                         )}
                                     />
@@ -292,16 +311,21 @@ export default function OrganizerProfilePage() {
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormField
+                             <FormField
                                 control={form.control}
                                 name="address"
                                 render={({ field }) => (
                                     <FormItem>
-                                    <FormLabel>Address</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="Club's full address" {...field} disabled={fieldsDisabled} />
-                                    </FormControl>
-                                    <FormMessage />
+                                        <FormLabel>Address</FormLabel>
+                                        <div className="flex items-start gap-2">
+                                            <FormControl>
+                                                <Textarea placeholder="Club's full address" {...field} disabled={fieldsDisabled} />
+                                            </FormControl>
+                                            <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'Address')} className="mt-1">
+                                                <Copy className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                        <FormMessage />
                                     </FormItem>
                                 )}
                             />
@@ -437,5 +461,7 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
 
     
