@@ -18,7 +18,27 @@ export type User = {
   avatar: string;
   roles: UserRole[];
   currentRole: UserRole;
+  organizerProfile?: Organizer;
 };
+
+export type Organizer = {
+    id: string;
+    name: string;
+    cis: string;
+    cif: string;
+    address: string;
+    phone?: string;
+    email: string;
+    website?: string;
+    socials?: {
+        facebook?: string;
+        instagram?: string;
+        youtube?: string;
+        tiktok?: string;
+        x?: string;
+    }
+    profilePicture?: string;
+}
 
 export type Competitor = {
   id: string;

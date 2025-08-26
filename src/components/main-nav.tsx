@@ -63,7 +63,7 @@ export function MainNav() {
               if (item.href === '/admin' && !isAdmin) {
                 return null;
               }
-              return item.roles.includes(user.currentRole) && (
+              return user.roles.includes(user.currentRole) && (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

@@ -35,6 +35,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/competitors')) return 'Competitors';
     if (path.startsWith('/leaderboard')) return 'Leaderboard';
     if (path.startsWith('/admin')) return 'Admin';
+    if (path.startsWith('/organizer')) return 'Organizer';
     if (path.startsWith('/community')) return 'Community';
     if (path.startsWith('/marketplace')) return 'Marketplace';
     if (path.startsWith('/shop')) return 'Shop';
