@@ -8,7 +8,10 @@ import {
   Car,
   Flag,
   LayoutDashboard,
+  Newspaper,
   Shield,
+  ShoppingBag,
+  Store,
   Users,
 } from 'lucide-react';
 import {
@@ -29,6 +32,10 @@ export function MainNav() {
 
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/community', label: 'Community', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/marketplace', label: 'Marketplace', icon: Store, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/shop', label: 'Shop', icon: ShoppingBag, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
+    { href: '/news', label: 'News', icon: Newspaper, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
     { href: '/stages', label: 'Stages', icon: Flag, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
     { href: '/competitors', label: 'Competitors', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
     { href: '/leaderboard', label: 'Leaderboard', icon: BarChart3, roles: ['fan', 'competitor', 'timekeeper', 'organizer'] },
