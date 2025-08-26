@@ -42,7 +42,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function EditEventPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const params = useParams();
+  const params = React.use(useParams());
   const { user } = useUserStore();
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
   const eventId = params.id as string;
