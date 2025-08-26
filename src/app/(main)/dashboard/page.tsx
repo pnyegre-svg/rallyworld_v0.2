@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { useEventStore } from '@/hooks/use-event-store';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -155,7 +155,12 @@ export default function DashboardPage() {
                                         {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
                                     </TableCell>
                                     <TableCell className="text-center font-mono">{event.stages.length}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right space-x-2">
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/organizer/event/view/${event.id}`}>
+                                                <Eye className="mr-2 h-4 w-4" /> View
+                                            </Link>
+                                        </Button>
                                         <Button asChild variant="outline" size="sm">
                                             <Link href={`/organizer/event/edit/${event.id}`}>
                                                 <PenSquare className="mr-2 h-4 w-4" /> Edit
