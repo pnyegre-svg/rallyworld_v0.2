@@ -55,7 +55,7 @@ export function MainNav() {
         <SidebarMenu>
           {menuItems.map(
             (item) =>
-              item.roles.includes(user.role) && (
+              item.roles.includes(user.currentRole) && (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

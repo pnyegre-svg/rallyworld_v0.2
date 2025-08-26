@@ -16,7 +16,8 @@ export type User = {
   name: string;
   email: string;
   avatar: string;
-  role: UserRole;
+  roles: UserRole[];
+  currentRole: UserRole;
 };
 
 export type Competitor = {
@@ -53,11 +54,11 @@ export type LeaderboardEntry = {
 };
 
 export const users: User[] = [
-  { id: 'usr_001', name: 'Rally Club Admin', email: 'admin@rally.world', avatar: '/avatars/01.png', role: 'organizer' },
-  { id: 'usr_002', name: 'Maria Garcia', email: 'maria.g@example.com', avatar: '/avatars/02.png', role: 'timekeeper' },
-  { id: 'usr_003', name: 'Kenji Tanaka', email: 'kenji.t@example.com', avatar: '/avatars/03.png', role: 'competitor' },
-  { id: 'usr_004', name: 'Chloe Dubois', email: 'chloe.d@example.com', avatar: '/avatars/04.png', role: 'fan' },
-  { id: 'usr_005', name: 'Ben Carter', email: 'ben.c@example.com', avatar: '/avatars/05.png', role: 'fan' },
+  { id: 'usr_001', name: 'Rally Club Admin', email: 'admin@rally.world', avatar: '/avatars/01.png', roles: ['organizer', 'fan'], currentRole: 'organizer' },
+  { id: 'usr_002', name: 'Maria Garcia', email: 'maria.g@example.com', avatar: '/avatars/02.png', roles: ['timekeeper', 'fan'], currentRole: 'timekeeper' },
+  { id: 'usr_003', name: 'Kenji Tanaka', email: 'kenji.t@example.com', avatar: '/avatars/03.png', roles: ['competitor', 'fan'], currentRole: 'competitor' },
+  { id: 'usr_004', name: 'Chloe Dubois', email: 'chloe.d@example.com', avatar: '/avatars/04.png', roles: ['fan'], currentRole: 'fan' },
+  { id: 'usr_005', name: 'Ben Carter', email: 'ben.c@example.com', avatar: '/avatars/05.png', roles: ['fan'], currentRole: 'fan' },
 ];
 
 export const competitors: Competitor[] = [

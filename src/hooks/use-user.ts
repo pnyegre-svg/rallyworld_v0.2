@@ -9,6 +9,7 @@ type UserState = {
   user: User;
   signInUser: (email: string, name?: string) => void;
   setRole: (role: UserRole) => void;
+  switchRole: (role: UserRole) => void;
 };
 
 const defaultUser = {
@@ -16,7 +17,8 @@ const defaultUser = {
     name: 'Rally Fan',
     email: '',
     avatar: '/avatars/04.png',
-    role: 'fan'
+    roles: ['fan'],
+    currentRole: 'fan',
 } as User;
 
 export const useUserStore = create<UserState>()(
@@ -27,7 +29,7 @@ export const useUserStore = create<UserState>()(
         const currentState = get();
         // If the user logging in is the same as the one in the store, do nothing.
         // This preserves the role chosen after sign-up.
-        if (currentState.user && currentState.user.email.toLowerCase() === email.toLowerCase()) {
+        if (currentState.user && currentState.user.email && currentState.user.email.toLowerCase() === email.toLowerCase()) {
           return;
         }
 
@@ -40,14 +42,23 @@ export const useUserStore = create<UserState>()(
                 name: name || 'New User',
                 email: email,
                 avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
-                role: 'fan',
+                roles: ['fan'],
+                currentRole: 'fan',
             };
             set({ user: newUser });
         }
       },
       setRole: (role: UserRole) => {
+        set((state) => {
+            const newRoles = state.user.roles.includes(role) ? state.user.roles : [...state.user.roles, role];
+            return {
+                user: { ...state.user, roles: newRoles, currentRole: role }
+            }
+        });
+      },
+      switchRole: (role: UserRole) => {
         set((state) => ({
-            user: { ...state.user, role }
+            user: { ...state.user, currentRole: role }
         }));
       }
     }),

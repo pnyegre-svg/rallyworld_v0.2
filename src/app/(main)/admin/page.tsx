@@ -32,7 +32,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [users, setUsers] = React.useState<User[]>(initialUsers);
 
-  if (user.role !== 'organizer') {
+  if (user.currentRole !== 'organizer') {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">You do not have permission to access this page.</p>
@@ -40,8 +40,9 @@ export default function AdminPage() {
     );
   }
 
-  const handleRoleChange = (userId: string, role: User['role']) => {
-    setUsers(users.map(u => u.id === userId ? {...u, role} : u));
+  const handleRoleChange = (userId: string, role: User['currentRole']) => {
+    // This is a mock implementation. In a real app, you'd update the user in a database.
+    setUsers(users.map(u => u.id === userId ? {...u, roles: [role], currentRole: role} : u));
     const updatedUser = users.find(u => u.id === userId);
     toast({
         title: "User Role Updated",
@@ -85,7 +86,7 @@ export default function AdminPage() {
                 </TableCell>
                 <TableCell className="text-muted-foreground">{u.email}</TableCell>
                 <TableCell>
-                  <Select value={u.role} onValueChange={(value) => handleRoleChange(u.id, value as User['role'])}>
+                  <Select value={u.currentRole} onValueChange={(value) => handleRoleChange(u.id, value as User['currentRole'])}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>

@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
                 <TableHead key={stage.id} className="text-right">{stage.name}</TableHead>
               ))}
               <TableHead className="text-right">Total Time</TableHead>
-              {user.role === 'timekeeper' && <TableHead></TableHead>}
+              {user.currentRole === 'timekeeper' && <TableHead></TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
                     </TableCell>
                 ))}
                 <TableCell className="font-bold text-right font-mono">{entry.totalTime}</TableCell>
-                {user.role === 'timekeeper' && (
+                {user.currentRole === 'timekeeper' && (
                   <TableCell className="text-right">
                     <UpdateTimeDialog competitor={entry.competitor} />
                   </TableCell>

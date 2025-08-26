@@ -14,15 +14,23 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import { Check, UserSquare } from 'lucide-react';
+import { UserRole } from '@/lib/data';
 
 export function UserNav() {
-  const { user } = useUserStore();
+  const { user, switchRole } = useUserStore();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -61,11 +69,28 @@ export function UserNav() {
               {user.email}
             </p>
             <p className="text-xs leading-none text-muted-foreground capitalize pt-1">
-              ({user.role.replace(/_/g, " ")})
+              ({user.currentRole.replace(/_/g, " ")})
             </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+                <UserSquare className="mr-2 h-4 w-4" />
+                <span>Switch Role</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                    <DropdownMenuRadioGroup value={user.currentRole} onValueChange={(role) => switchRole(role as UserRole)}>
+                        {user.roles.map((role) => (
+                            <DropdownMenuRadioItem key={role} value={role} className="capitalize">
+                                {role.replace(/_/g, " ")}
+                            </DropdownMenuRadioItem>
+                        ))}
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
         <DropdownMenuItem asChild>
           <Link href="/dashboard">Dashboard</Link>
         </DropdownMenuItem>

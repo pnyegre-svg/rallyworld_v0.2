@@ -40,7 +40,7 @@ export default function StagesPage() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Rally Stages</CardTitle>
-        {user.role === 'organizer' && (
+        {user.currentRole === 'organizer' && (
           <Button size="sm" className="gap-1 bg-accent hover:bg-accent/90">
             <PlusCircle className="h-4 w-4" />
             Create Stage

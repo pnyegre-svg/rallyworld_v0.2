@@ -20,7 +20,7 @@ export default function CompetitorsPage() {
   return (
     <div className="flex-1">
         <div className="flex items-center justify-end mb-4">
-            {user.role === 'organizer' && (
+            {user.currentRole === 'organizer' && (
               <Button size="sm" className="gap-1 bg-accent hover:bg-accent/90">
                 <PlusCircle className="h-4 w-4" />
                 Add Competitor
