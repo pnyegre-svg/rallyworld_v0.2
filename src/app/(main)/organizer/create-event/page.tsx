@@ -36,6 +36,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
@@ -46,9 +47,9 @@ const formSchema = z.object({
   hqLocation: z.string().min(3, { message: 'HQ Location is required.' }),
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
-  itineraryLink: z.string().url().optional().or(z.literal('')),
+  itineraryLink: z.string().optional(),
   itineraryFile: z.any().optional(),
-  docsLink: z.string().url().optional().or(z.literal('')),
+  docsLink: z.string().optional(),
   docsFile: z.any().optional(),
   stages: z.array(z.object({
     name: z.string().min(1, { message: 'Stage name is required.' }),
@@ -113,7 +114,7 @@ export default function CreateEventPage() {
             />
              {fileValue && (
                 <div className="absolute top-0 right-10 h-full flex items-center pr-3 pointer-events-none text-sm text-muted-foreground">
-                    {fileCount ? `${fileCount} file${fileCount > 1 ? 's' : ''}` : (fileValue.name ? '1 file' : 'No file')} selected
+                    {fileCount ? `${fileCount} file${fileCount > 1 ? 's' : ''}` : (fileValue?.name ? '1 file' : 'No file')} selected
                 </div>
             )}
         </div>
@@ -129,8 +130,8 @@ export default function CreateEventPage() {
 
   const renderLinkInput = (field: any, placeholder: string) => (
     <div className="relative">
-      <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      <Input {...field} placeholder={placeholder} className="pl-9" />
+      <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+      <Textarea {...field} placeholder={placeholder} className="pl-9" />
     </div>
   );
 
@@ -325,9 +326,9 @@ export default function CreateEventPage() {
                         name="itineraryLink"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link</FormLabel>
+                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
                                 <FormControl>
-                                    {renderLinkInput(field, "https://example.com/itinerary.pdf")}
+                                    {renderLinkInput(field, "Enter each link on a new line...")}
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -353,16 +354,16 @@ export default function CreateEventPage() {
             </div>
              <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
-                <FormDescription>Provide a link to a folder, upload documents, or both.</FormDescription>
+                <FormDescription>Provide links to a folder, upload documents, or both.</FormDescription>
                 <div className="grid md:grid-cols-[1fr_auto_1fr] items-center gap-4">
                     <FormField
                         control={form.control}
                         name="docsLink"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link</FormLabel>
+                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
                                 <FormControl>
-                                    {renderLinkInput(field, "https://example.com/docs")}
+                                    {renderLinkInput(field, "Enter each link on a new line...")}
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -394,3 +395,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
