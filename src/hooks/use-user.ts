@@ -2,6 +2,7 @@
 
 
 
+
 import { users } from '@/lib/data';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { create } from 'zustand';
@@ -29,24 +30,10 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       user: defaultUser,
       signInUser: (email, name) => {
-        const currentState = get();
-        // If the user logging in is the same as the one in the store from session, do nothing.
-        // This preserves the currentRole from the last session.
-        if (currentState.user?.email?.toLowerCase() === email.toLowerCase()) {
-            // On sign-in, default to the specialized role if it exists
-            const user = currentState.user;
-            if (user.roles.length > 1) {
-                const specializedRole = user.roles.find(r => r !== 'fan');
-                if (specializedRole && user.currentRole !== specializedRole) {
-                    set({ user: { ...user, currentRole: specializedRole } });
-                }
-            }
-          return;
-        }
-
         const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+
         if (existingUser) {
-            // Special case for admin to ensure they always have the organizer role
+             // Special case for admin to ensure they always have the organizer role
             if (existingUser.email === 'admin@rally.world' && !existingUser.roles.includes('organizer')) {
                 existingUser.roles.push('organizer');
                 existingUser.currentRole = 'organizer';
