@@ -23,7 +23,7 @@ import { useUserStore } from '@/hooks/use-user';
 export default function SignUpPage() {
     const router = useRouter();
     const { toast } = useToast();
-    const { setRole } = useUserStore();
+    const { signInUser } = useUserStore();
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
@@ -32,7 +32,7 @@ export default function SignUpPage() {
         e.preventDefault();
         try {
             await createUserWithEmailAndPassword(auth, email, password);
-            setRole('fan');
+            signInUser(email, name);
             router.push('/dashboard');
         } catch(error: any) {
             toast({
@@ -65,7 +65,7 @@ export default function SignUpPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
+        <Button type="submit" className="w-full bg-accent hover:bg-accent/20">
           Sign Up
         </Button>
         <div className="text-center text-sm">

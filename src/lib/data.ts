@@ -1,3 +1,4 @@
+
 export type User = {
   id: string;
   name: string;
@@ -40,7 +41,7 @@ export type LeaderboardEntry = {
 };
 
 export const users: User[] = [
-  { id: 'usr_001', name: 'Alex Johnson', email: 'alex.j@example.com', avatar: '/avatars/01.png', role: 'organizer' },
+  { id: 'usr_001', name: 'Admin User', email: 'admin@rally.world', avatar: '/avatars/01.png', role: 'organizer' },
   { id: 'usr_002', name: 'Maria Garcia', email: 'maria.g@example.com', avatar: '/avatars/02.png', role: 'timekeeper' },
   { id: 'usr_003', name: 'Kenji Tanaka', email: 'kenji.t@example.com', avatar: '/avatars/03.png', role: 'competitor' },
   { id: 'usr_004', name: 'Chloe Dubois', email: 'chloe.d@example.com', avatar: '/avatars/04.png', role: 'fan' },

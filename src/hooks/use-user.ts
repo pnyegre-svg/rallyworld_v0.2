@@ -6,20 +6,36 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 type UserState = {
   user: User;
-  setUser: (user: User) => void;
-  setRole: (role: User['role']) => void;
+  signInUser: (email: string, name?: string) => void;
 };
+
+const defaultUser = {
+    id: 'usr_new',
+    name: 'Rally Fan',
+    email: '',
+    avatar: '/avatars/04.png',
+    role: 'fan'
+} as User;
 
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      user: users.find(u => u.role === 'fan')!,
-      setUser: (user) => set({ user }),
-      setRole: (role) =>
-        set((state) => {
-          const newUser = users.find((u) => u.role === role);
-          return { user: newUser || state.user };
-        }),
+      user: defaultUser,
+      signInUser: (email, name) => {
+        const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+        if (existingUser) {
+            set({ user: existingUser });
+        } else {
+            const newUser: User = {
+                id: `usr_${Math.random().toString(36).substr(2, 9)}`,
+                name: name || 'New User',
+                email: email,
+                avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
+                role: 'fan',
+            };
+            set({ user: newUser });
+        }
+      },
     }),
     {
       name: 'user-storage',

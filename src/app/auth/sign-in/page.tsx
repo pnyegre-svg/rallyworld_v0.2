@@ -18,10 +18,12 @@ import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/hooks/use-user';
 
 export default function SignInPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const { signInUser } = useUserStore();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
 
@@ -29,6 +31,7 @@ export default function SignInPage() {
         e.preventDefault();
         try {
             await signInWithEmailAndPassword(auth, email, password);
+            signInUser(email);
             router.push('/dashboard');
         } catch (error: any) {
             toast({
