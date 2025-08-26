@@ -3,7 +3,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getRedirectResult, isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
@@ -36,23 +36,9 @@ export default function AuthCallbackPage() {
             } else {
                 router.push('/dashboard');
             }
-        } else if (isSignInWithEmailLink(auth, window.location.href)) {
-            // This was an email link sign-in redirect
-            let email = window.localStorage.getItem('emailForSignIn');
-            if (!email) {
-                // This can happen if the user opens the link on a different device.
-                // Ask the user to provide their email.
-                email = window.prompt('Please provide your email for confirmation');
-            }
-            if(email) {
-                const result = await signInWithEmailLink(auth, email, window.location.href);
-                window.localStorage.removeItem('emailForSignIn');
-                if (result) {
-                    router.push('/dashboard');
-                }
-            }
         } else {
-            // No redirect result, maybe a direct navigation, send to sign-in
+             // If there's no result, it might be a direct navigation.
+             // It's safe to just redirect to the main sign-in page.
             router.push('/auth/sign-in');
         }
       } catch (error: any) {
@@ -70,7 +56,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
-        <p>Please wait, authenticating...</p>
+        <p>Please wait, completing sign-in...</p>
     </div>
   );
 }
