@@ -72,7 +72,7 @@ export function MainNav() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-4">
-        <UserNav />
+        {/* The UserNav is now in the PageHeader for better visibility */}
       </SidebarFooter>
     </Sidebar>
   );
