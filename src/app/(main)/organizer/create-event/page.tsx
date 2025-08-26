@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -184,8 +184,8 @@ export default function CreateEventPage() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid md:grid-cols-2 gap-8">
-                <div className="space-y-8">
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="space-y-6">
                      <FormField
                         control={form.control}
                         name="title"
@@ -276,7 +276,7 @@ export default function CreateEventPage() {
                         )}
                     />
                 </div>
-                <div className="space-y-8">
+                <div className="space-y-6">
                      <FormField
                         control={form.control}
                         name="whatsappLink"
@@ -295,7 +295,7 @@ export default function CreateEventPage() {
                         name="livestreamLink"
                         render={({ field }) => (
                             <FormItem>
-                            <FormLabel>Live Stream (YouTube/Facebook) (Optional)</FormLabel>
+                            <FormLabel>Live Stream Link (YouTube/Facebook) (Optional)</FormLabel>
                             <FormControl>
                                 <Input placeholder="https://youtube.com/live/..." {...field} />
                             </FormControl>
@@ -310,15 +310,17 @@ export default function CreateEventPage() {
                  <h3 className="text-lg font-medium">Event Stages</h3>
                 <div className="space-y-4">
                     {stageFields.map((item, index) => (
-                        <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-2 p-2 rounded-md border">
+                        <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-4 p-3 rounded-md border bg-muted/30">
                             <FormField
                                 control={form.control}
                                 name={`stages.${index}.name`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Stage Name</FormLabel>
+                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                            <Flag className="h-4 w-4"/> Stage Name
+                                        </FormLabel>
                                         <FormControl>
-                                            <Input {...field} placeholder="e.g. Col de Turini" />
+                                            <Input {...field} placeholder="e.g. SS1 - Col de Turini" />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -329,7 +331,9 @@ export default function CreateEventPage() {
                                 name={`stages.${index}.location`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Location</FormLabel>
+                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                            <MapPin className="h-4 w-4"/> Location
+                                        </FormLabel>
                                         <FormControl>
                                             <Input {...field} placeholder="e.g. Monte Carlo" />
                                         </FormControl>
@@ -342,9 +346,11 @@ export default function CreateEventPage() {
                                 name={`stages.${index}.distance`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only")}>Distance (km)</FormLabel>
+                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                            <Route className="h-4 w-4"/> Distance (km)
+                                        </FormLabel>
                                         <FormControl>
-                                            <Input type="number" {...field} placeholder="15.31" className="w-28"/>
+                                            <Input type="number" {...field} placeholder="15.31" className="w-32"/>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -355,7 +361,7 @@ export default function CreateEventPage() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => removeStage(index)}
-                                className={cn(index !== 0 ? "mt-8" : "self-center")}
+                                className={cn(index !== 0 ? "mt-8" : "mt-8")}
                             >
                                 <Trash2 className="h-4 w-4" />
                             </Button>
@@ -373,21 +379,31 @@ export default function CreateEventPage() {
             </div>
 
 
-            <div className="space-y-4 rounded-lg border p-4">
-                <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
-                <FormDescription>Provide links to the itinerary. File uploads are not yet supported.</FormDescription>
-                <div className="space-y-2">
-                    <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
-                    {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
-                </div>
-            </div>
-             <div className="space-y-4 rounded-lg border p-4">
-                <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
-                <FormDescription>Provide links to documents. File uploads are not yet supported.</FormDescription>
-                <div className="space-y-2">
-                    <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
-                    {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
-                </div>
+            <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormDescription>Provide links to the itinerary. File uploads are not yet supported.</FormDescription>
+                        <div className="space-y-2">
+                            <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
+                            {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
+                        </div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <FormDescription>Provide links to documents. File uploads are not yet supported.</FormDescription>
+                        <div className="space-y-2">
+                            <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
+                            {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
             <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
@@ -399,3 +415,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
