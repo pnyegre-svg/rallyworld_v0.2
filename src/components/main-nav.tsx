@@ -25,6 +25,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { useUserStore } from '@/hooks/use-user';
+import { UserNav } from './user-nav';
 
 export function MainNav() {
   const pathname = usePathname();
@@ -71,7 +72,7 @@ export function MainNav() {
           )}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-4">
+      <SidebarFooter className="p-4 mt-auto">
         {/* The UserNav is now in the PageHeader for better visibility */}
       </SidebarFooter>
     </Sidebar>
