@@ -22,7 +22,7 @@ export function EventHeader({ event }: EventHeaderProps) {
             fill
             className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between">
