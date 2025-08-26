@@ -5,8 +5,9 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { format } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
 import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,6 +37,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEventStore, Event } from '@/hooks/use-event-store';
+import { Separator } from '@/components/ui/separator';
 
 const linkSchema = z.object({
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
@@ -71,6 +73,7 @@ export default function CreateEventPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { addEvent } = useEventStore();
+  const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -191,6 +194,15 @@ export default function CreateEventPage() {
     </div>
   );
 
+  const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
+    <Button
+      variant="ghost"
+      className="w-full justify-start px-2 py-1.5"
+      onClick={() => setRange(range)}
+    >
+      {label}
+    </Button>
+  );
 
   return (
     <Card>
@@ -217,51 +229,67 @@ export default function CreateEventPage() {
                         )}
                         />
                     <FormField
-                        control={form.control}
-                        name="dates"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Event Dates</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={'outline'}
-                                    className={cn(
-                                        'w-full justify-start text-left font-normal',
-                                        !field.value?.from && 'text-muted-foreground'
-                                    )}
-                                    >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {field.value?.from ? (
-                                        field.value.to ? (
-                                        <>
-                                            {format(field.value.from, 'LLL dd, y')} -{' '}
-                                            {format(field.value.to, 'LLL dd, y')}
-                                        </>
-                                        ) : (
-                                        format(field.value.from, 'LLL dd, y')
-                                        )
+                      control={form.control}
+                      name="dates"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Event Dates</FormLabel>
+                          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={'outline'}
+                                  className={cn(
+                                    'w-full justify-start text-left font-normal',
+                                    !field.value?.from && 'text-muted-foreground'
+                                  )}
+                                >
+                                  <CalendarIcon className="mr-2 h-4 w-4" />
+                                  {field.value?.from ? (
+                                    field.value.to ? (
+                                      <>
+                                        {format(field.value.from, 'LLL dd, y')} -{' '}
+                                        {format(field.value.to, 'LLL dd, y')}
+                                      </>
                                     ) : (
-                                        <span>Pick a date range</span>
-                                    )}
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    initialFocus
-                                    mode="range"
-                                    defaultMonth={field.value?.from}
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    numberOfMonths={2}
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+                                      format(field.value.from, 'LLL dd, y')
+                                    )
+                                  ) : (
+                                    <span>Pick a date range</span>
+                                  )}
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <div className="flex">
+                                    <div className="flex-col space-y-2 border-r p-3">
+                                         <DatePresetButton label="Today" range={{ from: new Date(), to: new Date() }} setRange={field.onChange} />
+                                        <DatePresetButton label="This Week" range={{ from: startOfWeek(new Date()), to: endOfWeek(new Date()) }} setRange={field.onChange} />
+                                        <DatePresetButton label="This Month" range={{ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }} setRange={field.onChange} />
+                                        <DatePresetButton label="Last Month" range={{ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }} setRange={field.onChange} />
+                                        <DatePresetButton label="This Year" range={{ from: startOfYear(new Date()), to: endOfYear(new Date()) }} setRange={field.onChange} />
+                                        <DatePresetButton label="Last Year" range={{ from: startOfYear(subYears(new Date(), 1)), to: endOfYear(subYears(new Date(), 1)) }} setRange={field.onChange} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={field.value?.from}
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            numberOfMonths={2}
+                                        />
+                                        <div className="flex justify-end gap-2 p-3 border-t">
+                                            <Button variant="ghost" onClick={() => setDatePopoverOpen(false)}>Cancel</Button>
+                                            <Button className="bg-accent hover:bg-accent/90" onClick={() => setDatePopoverOpen(false)}>Apply</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                     <FormField
                         control={form.control}
