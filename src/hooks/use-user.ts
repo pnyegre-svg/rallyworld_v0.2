@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
@@ -70,7 +71,7 @@ export const useUserStore = create<UserState>()(
         if (!currentUser) return;
         
         set({ user: { ...currentUser, currentRole: role } });
-        updateUser(currentUser.id, { currentRole: role });
+        await updateUser(currentUser.id, { currentRole: role });
       },
       updateOrganizerProfile: async (profile: Organizer) => {
         const currentUser = get().user;
@@ -80,6 +81,7 @@ export const useUserStore = create<UserState>()(
 
         set({ user: updatedUser });
 
+        // Use dot notation to update a nested object field in Firestore.
         await updateUser(currentUser.id, { organizerProfile: profile });
       }
     }),
