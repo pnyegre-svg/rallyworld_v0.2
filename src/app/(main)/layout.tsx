@@ -2,14 +2,32 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import Loading from './loading';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        router.push('/auth/sign-in');
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, [router]);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
@@ -23,6 +41,10 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/news')) return 'News';
     return 'Rally World';
   };
+  
+  if (loading) {
+    return <Loading />;
+  }
   
   return (
     <SidebarProvider>
