@@ -96,22 +96,36 @@ export default function CreateEventPage() {
     router.push('/dashboard');
   }
 
-  const renderFileUpload = (field: any, id: string) => (
-    <div className="flex items-center gap-2">
-      <Label htmlFor={id} className="sr-only">Upload file</Label>
-      <Input
-        id={id}
-        type="file"
-        onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
-        className="flex-1"
-      />
-      {field.value && (
-        <Button variant="ghost" size="icon" onClick={() => field.onChange(null)}>
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
-  );
+  const renderFileUpload = (field: any, id: string, isMultiple = false) => {
+    const fileValue = field.value;
+    const fileCount = fileValue?.length;
+
+    return (
+        <div className="flex items-center gap-2">
+        <Label htmlFor={id} className="sr-only">Upload file</Label>
+        <div className="relative w-full">
+            <Input
+                id={id}
+                type="file"
+                multiple={isMultiple}
+                onChange={(e) => field.onChange(isMultiple ? e.target.files : e.target.files?.[0] || null)}
+                className="flex-1"
+            />
+             {fileValue && (
+                <div className="absolute top-0 right-10 h-full flex items-center pr-3 pointer-events-none text-sm text-muted-foreground">
+                    {fileCount ? `${fileCount} file${fileCount > 1 ? 's' : ''}` : (fileValue.name ? '1 file' : 'No file')} selected
+                </div>
+            )}
+        </div>
+        {fileValue && (
+            <Button variant="ghost" size="icon" onClick={() => field.onChange(null)}>
+            <Trash2 className="h-4 w-4" />
+            </Button>
+        )}
+        </div>
+    );
+  };
+
 
   const renderLinkInput = (field: any, placeholder: string) => (
     <div className="relative">
@@ -364,7 +378,7 @@ export default function CreateEventPage() {
                             <FormItem>
                                 <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Documents Upload</FormLabel>
                                 <FormControl>
-                                    {renderFileUpload(field, "docs-file-upload")}
+                                    {renderFileUpload(field, "docs-file-upload", true)}
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -380,5 +394,3 @@ export default function CreateEventPage() {
     </Card>
   );
 }
-
-    
