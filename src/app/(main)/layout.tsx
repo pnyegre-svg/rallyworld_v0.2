@@ -10,10 +10,14 @@ import { UserNav } from '@/components/user-nav';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import Loading from './loading';
+import { useUserStore } from '@/hooks/use-user';
+import { Button } from '@/components/ui/button';
+import { Bell } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useUserStore();
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -35,7 +39,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/competitors')) return 'Competitors';
     if (path.startsWith('/leaderboard')) return 'Leaderboard';
     if (path.startsWith('/admin')) return 'Admin';
-    if (path.startsWith('/organizer')) return 'Organizer';
+    if (path.startsWith('/organizer')) return 'Organizer Profile';
     if (path.startsWith('/community')) return 'Community';
     if (path.startsWith('/marketplace')) return 'Marketplace';
     if (path.startsWith('/shop')) return 'Shop';
@@ -52,8 +56,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-screen w-full">
         <MainNav />
         <SidebarInset className="flex flex-col">
-          <PageHeader title={getTitle(pathname)}>
-            <div className="hidden md:block">
+          <PageHeader title={getTitle(pathname)} role={user.currentRole}>
+            <div className="hidden md:flex items-center gap-4">
+               <Button variant="ghost" size="icon" className="rounded-full">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
+              </Button>
               <UserNav />
             </div>
           </PageHeader>
