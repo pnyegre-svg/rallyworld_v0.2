@@ -1,7 +1,8 @@
 
 
+
 import { users } from '@/lib/data';
-import type { User, UserRole } from '@/lib/data';
+import type { User, UserRole, Organizer } from '@/lib/data';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
@@ -10,6 +11,7 @@ type UserState = {
   signInUser: (email: string, name?: string) => void;
   setRole: (role: UserRole) => void;
   switchRole: (role: UserRole) => void;
+  updateOrganizerProfile: (profile: Organizer) => void;
 };
 
 const defaultUser = {
@@ -69,6 +71,11 @@ export const useUserStore = create<UserState>()(
         set((state) => ({
             user: { ...state.user, currentRole: role }
         }));
+      },
+      updateOrganizerProfile: (profile: Organizer) => {
+        set((state) => ({
+            user: { ...state.user, organizerProfile: profile }
+        }))
       }
     }),
     {

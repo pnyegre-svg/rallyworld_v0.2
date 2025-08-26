@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -40,7 +41,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import { clubs, Club } from '@/lib/data';
+import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
 
@@ -63,7 +64,7 @@ const formSchema = z.object({
 
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
-    const { user } = useUserStore();
+    const { user, updateOrganizerProfile } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
     const [selectedClubId, setSelectedClubId] = React.useState<string>('');
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -71,7 +72,7 @@ export default function OrganizerProfilePage() {
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
+        defaultValues: user.organizerProfile || {
             name: '',
             cis: '',
             cif: '',
@@ -86,6 +87,22 @@ export default function OrganizerProfilePage() {
             x: '',
         },
     });
+    
+    React.useEffect(() => {
+        if(user.organizerProfile) {
+            form.reset(user.organizerProfile);
+            const existingClub = clubs.find(c => c.name === user.organizerProfile?.name);
+            if (existingClub) {
+                setSelectedClubId(existingClub.id);
+                setIsManualEntry(false);
+            } else {
+                 setSelectedClubId('new');
+                 setIsManualEntry(true);
+            }
+            setIsEditing(false);
+        }
+    }, [user.organizerProfile, form]);
+
 
     const handleClubChange = (clubId: string) => {
         form.setValue("clubId", clubId)
@@ -116,7 +133,26 @@ export default function OrganizerProfilePage() {
     }
 
     function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
+        const organizerData: Organizer = {
+            id: values.clubId || `org_${Date.now()}`,
+            name: values.name,
+            cis: values.cis,
+            cif: values.cif,
+            address: values.address,
+            phone: values.phone,
+            email: values.email,
+            website: values.website,
+            socials: {
+                facebook: values.facebook,
+                instagram: values.instagram,
+                youtube: values.youtube,
+                tiktok: values.tiktok,
+                x: values.x,
+            },
+            // Note: Profile picture handling would require actual upload logic
+            profilePicture: values.profilePicture ? URL.createObjectURL(values.profilePicture) : undefined,
+        }
+        updateOrganizerProfile(organizerData)
         toast({
             title: "Profile Saved",
             description: "Your club profile has been successfully updated.",
@@ -125,6 +161,7 @@ export default function OrganizerProfilePage() {
     }
     
     const copyToClipboard = (text: string, fieldName: string) => {
+        if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
             toast({
                 title: 'Copied to clipboard',
@@ -141,13 +178,25 @@ export default function OrganizerProfilePage() {
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     )
 
-    const fieldsDisabled = !isManualEntry && selectedClubId !== '' && selectedClubId !== 'new';
+    const fieldsDisabled = !isEditing || (!isManualEntry && selectedClubId !== '' && selectedClubId !== 'new');
+    const allFieldsDisabled = !isEditing;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Club Profile Setup</CardTitle>
-                <CardDescription>Select your club from the list or add a new one.</CardDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <CardTitle>Club Profile</CardTitle>
+                        <CardDescription>
+                            {user.organizerProfile ? "View or edit your club's profile." : "Select your club from the list or add a new one."}
+                        </CardDescription>
+                    </div>
+                    {!isEditing && (
+                        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                            <PenSquare className="mr-2 h-4 w-4" /> Edit Profile
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -164,6 +213,7 @@ export default function OrganizerProfilePage() {
                                         <Button
                                             variant="outline"
                                             role="combobox"
+                                            disabled={allFieldsDisabled}
                                             className={cn(
                                                 "w-full justify-between",
                                                 !field.value && "text-muted-foreground"
@@ -236,17 +286,20 @@ export default function OrganizerProfilePage() {
                                     <FormControl>
                                     <div className="relative">
                                         <Avatar className="h-24 w-24">
-                                            <AvatarImage src={field.value ? URL.createObjectURL(field.value) : ''} alt="Club Profile Picture" />
+                                            <AvatarImage src={field.value} alt="Club Profile Picture" />
                                             <AvatarFallback>CLUB</AvatarFallback>
                                         </Avatar>
-                                        <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-primary p-1 text-primary-foreground">
-                                            <PenSquare className="h-4 w-4" />
-                                        </label>
+                                        {isEditing && (
+                                            <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 cursor-pointer rounded-full bg-primary p-1 text-primary-foreground">
+                                                <PenSquare className="h-4 w-4" />
+                                            </label>
+                                        )}
                                         <Input 
                                             id="profile-picture-upload" 
                                             type="file" 
                                             className="sr-only" 
                                             accept="image/*"
+                                            disabled={allFieldsDisabled}
                                             onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} 
                                         />
                                     </div>
@@ -337,7 +390,7 @@ export default function OrganizerProfilePage() {
                                         <FormItem>
                                         <FormLabel>Phone Number (Optional)</FormLabel>
                                         <FormControl>
-                                            <Input type="tel" placeholder="+1234567890" {...field} />
+                                            <Input type="tel" placeholder="+1234567890" {...field} disabled={allFieldsDisabled} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -350,7 +403,7 @@ export default function OrganizerProfilePage() {
                                         <FormItem>
                                         <FormLabel>Email</FormLabel>
                                         <FormControl>
-                                            <Input type="email" placeholder="contact@rallysport.club" {...field} />
+                                            <Input type="email" placeholder="contact@rallysport.club" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -369,7 +422,7 @@ export default function OrganizerProfilePage() {
                                         <FormItem>
                                         <FormLabel>Website (Optional)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://rallysport.club" {...field} />
+                                            <Input placeholder="https://rallysport.club" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -384,7 +437,7 @@ export default function OrganizerProfilePage() {
                                             <Facebook className="h-5 w-5"/> Facebook (Optional)
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://facebook.com/rallysportclub" {...field} />
+                                            <Input placeholder="https://facebook.com/rallysportclub" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -399,7 +452,7 @@ export default function OrganizerProfilePage() {
                                             <Instagram className="h-5 w-5"/> Instagram (Optional)
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://instagram.com/rallysportclub" {...field} />
+                                            <Input placeholder="https://instagram.com/rallysportclub" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -414,7 +467,7 @@ export default function OrganizerProfilePage() {
                                             <Youtube className="h-5 w-5"/> YouTube (Optional)
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://youtube.com/c/rallysportclub" {...field} />
+                                            <Input placeholder="https://youtube.com/c/rallysportclub" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -429,7 +482,7 @@ export default function OrganizerProfilePage() {
                                             <TikTokIcon /> TikTok (Optional)
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://tiktok.com/@rallysportclub" {...field} />
+                                            <Input placeholder="https://tiktok.com/@rallysportclub" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -444,7 +497,7 @@ export default function OrganizerProfilePage() {
                                             <XIcon /> X / Twitter (Optional)
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://x.com/rallysportclub" {...field} />
+                                            <Input placeholder="https://x.com/rallysportclub" {...field} disabled={allFieldsDisabled}/>
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -453,7 +506,17 @@ export default function OrganizerProfilePage() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="bg-accent hover:bg-accent/90">Save Profile</Button>
+                        {isEditing && (
+                            <div className="flex gap-2">
+                                <Button type="submit" className="bg-accent hover:bg-accent/90">Save Profile</Button>
+                                {user.organizerProfile && (
+                                     <Button variant="outline" onClick={() => {
+                                        setIsEditing(false);
+                                        form.reset(user.organizerProfile);
+                                     }}>Cancel</Button>
+                                )}
+                            </div>
+                        )}
                         </>}
                     </form>
                 </Form>
@@ -461,7 +524,3 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
-
-    
-
-    
