@@ -50,7 +50,8 @@ export const useUserStore = create<UserState>()(
       },
       setRole: (role: UserRole) => {
         set((state) => {
-            const newRoles = state.user.roles.includes(role) ? state.user.roles : [...state.user.roles, role];
+            const currentRoles = state.user.roles || [];
+            const newRoles = currentRoles.includes(role) ? currentRoles : [...currentRoles, role];
             return {
                 user: { ...state.user, roles: newRoles, currentRole: role }
             }
