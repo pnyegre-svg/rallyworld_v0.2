@@ -65,11 +65,6 @@ export default function DashboardPage() {
                         </CardDescription>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <Button asChild className="w-full bg-accent hover:bg-accent/90">
-                        <Link href="/leaderboard">View Full Leaderboard <Trophy className="ml-2 h-4 w-4" /></Link>
-                    </Button>
-                </CardContent>
             </Card>
 
             {isOrganizer && (
