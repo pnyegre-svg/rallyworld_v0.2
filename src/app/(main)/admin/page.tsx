@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -32,7 +33,7 @@ export default function AdminPage() {
   const { toast } = useToast();
   const [users, setUsers] = React.useState<User[]>(initialUsers);
 
-  if (user.currentRole !== 'organizer') {
+  if (user.email !== 'admin@rally.world') {
     return (
       <div className="flex h-full items-center justify-center">
         <p className="text-muted-foreground">You do not have permission to access this page.</p>

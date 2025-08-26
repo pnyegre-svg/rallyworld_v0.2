@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
+  Building,
   Car,
   Flag,
   LayoutDashboard,
@@ -40,8 +41,11 @@ export function MainNav() {
     { href: '/stages', label: 'Stages', icon: Flag, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/competitors', label: 'Competitors', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/leaderboard', label: 'Leaderboard', icon: BarChart3, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
+    { href: '/organizer', label: 'Organizer', icon: Building, roles: ['organizer'] },
     { href: '/admin', label: 'Admin', icon: Shield, roles: ['organizer'] },
   ];
+
+  const isAdmin = user?.email === 'admin@rally.world';
 
   return (
     <Sidebar>
@@ -55,7 +59,11 @@ export function MainNav() {
         <SidebarMenu>
           {menuItems.map(
             (item) =>
-              item.roles.includes(user.currentRole) && (
+            {
+              if (item.href === '/admin' && !isAdmin) {
+                return null;
+              }
+              return item.roles.includes(user.currentRole) && (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
@@ -69,6 +77,7 @@ export function MainNav() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )
+            }
           )}
         </SidebarMenu>
       </SidebarContent>
