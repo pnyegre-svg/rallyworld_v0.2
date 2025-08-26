@@ -44,6 +44,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -64,6 +65,7 @@ const formSchema = z.object({
 
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
+    const router = useRouter();
     const { user, updateOrganizerProfile } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
     const [selectedClubId, setSelectedClubId] = React.useState<string>('');
@@ -158,6 +160,7 @@ export default function OrganizerProfilePage() {
             description: "Your club profile has been successfully updated.",
         });
         setIsEditing(false);
+        router.push('/dashboard');
     }
     
     const copyToClipboard = (text: string, fieldName: string) => {
