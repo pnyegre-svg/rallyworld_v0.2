@@ -64,6 +64,10 @@ export default function CreateEventPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
+      dates: {
+        from: undefined,
+        to: undefined,
+      },
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
@@ -168,7 +172,7 @@ export default function CreateEventPage() {
                                     initialFocus
                                     mode="range"
                                     defaultMonth={field.value?.from}
-                                    selected={{from: field.value.from, to: field.value.to}}
+                                    selected={field.value}
                                     onSelect={field.onChange}
                                     numberOfMonths={2}
                                 />
