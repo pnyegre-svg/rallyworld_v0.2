@@ -27,9 +27,9 @@ export const useUserStore = create<UserState>()(
       user: defaultUser,
       signInUser: (email, name) => {
         const currentState = get();
-        // If the user logging in is the same as the one in the store, do nothing.
-        // This preserves the role chosen after sign-up.
-        if (currentState.user && currentState.user.email && currentState.user.email.toLowerCase() === email.toLowerCase()) {
+        // If the user logging in is the same as the one in the store from session, do nothing.
+        // This preserves the currentRole from the last session.
+        if (currentState.user?.email?.toLowerCase() === email.toLowerCase()) {
           return;
         }
 
