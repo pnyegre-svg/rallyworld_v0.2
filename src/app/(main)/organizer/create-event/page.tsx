@@ -305,7 +305,7 @@ export default function CreateEventPage() {
             <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
                 <FormDescription>Provide a link to the itinerary, upload a file, or both.</FormDescription>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-[1fr_auto_1fr] items-center gap-4">
                     <FormField
                         control={form.control}
                         name="itineraryLink"
@@ -319,6 +319,9 @@ export default function CreateEventPage() {
                             </FormItem>
                         )}
                     />
+                    <div className="flex flex-col items-center self-end pb-3">
+                        <span className="text-sm text-muted-foreground">OR</span>
+                    </div>
                      <FormField
                         control={form.control}
                         name="itineraryFile"
@@ -337,7 +340,7 @@ export default function CreateEventPage() {
              <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
                 <FormDescription>Provide a link to a folder, upload documents, or both.</FormDescription>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-[1fr_auto_1fr] items-center gap-4">
                     <FormField
                         control={form.control}
                         name="docsLink"
@@ -351,6 +354,9 @@ export default function CreateEventPage() {
                             </FormItem>
                         )}
                     />
+                     <div className="flex flex-col items-center self-end pb-3">
+                        <span className="text-sm text-muted-foreground">OR</span>
+                    </div>
                      <FormField
                         control={form.control}
                         name="docsFile"
@@ -374,3 +380,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
