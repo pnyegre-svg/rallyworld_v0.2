@@ -42,6 +42,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club } from '@/lib/data';
 import { cn } from "@/lib/utils"
+import { useUserStore } from '@/hooks/use-user';
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -62,6 +63,7 @@ const formSchema = z.object({
 
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
+    const { user } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
     const [selectedClubId, setSelectedClubId] = React.useState<string>('');
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -75,7 +77,7 @@ export default function OrganizerProfilePage() {
             cif: '',
             address: '',
             phone: '',
-            email: '',
+            email: user?.email || '',
             website: '',
             facebook: '',
             instagram: '',
@@ -99,6 +101,7 @@ export default function OrganizerProfilePage() {
                 cis: '',
                 cif: '',
                 address: '',
+                email: user?.email || '', // Keep email pre-filled
             });
         } else {
             setIsManualEntry(false);
