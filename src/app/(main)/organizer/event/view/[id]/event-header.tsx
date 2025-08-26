@@ -5,7 +5,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { MapPin, Share2, UserPlus } from 'lucide-react';
-import { Event } from '@/hooks/use-event-store';
+import { Event } from '@/lib/events';
 import { DateDisplay } from './date-display';
 
 type EventHeaderProps = {
@@ -16,7 +16,7 @@ export function EventHeader({ event }: EventHeaderProps) {
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
         <Image
-            src={`https://picsum.photos/seed/${event.id}/1200/800`}
+            src="https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"
             alt="Rally car background"
             data-ai-hint="rally car racing"
             fill
