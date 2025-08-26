@@ -77,7 +77,7 @@ export default function DashboardPage() {
                         <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h1 className="text-2xl font-bold font-headline">Welcome, {user.name.split(' ')[0]}!</h1>
+                        <h1 className="text-3xl font-bold font-headline">Welcome, {user.name.split(' ')[0]}!</h1>
                         <CardDescription>
                             Your role: <span className="font-semibold capitalize text-foreground">{user.currentRole.replace(/_/g, ' ')}</span>
                         </CardDescription>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             </Card>
 
             {isOrganizer && (
-                 <Card className="lg:col-span-1 bg-gradient-to-tr from-accent/80 to-accent/50 text-accent-foreground p-0 relative overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl">
+                 <Card className="lg:col-span-1 p-0 relative overflow-hidden transition-all text-white bg-[length:200%_auto] bg-[linear-gradient(90deg,hsl(var(--accent))_0%,hsl(var(--orange))_50%,hsl(var(--accent))_100%)] hover:bg-[position:200%_0] animate-gradient-slide">
                     <Link href="/organizer/create-event" className="h-full w-full flex flex-col items-center justify-center p-6">
                         <PlusSquare className="h-12 w-12 mb-2" />
                         <h2 className="text-xl font-headline">Create Event</h2>
