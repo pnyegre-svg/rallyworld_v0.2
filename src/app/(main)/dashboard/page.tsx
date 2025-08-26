@@ -29,6 +29,7 @@ import { stages, leaderboard, newsPosts } from '@/lib/data';
 import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { user } = useUserStore();
@@ -216,5 +217,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
