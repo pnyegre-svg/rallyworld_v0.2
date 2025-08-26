@@ -13,6 +13,7 @@ import Loading from './loading';
 import { useUserStore } from '@/hooks/use-user';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -63,6 +64,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 <span className="sr-only">Notifications</span>
               </Button>
               <UserNav />
+              <ThemeToggle />
             </div>
           </PageHeader>
           <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
