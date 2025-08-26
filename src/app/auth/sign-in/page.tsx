@@ -68,7 +68,6 @@ export default function SignInPage() {
     const handleGoogleSignIn = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            auth.tenantId = auth.app.options.projectId || '';
             await signInWithPopup(auth, provider);
             router.push('/dashboard');
         } catch (error: any) {
