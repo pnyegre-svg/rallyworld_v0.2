@@ -1,6 +1,7 @@
 
 
 
+
 import { users } from '@/lib/data';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { create } from 'zustand';
@@ -45,6 +46,11 @@ export const useUserStore = create<UserState>()(
 
         const existingUser = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
         if (existingUser) {
+            // Special case for admin to ensure they always have the organizer role
+            if (existingUser.email === 'admin@rally.world' && !existingUser.roles.includes('organizer')) {
+                existingUser.roles.push('organizer');
+                existingUser.currentRole = 'organizer';
+            }
             set({ user: existingUser });
         } else {
             const newUser: User = {
