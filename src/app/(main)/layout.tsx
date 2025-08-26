@@ -61,7 +61,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         <MainNav />
         <SidebarInset className="flex flex-col">
           <PageHeader title={getTitle(pathname)} role={user.currentRole}>
-            <SidebarTrigger className="hidden md:flex" />
             <div className="ml-auto hidden md:flex items-center gap-4">
                <Button variant="ghost" size="icon" className="rounded-full">
                 <Bell className="h-5 w-5" />

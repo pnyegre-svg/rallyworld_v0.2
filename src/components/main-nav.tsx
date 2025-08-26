@@ -25,7 +25,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  useSidebar
 } from '@/components/ui/sidebar';
 import { useUserStore } from '@/hooks/use-user';
 import { UserNav } from './user-nav';
@@ -34,8 +33,7 @@ import Image from 'next/image';
 export function MainNav() {
   const pathname = usePathname();
   const { user } = useUserStore();
-  const { state: sidebarState } = useSidebar();
-
+  
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/community', label: 'Community', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
@@ -51,14 +49,12 @@ export function MainNav() {
   ];
 
   const isAdmin = user?.email === 'admin@rally.world';
-  const isCollapsed = sidebarState === 'collapsed';
-  
-  const logoSrc = isCollapsed ? '/RW_favi.svg' : '/RW_txt2.svg';
-  const logoWidth = isCollapsed ? 30 : 112;
+  const logoSrc = '/RW_txt2.svg';
+  const logoWidth = 112;
   const logoHeight = 30;
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar>
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2">
             <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto transition-all"/>
