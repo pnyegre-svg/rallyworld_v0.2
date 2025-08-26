@@ -15,6 +15,13 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import {
   Card,
@@ -27,8 +34,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Facebook, Instagram, PenSquare, Youtube } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
+import { clubs, Club } from '@/lib/data';
 
 const formSchema = z.object({
+  clubId: z.string().optional(),
   name: z.string().min(2, { message: 'Club name must be at least 2 characters.' }),
   cis: z.string().min(1, { message: 'CIS is required.' }),
   cif: z.string().min(1, { message: 'CIF is required.' }),
@@ -47,6 +56,8 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
+    const [selectedClub, setSelectedClub] = React.useState<string>('');
+    const [isManualEntry, setIsManualEntry] = React.useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -66,6 +77,29 @@ export default function OrganizerProfilePage() {
         },
     });
 
+    const handleClubChange = (clubId: string) => {
+        setSelectedClub(clubId);
+        if (clubId === 'new') {
+            setIsManualEntry(true);
+            form.reset({
+                ...form.getValues(),
+                name: '',
+                cis: '',
+                cif: '',
+                address: '',
+            });
+        } else {
+            setIsManualEntry(false);
+            const club = clubs.find(c => c.id === clubId);
+            if (club) {
+                form.setValue('name', club.name);
+                form.setValue('cis', club.cis);
+                form.setValue('cif', club.cif);
+                form.setValue('address', club.address);
+            }
+        }
+    }
+
     function onSubmit(values: z.infer<typeof formSchema>) {
         console.log(values);
         toast({
@@ -75,7 +109,6 @@ export default function OrganizerProfilePage() {
         setIsEditing(false);
     }
     
-    // For the TikTok and X icons, we'll use inline SVGs as they are not in lucide-react
     const TikTokIcon = () => (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04-.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
     )
@@ -84,15 +117,42 @@ export default function OrganizerProfilePage() {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     )
 
+    const fieldsDisabled = !isManualEntry && selectedClub !== '';
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Club Profile Setup</CardTitle>
-                <CardDescription>Fill in your club's details to get started.</CardDescription>
+                <CardDescription>Select your club from the list or add a new one.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <FormField
+                            control={form.control}
+                            name="clubId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Select Your Club</FormLabel>
+                                <Select onValueChange={handleClubChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Choose your organization" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {clubs.map((club) => (
+                                        <SelectItem key={club.id} value={club.id}>{club.name}</SelectItem>
+                                    ))}
+                                    <SelectItem value="new">My club is not listed</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        { (selectedClub) && <>
                         <div className="flex items-center gap-4">
                             <FormField
                                 control={form.control}
@@ -129,7 +189,7 @@ export default function OrganizerProfilePage() {
                                         <FormItem>
                                         <FormLabel>Club Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="e.g. Rally Sport Club" {...field} />
+                                            <Input placeholder="e.g. Rally Sport Club" {...field} disabled={fieldsDisabled} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -143,7 +203,7 @@ export default function OrganizerProfilePage() {
                                             <FormItem>
                                             <FormLabel>Club CIS</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Club's Sport Identity Card" {...field} />
+                                                <Input placeholder="Club's Sport Identity Card" {...field} disabled={fieldsDisabled} />
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>
@@ -156,7 +216,7 @@ export default function OrganizerProfilePage() {
                                             <FormItem>
                                             <FormLabel>Club CIF</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Club's Fiscal ID Code" {...field} />
+                                                <Input placeholder="Club's Fiscal ID Code" {...field} disabled={fieldsDisabled}/>
                                             </FormControl>
                                             <FormMessage />
                                             </FormItem>
@@ -174,7 +234,7 @@ export default function OrganizerProfilePage() {
                                     <FormItem>
                                     <FormLabel>Address</FormLabel>
                                     <FormControl>
-                                        <Textarea placeholder="Club's full address" {...field} />
+                                        <Textarea placeholder="Club's full address" {...field} disabled={fieldsDisabled} />
                                     </FormControl>
                                     <FormMessage />
                                     </FormItem>
@@ -305,6 +365,7 @@ export default function OrganizerProfilePage() {
                         </div>
 
                         <Button type="submit" className="bg-accent hover:bg-accent/90">Save Profile</Button>
+                        </>}
                     </form>
                 </Form>
             </CardContent>

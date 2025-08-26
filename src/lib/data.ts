@@ -40,6 +40,14 @@ export type Organizer = {
     profilePicture?: string;
 }
 
+export type Club = {
+    id: string;
+    name: string;
+    cis: string;
+    cif: string;
+    address: string;
+}
+
 export type Competitor = {
   id: string;
   name: string;
@@ -81,6 +89,12 @@ export const users: User[] = [
   { id: 'usr_005', name: 'Ben Carter', email: 'ben.c@example.com', avatar: '/avatars/05.png', roles: ['fan'], currentRole: 'fan' },
 ];
 
+export const clubs: Club[] = [
+    { id: 'club_001', name: 'Automobile Club de Monaco', cis: 'ACM-001', cif: 'CIF-ACM', address: '23 Boulevard Albert 1er, 98000 Monaco' },
+    { id: 'club_002', name: 'AKK-Motorsport', cis: 'AKK-002', cif: 'CIF-AKK', address: 'Kellokukantie 7, 01300 Vantaa, Finland' },
+    { id: 'club_003', name: 'Royal Automobile Club', cis: 'RAC-003', cif: 'CIF-RAC', address: '89 Pall Mall, London SW1Y 5HS, United Kingdom' },
+];
+
 export const competitors: Competitor[] = [
   { id: 'comp_001', name: 'Sébastien Loeb', team: 'M-Sport Ford', country: 'FR', avatar: 'https://i.pravatar.cc/150?u=sebastienloeb', vehicle: 'Ford Puma Rally1' },
   { id: 'comp_002', name: 'Kalle Rovanperä', team: 'Toyota Gazoo Racing', country: 'FI', avatar: 'https://i.pravatar.cc/150?u=kallerovanpera', vehicle: 'Toyota GR Yaris Rally1' },
@@ -110,3 +124,5 @@ export const leaderboard: LeaderboardEntry[] = [
     { rank: 3, competitor: competitors[2], totalTime: "1:16:01.0", stageTimes: [{ stageId: 'stg_01', time: '08:20.3' }, { stageId: 'stg_02', time: '15:35.5' }] },
     { rank: 4, competitor: competitors[3], totalTime: "1:16:12.5", stageTimes: [{ stageId: 'stg_01', time: '08:25.0' }, { stageId: 'stg_02', time: '15:40.3' }] },
 ];
+
+    
