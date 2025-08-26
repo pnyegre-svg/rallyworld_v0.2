@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,6 +16,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+
 
 function GoogleIcon(props: React.ComponentProps<'svg'>) {
   return (
@@ -42,10 +47,36 @@ function GoogleIcon(props: React.ComponentProps<'svg'>) {
 
 export default function SignInPage() {
     const router = useRouter();
+    const { toast } = useToast();
+    const [email, setEmail] = React.useState('');
+    const [password, setPassword] = React.useState('');
 
-    const handleSignIn = (e: React.FormEvent) => {
+    const handleSignIn = async (e: React.FormEvent) => {
         e.preventDefault();
-        router.push('/dashboard');
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            router.push('/dashboard');
+        } catch (error: any) {
+            toast({
+                title: 'Sign in failed',
+                description: error.message,
+                variant: 'destructive'
+            });
+        }
+    }
+
+    const handleGoogleSignIn = async () => {
+        try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            router.push('/dashboard');
+        } catch (error: any) {
+             toast({
+                title: 'Sign in failed',
+                description: error.message,
+                variant: 'destructive'
+            });
+        }
     }
 
   return (
@@ -56,7 +87,7 @@ export default function SignInPage() {
       </CardHeader>
       <form onSubmit={handleSignIn}>
         <CardContent className="grid gap-4">
-            <Button variant="outline" type="button">
+            <Button variant="outline" type="button" onClick={handleGoogleSignIn}>
                 <GoogleIcon className="mr-2 h-4 w-4" />
                 Sign in with Google
             </Button>
@@ -72,11 +103,11 @@ export default function SignInPage() {
             </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="m@example.com" required />
+            <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" required />
+            <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
