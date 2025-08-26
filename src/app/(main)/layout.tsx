@@ -1,13 +1,41 @@
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
+import { getRedirectResult } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
+
+  React.useEffect(() => {
+    const checkRedirectResult = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user) {
+          // User signed in successfully.
+          // You can access user info from result.user
+          // Redirect to the dashboard or the desired page.
+          router.push('/dashboard');
+        }
+      } catch (error: any) {
+        toast({
+          title: 'Sign in failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    };
+
+    checkRedirectResult();
+  }, [router, toast]);
+
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
