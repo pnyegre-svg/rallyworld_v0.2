@@ -67,6 +67,7 @@ export default function SignUpPage() {
     const handleGoogleSignUp = async () => {
         try {
             const provider = new GoogleAuthProvider();
+            auth.tenantId = auth.app.options.projectId || '';
             await signInWithPopup(auth, provider);
             router.push('/auth/choose-role');
         } catch (error: any) {
