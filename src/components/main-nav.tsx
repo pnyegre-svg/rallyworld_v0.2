@@ -52,7 +52,7 @@ export function MainNav() {
     <Sidebar>
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Rally World Logo" width={150} height={40} className="w-auto h-auto"/>
+            <Image src="/RW_txt2.svg" alt="Rally World Logo" width={150} height={40} className="w-auto h-auto"/>
         </Link>
       </SidebarHeader>
       <SidebarContent>
