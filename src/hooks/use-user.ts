@@ -30,6 +30,14 @@ export const useUserStore = create<UserState>()(
         // If the user logging in is the same as the one in the store from session, do nothing.
         // This preserves the currentRole from the last session.
         if (currentState.user?.email?.toLowerCase() === email.toLowerCase()) {
+            // On sign-in, default to the specialized role if it exists
+            const user = currentState.user;
+            if (user.roles.length > 1) {
+                const specializedRole = user.roles.find(r => r !== 'fan');
+                if (specializedRole && user.currentRole !== specializedRole) {
+                    set({ user: { ...user, currentRole: specializedRole } });
+                }
+            }
           return;
         }
 
