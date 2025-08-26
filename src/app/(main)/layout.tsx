@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
+import { UserNav } from '@/components/user-nav';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,7 +29,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-screen w-full">
         <MainNav />
         <SidebarInset className="flex flex-col">
-          <PageHeader title={getTitle(pathname)} />
+          <PageHeader title={getTitle(pathname)}>
+            <div className="hidden md:block">
+              <UserNav />
+            </div>
+          </PageHeader>
           <main className="flex-1 overflow-y-auto p-4 sm:p-6">{children}</main>
         </SidebarInset>
       </div>
