@@ -65,7 +65,7 @@ export default function SignUpPage() {
         </div>
       </CardContent>
       <CardFooter className="flex flex-col gap-4">
-        <Button type="submit" className="w-full bg-accent hover:bg-accent/20">
+        <Button type="submit" className="w-full bg-accent hover:bg-accent/90">
           Sign Up
         </Button>
         <div className="text-center text-sm">
