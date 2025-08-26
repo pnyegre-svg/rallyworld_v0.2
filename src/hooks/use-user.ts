@@ -76,9 +76,9 @@ export const useUserStore = create<UserState>()(
         const currentUser = get().user;
         if (!currentUser) return;
 
-        set((state) => ({
-            user: state.user ? { ...state.user, organizerProfile: profile } : null
-        }));
+        const updatedUser = { ...currentUser, organizerProfile: profile };
+
+        set({ user: updatedUser });
 
         await updateUser(currentUser.id, { organizerProfile: profile });
       }
