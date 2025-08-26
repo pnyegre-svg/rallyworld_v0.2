@@ -13,13 +13,12 @@ export default function LandingPage() {
           <span className="sr-only">Rally World</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium hover:underline underline-offset-4"
-            prefetch={false}
-          >
-            Dashboard
-          </Link>
+           <Button asChild variant="ghost">
+             <Link href="/auth/sign-in">Sign In</Link>
+           </Button>
+           <Button asChild className="bg-accent hover:bg-accent/90">
+             <Link href="/auth/sign-up">Sign Up</Link>
+           </Button>
         </nav>
       </header>
       <main className="flex-1">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/hooks/use-user';
 import type { User } from '@/lib/data';
+import Link from 'next/link';
 
 export function UserNav() {
   const { user, setRole } = useUserStore();
@@ -70,8 +72,8 @@ export function UserNav() {
           </DropdownMenuRadioGroup>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Log out
+        <DropdownMenuItem asChild>
+          <Link href="/auth/sign-in">Log out</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
