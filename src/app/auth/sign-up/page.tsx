@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 function GoogleIcon(props: React.ComponentProps<'svg'>) {
@@ -67,8 +67,7 @@ export default function SignUpPage() {
     const handleGoogleSignUp = async () => {
         try {
             const provider = new GoogleAuthProvider();
-            await signInWithPopup(auth, provider);
-            router.push('/auth/choose-role');
+            await signInWithRedirect(auth, provider);
         } catch (error: any) {
              toast({
                 title: 'Sign up failed',
