@@ -15,8 +15,8 @@ export function DateDisplay({ from, to }: DateDisplayProps) {
             <div className="flex items-end gap-2">
                 <span className="text-5xl font-bold text-accent font-headline leading-none">{format(date, 'dd')}</span>
                 <div className="flex flex-col text-sm leading-tight">
-                    <span className="font-semibold">{format(date, 'MMM')}</span>
-                    <span>{format(date, 'yyyy')}</span>
+                    <span className="font-bold">{format(date, 'MMM')}</span>
+                    <span className="font-bold">{format(date, 'yyyy')}</span>
                 </div>
             </div>
         )
