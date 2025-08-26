@@ -13,7 +13,7 @@ export function DateDisplay({ from, to }: DateDisplayProps) {
     const renderDatePart = (date: Date) => {
         return (
             <div className="flex items-end gap-2">
-                <span className="text-5xl font-bold text-accent font-headline leading-none">{format(date, 'dd')}</span>
+                <span className="text-5xl font-bold text-accent font-mono leading-none">{format(date, 'dd')}</span>
                 <div className="flex flex-col text-sm leading-tight">
                     <span className="font-bold">{format(date, 'MMM')}</span>
                     <span className="font-bold">{format(date, 'yyyy')}</span>
