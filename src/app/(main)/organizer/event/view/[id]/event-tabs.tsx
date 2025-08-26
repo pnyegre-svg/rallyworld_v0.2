@@ -12,9 +12,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Download, Globe, Users, FileText, BarChart2 } from 'lucide-react';
-import { Event } from '@/hooks/use-event-store';
 import { Badge } from '@/components/ui/badge';
 import { competitors } from '@/lib/data';
+import { Event } from '@/lib/events';
+
 
 type EventTabsProps = {
     event: Event;
@@ -37,13 +38,13 @@ export function EventTabs({ event }: EventTabsProps) {
     );
   };
   
-  const renderFiles = (files: {value: File}[]) => {
-     if (!files || files.length === 0 || files.every(f => !f.value)) return <p className="text-sm text-muted-foreground">No files uploaded.</p>;
+  const renderFiles = (files: any[]) => { // `any` because we don't have file uploads yet
+     if (!files || files.length === 0) return <p className="text-sm text-muted-foreground">No files uploaded.</p>;
      return (
         <ul className="space-y-2">
-            {files.filter(f => f.value).map((file, index) => (
+            {files.map((file, index) => (
                  <li key={index} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted">
-                    <span className="truncate">{file.value.name}</span>
+                    <span className="truncate">{file.name || 'uploaded-file'}</span>
                     <Button variant="ghost" size="sm">
                         <Download className="h-4 w-4 mr-2"/>
                         Download
@@ -125,30 +126,18 @@ export function EventTabs({ event }: EventTabsProps) {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><FileText /> Itinerary</CardTitle>
                 </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="h-4 w-4" />Links</h4>
-                        {renderLinks(event.itineraryLinks || [])}
-                    </div>
-                    <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><Download className="h-4 w-4" />Files</h4>
-                        {renderFiles(event.itineraryFiles || [])}
-                    </div>
+                <CardContent>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="h-4 w-4" />Links</h4>
+                    {renderLinks(event.itineraryLinks || [])}
                 </CardContent>
             </Card>
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><FileText /> Documents</CardTitle>
                 </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="h-4 w-4" />Links</h4>
-                        {renderLinks(event.docsLinks || [])}
-                    </div>
-                    <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2"><Download className="h-4 w-4" />Files</h4>
-                        {renderFiles(event.docsFiles || [])}
-                    </div>
+                <CardContent>
+                    <h4 className="font-semibold mb-2 flex items-center gap-2"><Globe className="h-4 w-4" />Links</h4>
+                    {renderLinks(event.docsLinks || [])}
                 </CardContent>
             </Card>
         </TabsContent>

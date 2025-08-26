@@ -4,8 +4,7 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { format, addDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, subYears } from 'date-fns';
+import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
@@ -36,67 +35,60 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { useEventStore, Event } from '@/hooks/use-event-store';
-
-const linkSchema = z.object({
-  value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
-});
-
-const fileSchema = z.object({
-  value: z.any().optional(),
-});
-
-const formSchema = z.object({
-  title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
-  dates: z.object({
-    from: z.date({ required_error: 'A start date is required.' }),
-    to: z.date({ required_error: 'An end date is required.' }),
-  }),
-  hqLocation: z.string().min(3, { message: 'HQ Location is required.' }),
-  whatsappLink: z.string().url().optional().or(z.literal('')),
-  livestreamLink: z.string().url().optional().or(z.literal('')),
-  itineraryLinks: z.array(linkSchema).optional(),
-  itineraryFiles: z.array(fileSchema).optional(),
-  docsLinks: z.array(linkSchema).optional(),
-  docsFiles: z.array(fileSchema).optional(),
-  stages: z.array(z.object({
-    name: z.string().min(1, { message: 'Stage name is required.' }),
-    location: z.string().min(1, { message: 'Location is required.' }),
-    distance: z.coerce.number().min(0.1, { message: 'Distance must be positive.' }),
-  })).optional().default([]),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { useUserStore } from '@/hooks/use-user';
+import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/events';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditEventPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
-  const { events, updateEvent } = useEventStore();
+  const { user } = useUserStore();
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
   const eventId = params.id as string;
-  const eventToEdit = events.find(e => e.id === eventId);
   
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<EventFormValues>({
+    resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: '',
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
       itineraryLinks: [],
-      itineraryFiles: [],
       docsLinks: [],
-      docsFiles: [],
       stages: [],
+      organizerId: user.organizerProfile?.id || '',
     },
   });
 
   React.useEffect(() => {
-    if (eventToEdit) {
-      form.reset(eventToEdit);
+    if (eventId) {
+      const fetchEventData = async () => {
+        const eventToEdit = await getEvent(eventId);
+        if (eventToEdit) {
+            // Ensure the current user is the owner of the event
+            if (eventToEdit.organizerId !== user.organizerProfile?.id) {
+                 toast({
+                    title: "Permission Denied",
+                    description: "You are not authorized to edit this event.",
+                    variant: "destructive",
+                });
+                router.push('/dashboard');
+                return;
+            }
+          form.reset(eventToEdit);
+        } else {
+           toast({
+                title: "Event Not Found",
+                description: "Could not find the event you are trying to edit.",
+                variant: "destructive",
+            });
+           router.push('/dashboard');
+        }
+      };
+      fetchEventData();
     }
-  }, [eventToEdit, form]);
+  }, [eventId, form, router, user.organizerProfile?.id, toast]);
 
   const { fields: stageFields, append: appendStage, remove: removeStage } = useFieldArray({
     control: form.control,
@@ -108,34 +100,27 @@ export default function EditEventPage() {
     name: "itineraryLinks"
   });
 
-  const { fields: itineraryFileFields, append: appendItineraryFile, remove: removeItineraryFile } = useFieldArray({
-    control: form.control,
-    name: "itineraryFiles"
-  });
-
   const { fields: docsLinkFields, append: appendDocsLink, remove: removeDocsLink } = useFieldArray({
     control: form.control,
     name: "docsLinks"
   });
 
-  const { fields: docsFileFields, append: appendDocsFile, remove: removeDocsFile } = useFieldArray({
-    control: form.control,
-    name: "docsFiles"
-  });
 
-
-  function onSubmit(values: FormValues) {
-    const updatedEvent: Event = {
-      id: eventId,
-      ...values,
-    };
-    updateEvent(updatedEvent);
-
-    toast({
-      title: "Event Updated Successfully!",
-      description: `The event "${values.title}" has been updated.`,
-    });
-    router.push('/dashboard');
+  async function onSubmit(values: EventFormValues) {
+    try {
+        await updateEvent(eventId, values);
+        toast({
+        title: "Event Updated Successfully!",
+        description: `The event "${values.title}" has been updated.`,
+        });
+        router.push('/dashboard');
+    } catch (error) {
+        toast({
+            title: "Failed to update event",
+            description: "An error occurred while saving the event. Please try again.",
+            variant: "destructive"
+        })
+    }
   }
 
   const renderLinkInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryLinks' | 'docsLinks') => (
@@ -167,37 +152,6 @@ export default function EditEventPage() {
     </div>
   );
 
-  const renderFileInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryFiles' | 'docsFiles') => (
-    <div className="space-y-2">
-      {fields.map((field: any, index: number) => (
-        <FormField
-          key={field.id}
-          control={form.control}
-          name={`${namePrefix}.${index}.value`}
-          render={({ field: formField }) => (
-            <FormItem>
-              <div className="flex items-center gap-2">
-                <FormControl>
-                  <Input 
-                    type="file" 
-                    onChange={(e) => formField.onChange(e.target.files?.[0] || null)}
-                  />
-                </FormControl>
-                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: null })}>
-        <PlusCircle className="mr-2 h-4 w-4" /> Add File
-      </Button>
-    </div>
-  );
-
   const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
     <Button
       variant="ghost"
@@ -208,8 +162,34 @@ export default function EditEventPage() {
     </Button>
   );
 
-  if (!eventToEdit) {
-    return <div>Event not found or you do not have permission to edit it.</div>;
+  if (!form.formState.isDirty) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>
+                    <Skeleton className="h-8 w-1/2" />
+                </CardTitle>
+                <CardDescription>
+                     <Skeleton className="h-4 w-3/4" />
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8">
+                 <div className="grid md:grid-cols-2 gap-8">
+                     <div className="space-y-8">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                      <div className="space-y-8">
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                     </div>
+                 </div>
+                 <Skeleton className="h-40 w-full" />
+                 <Skeleton className="h-10 w-32" />
+            </CardContent>
+        </Card>
+    )
   }
 
   return (
@@ -412,40 +392,24 @@ export default function EditEventPage() {
 
             <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
-                <FormDescription>Provide links to the itinerary, upload files, or both.</FormDescription>
-                <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
-                    <div className="space-y-2">
-                        <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
-                        {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
-                    </div>
-                    <div className="flex flex-col items-center self-center pt-8">
-                        <span className="text-sm text-muted-foreground">OR</span>
-                    </div>
-                     <div className="space-y-2">
-                        <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Itinerary Upload(s)</FormLabel>
-                        {renderFileInputs(itineraryFileFields, removeItineraryFile, appendItineraryFile, 'itineraryFiles')}
-                    </div>
+                <FormDescription>Provide links to the itinerary. File uploads are not yet supported.</FormDescription>
+                 <div className="space-y-2">
+                    <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
+                    {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
                 </div>
             </div>
              <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
-                <FormDescription>Provide links to documents, upload files, or both.</FormDescription>
-                <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
-                     <div className="space-y-2">
-                        <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
-                        {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
-                    </div>
-                     <div className="flex flex-col items-center self-center pt-8">
-                        <span className="text-sm text-muted-foreground">OR</span>
-                    </div>
-                    <div className="space-y-2">
-                        <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Documents Upload(s)</FormLabel>
-                        {renderFileInputs(docsFileFields, removeDocsFile, appendDocsFile, 'docsFiles')}
-                    </div>
+                <FormDescription>Provide links to documents. File uploads are not yet supported.</FormDescription>
+                <div className="space-y-2">
+                    <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
+                    {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
                 </div>
             </div>
 
-            <Button type="submit" className="bg-accent hover:bg-accent/90">Save Changes</Button>
+            <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
           </form>
         </Form>
       </CardContent>

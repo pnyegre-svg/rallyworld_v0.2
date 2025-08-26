@@ -1,6 +1,7 @@
 
 'use client';
 
+import * as React from 'react';
 import {
   Avatar,
   AvatarFallback,
@@ -24,16 +25,33 @@ import {
   } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
-import { useEventStore } from '@/hooks/use-event-store';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
 import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { getEvents, Event } from '@/lib/events';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { user } = useUserStore();
-  const { events } = useEventStore();
+  const [events, setEvents] = React.useState<Event[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (user.organizerProfile?.id) {
+        const fetchEvents = async () => {
+            setLoading(true);
+            const organizerEvents = await getEvents(user.organizerProfile.id);
+            setEvents(organizerEvents);
+            setLoading(false);
+        };
+        fetchEvents();
+    } else {
+        setLoading(false);
+    }
+  }, [user.organizerProfile?.id]);
+
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -48,7 +66,6 @@ export default function DashboardPage() {
   const topCompetitor = leaderboard[0];
   const recentNews = newsPosts.slice(0, 2);
   const isOrganizer = user.currentRole === 'organizer';
-  const organizerEvents = events.slice(0, 3); // Show latest 3 events
 
   return (
     <div className="space-y-6">
@@ -132,45 +149,59 @@ export default function DashboardPage() {
             )}
         </div>
         
-        {isOrganizer && events.length > 0 && (
+        {isOrganizer && (
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Calendar /> My Events</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Event Title</TableHead>
-                                <TableHead>Dates</TableHead>
-                                <TableHead className="text-center">Stages</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {organizerEvents.map(event => (
-                                <TableRow key={event.id}>
-                                    <TableCell className="font-medium">{event.title}</TableCell>
-                                    <TableCell className="text-muted-foreground">
-                                        {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
-                                    </TableCell>
-                                    <TableCell className="text-center font-mono">{event.stages.length}</TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                        <Button asChild variant="outline" size="sm">
-                                            <Link href={`/organizer/event/view/${event.id}`}>
-                                                <Eye className="mr-2 h-4 w-4" /> View
-                                            </Link>
-                                        </Button>
-                                        <Button asChild variant="outline" size="sm">
-                                            <Link href={`/organizer/event/edit/${event.id}`}>
-                                                <PenSquare className="mr-2 h-4 w-4" /> Edit
-                                            </Link>
-                                        </Button>
-                                    </TableCell>
+                    {loading ? (
+                        <div className="space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    ) : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Event Title</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead className="text-center">Stages</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {events.length > 0 ? events.map(event => (
+                                    <TableRow key={event.id}>
+                                        <TableCell className="font-medium">{event.title}</TableCell>
+                                        <TableCell className="text-muted-foreground">
+                                            {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
+                                        </TableCell>
+                                        <TableCell className="text-center font-mono">{event.stages.length}</TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            <Button asChild variant="outline" size="sm">
+                                                <Link href={`/organizer/event/view/${event.id}`}>
+                                                    <Eye className="mr-2 h-4 w-4" /> View
+                                                </Link>
+                                            </Button>
+                                            <Button asChild variant="outline" size="sm">
+                                                <Link href={`/organizer/event/edit/${event.id}`}>
+                                                    <PenSquare className="mr-2 h-4 w-4" /> Edit
+                                                </Link>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                            You haven't created any events yet.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    )}
                 </CardContent>
             </Card>
         )}
@@ -213,7 +244,7 @@ export default function DashboardPage() {
                             <p className="text-xs text-muted-foreground">{post.content}</p>
                         </div>
                     ))}
-                     <Button variant="outline" className="w-full">
+                     <Button variant="outline" className="w-full" asChild>
                         <Link href="/news">View All News</Link>
                     </Button>
                 </CardContent>
