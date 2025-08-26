@@ -56,7 +56,7 @@ export function MainNav() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
             <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto transition-all"/>
         </Link>
       </SidebarHeader>
