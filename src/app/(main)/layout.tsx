@@ -60,7 +60,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <div className="flex min-h-screen w-full">
         <MainNav />
         <SidebarInset className="flex flex-col">
-          <PageHeader title={getTitle(pathname)} role={user.currentRole}>
+          <PageHeader title={getTitle(pathname)}>
              <div className="flex items-center gap-2">
                  <SidebarTrigger className="md:hidden" />
              </div>
