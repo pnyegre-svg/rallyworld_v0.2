@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, MapPin, Flag, PlusCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -36,7 +36,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+
+const linkSchema = z.object({
+  value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
+});
 
 const formSchema = z.object({
   title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
@@ -47,9 +50,9 @@ const formSchema = z.object({
   hqLocation: z.string().min(3, { message: 'HQ Location is required.' }),
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
-  itineraryLink: z.string().optional(),
+  itineraryLinks: z.array(linkSchema).optional(),
   itineraryFile: z.any().optional(),
-  docsLink: z.string().optional(),
+  docsLinks: z.array(linkSchema).optional(),
   docsFile: z.any().optional(),
   stages: z.array(z.object({
     name: z.string().min(1, { message: 'Stage name is required.' }),
@@ -75,18 +78,29 @@ export default function CreateEventPage() {
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
-      itineraryLink: '',
+      itineraryLinks: [],
       itineraryFile: undefined,
-      docsLink: '',
+      docsLinks: [],
       docsFile: undefined,
       stages: [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: stageFields, append: appendStage, remove: removeStage } = useFieldArray({
     control: form.control,
     name: "stages"
   });
+
+  const { fields: itineraryLinkFields, append: appendItineraryLink, remove: removeItineraryLink } = useFieldArray({
+    control: form.control,
+    name: "itineraryLinks"
+  });
+
+  const { fields: docsLinkFields, append: appendDocsLink, remove: removeDocsLink } = useFieldArray({
+    control: form.control,
+    name: "docsLinks"
+  });
+
 
   function onSubmit(values: FormValues) {
     console.log(values);
@@ -127,13 +141,35 @@ export default function CreateEventPage() {
     );
   };
 
-
-  const renderLinkInput = (field: any, placeholder: string) => (
-    <div className="relative">
-      <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-      <Textarea {...field} placeholder={placeholder} className="pl-9" />
+  const renderLinkInputs = (fields: any, remove: any, append: any) => (
+    <div className="space-y-2">
+      {fields.map((field: any, index: number) => (
+         <FormField
+            key={field.id}
+            control={form.control}
+            name={`docsLinks.${index}.value`}
+            render={({ field: formField }) => (
+                <FormItem>
+                    <div className="flex items-center gap-2">
+                         <div className="relative flex-1">
+                            <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input {...formField} placeholder="https://..." className="pl-9" />
+                        </div>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                     <FormMessage />
+                </FormItem>
+            )}
+        />
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: "" })}>
+        <PlusCircle className="mr-2 h-4 w-4"/> Add Link
+      </Button>
     </div>
   );
+
 
   return (
     <Card>
@@ -253,7 +289,7 @@ export default function CreateEventPage() {
              <div className="space-y-6 rounded-lg border p-4">
                  <h3 className="text-lg font-medium">Event Stages</h3>
                 <div className="space-y-4">
-                    {fields.map((item, index) => (
+                    {stageFields.map((item, index) => (
                         <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-2 p-2 rounded-md border">
                             <FormField
                                 control={form.control}
@@ -298,7 +334,7 @@ export default function CreateEventPage() {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => remove(index)}
+                                onClick={() => removeStage(index)}
                                 className={cn(index !== 0 ? "mt-8" : "self-center")}
                             >
                                 <Trash2 className="h-4 w-4" />
@@ -310,7 +346,7 @@ export default function CreateEventPage() {
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => append({ name: '', location: '', distance: 0 })}
+                    onClick={() => appendStage({ name: '', location: '', distance: 0 })}
                 >
                    <PlusCircle className="mr-2 h-4 w-4"/> Add Stage
                 </Button>
@@ -319,22 +355,13 @@ export default function CreateEventPage() {
 
             <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</FormLabel>
-                <FormDescription>Provide a link to the itinerary, upload a file, or both.</FormDescription>
-                <div className="grid md:grid-cols-[1fr_auto_1fr] items-center gap-4">
-                    <FormField
-                        control={form.control}
-                        name="itineraryLink"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
-                                <FormControl>
-                                    {renderLinkInput(field, "Enter each link on a new line...")}
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <div className="flex flex-col items-center self-end pb-3">
+                <FormDescription>Provide links to the itinerary, upload a file, or both.</FormDescription>
+                <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
+                    <div className="space-y-2">
+                        <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
+                        {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink)}
+                    </div>
+                    <div className="flex flex-col items-center self-center pt-8">
                         <span className="text-sm text-muted-foreground">OR</span>
                     </div>
                      <FormField
@@ -354,22 +381,13 @@ export default function CreateEventPage() {
             </div>
              <div className="space-y-4 rounded-lg border p-4">
                 <FormLabel className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</FormLabel>
-                <FormDescription>Provide links to a folder, upload documents, or both.</FormDescription>
-                <div className="grid md:grid-cols-[1fr_auto_1fr] items-center gap-4">
-                    <FormField
-                        control={form.control}
-                        name="docsLink"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
-                                <FormControl>
-                                    {renderLinkInput(field, "Enter each link on a new line...")}
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                     <div className="flex flex-col items-center self-end pb-3">
+                <FormDescription>Provide links to documents, upload files, or both.</FormDescription>
+                <div className="grid md:grid-cols-[1fr_auto_1fr] items-start gap-4">
+                     <div className="space-y-2">
+                        <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
+                        {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink)}
+                    </div>
+                     <div className="flex flex-col items-center self-center pt-8">
                         <span className="text-sm text-muted-foreground">OR</span>
                     </div>
                      <FormField
