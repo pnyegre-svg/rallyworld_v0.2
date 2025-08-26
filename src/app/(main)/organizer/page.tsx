@@ -38,7 +38,7 @@ const formSchema = z.object({
   website: z.string().url().optional().or(z.literal('')),
   facebook: z.string().url().optional().or(z.literal('')),
   instagram: z.string().url().optional().or(z.literal('')),
-  youtube: z.string().url().optional().or(z-literal('')),
+  youtube: z.string().url().optional().or(z.literal('')),
   tiktok: z.string().url().optional().or(z.literal('')),
   x: z.string().url().optional().or(z.literal('')),
   profilePicture: z.any().optional(),
@@ -311,3 +311,5 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
