@@ -52,7 +52,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-             <Card className="lg:col-span-1">
+             <Card className={cn(isOrganizer ? "lg:col-span-2" : "lg:col-span-1")}>
                 <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarImage src={user.avatar} alt={user.name} />
@@ -68,21 +68,10 @@ export default function DashboardPage() {
             </Card>
 
             {isOrganizer && (
-                 <Card className="lg:col-span-2 bg-accent/20 border-accent/50 hover:bg-accent/30 transition-colors">
-                    <Link href="/organizer/create-event" className="h-full flex flex-col">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2 text-accent">
-                                    <PlusSquare />
-                                    Organizer Action
-                                </CardTitle>
-                                <ArrowRight className="text-accent"/>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col justify-center">
-                            <h2 className="text-2xl font-headline text-foreground">Create New Rally Event</h2>
-                            <p className="text-muted-foreground mt-2">Define stages, manage competitors, and kick off your next competition.</p>
-                        </CardContent>
+                 <Card className="lg:col-span-1 bg-gradient-to-tr from-accent/80 to-accent/50 text-accent-foreground p-0 relative overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl">
+                    <Link href="/organizer/create-event" className="h-full w-full flex flex-col items-center justify-center p-6">
+                        <PlusSquare className="h-12 w-12 mb-2" />
+                        <h2 className="text-xl font-headline">Create Event</h2>
                     </Link>
                 </Card>
             )}
@@ -227,3 +216,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
