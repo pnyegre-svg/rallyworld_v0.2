@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 
 
 export default function ViewEventPage() {
-  const params = React.use(useParams());
+  const params = useParams();
   const eventId = params.id as string;
   const [event, setEvent] = React.useState<Event | null>(null);
   const [loading, setLoading] = React.useState(true);

@@ -42,10 +42,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function EditEventPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const params = React.use(useParams());
+  const params = useParams();
   const { user } = useUserStore();
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
-  const eventId = React.use(params).id as string;
+  const eventId = params.id as string;
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -432,5 +432,3 @@ export default function EditEventPage() {
     </Card>
   );
 }
-
-    
