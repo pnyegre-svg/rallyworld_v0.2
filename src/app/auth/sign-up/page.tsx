@@ -17,7 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 
 function GoogleIcon(props: React.ComponentProps<'svg'>) {
@@ -49,6 +49,25 @@ export default function SignUpPage() {
     const [name, setName] = React.useState('');
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
+
+    React.useEffect(() => {
+        const checkRedirectResult = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    router.push('/auth/choose-role');
+                }
+            } catch (error: any) {
+                toast({
+                    title: 'Sign up failed',
+                    description: error.message,
+                    variant: 'destructive',
+                });
+            }
+        };
+        checkRedirectResult();
+    }, [router, toast]);
+
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
