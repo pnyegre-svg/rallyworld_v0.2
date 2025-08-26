@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useUserStore } from '@/hooks/use-user';
 import { UserNav } from './user-nav';
+import Image from 'next/image';
 
 export function MainNav() {
   const pathname = usePathname();
@@ -50,10 +51,9 @@ export function MainNav() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
-        <div className="flex items-center gap-2">
-          <Car className="text-primary h-8 w-8" />
-          <h1 className="font-headline text-2xl font-bold">Rally World</h1>
-        </div>
+        <Link href="/dashboard" className="flex items-center gap-2">
+            <Image src="/logo.svg" alt="Rally World Logo" width={150} height={40} className="w-auto h-auto"/>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

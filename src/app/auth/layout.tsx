@@ -1,5 +1,5 @@
 
-import { Car } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -8,8 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-sm">
         <div className="mb-8 flex justify-center">
             <Link href="/" className="flex items-center gap-2 text-primary">
-                <Car className="h-8 w-8" />
-                <span className="text-2xl font-bold font-headline">Rally World</span>
+                <Image src="/logo.svg" alt="Rally World Logo" width={180} height={50} />
             </Link>
         </div>
         {children}

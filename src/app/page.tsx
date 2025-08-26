@@ -4,7 +4,6 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Car } from 'lucide-react';
 import Image from 'next/image';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
@@ -24,7 +23,7 @@ export default function LandingPage() {
     <div className="flex flex-col min-h-[100dvh] bg-background">
       <header className="px-4 lg:px-6 h-14 flex items-center">
         <Link href="/" className="flex items-center justify-center" prefetch={false}>
-          <Car className="h-6 w-6 text-primary" />
+          <Image src="/logo.svg" alt="Rally World Logo" width={120} height={35} />
           <span className="sr-only">Rally World</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
