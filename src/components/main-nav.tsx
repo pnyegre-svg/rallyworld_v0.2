@@ -48,12 +48,14 @@ export function MainNav() {
 
   const isAdmin = user?.email === 'admin@rally.world';
   const logoSrc = pathname === '/dashboard' ? '/RW_favi.svg' : '/RW_txt2.svg';
+  const logoWidth = pathname === '/dashboard' ? 15 : 56;
+  const logoHeight = pathname === '/dashboard' ? 15 : 15;
 
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src={logoSrc} alt="Rally World Logo" width={pathname === '/dashboard' ? 30 : 112} height={30} className="w-auto h-auto"/>
+            <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto"/>
         </Link>
       </SidebarHeader>
       <SidebarContent>
