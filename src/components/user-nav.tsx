@@ -17,9 +17,18 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
   const { user } = useUserStore();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    // The auth listener in the layout will handle the redirect.
+  };
   
   if (!user) return null;
 
@@ -58,8 +67,8 @@ export function UserNav() {
           <Link href="/dashboard">Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/auth/sign-in">Log out</Link>
+        <DropdownMenuItem onClick={handleSignOut}>
+          Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
