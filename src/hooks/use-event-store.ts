@@ -31,6 +31,7 @@ export type Event = z.infer<typeof eventSchema>;
 type EventState = {
   events: Event[];
   addEvent: (event: Event) => void;
+  updateEvent: (event: Event) => void;
 };
 
 export const useEventStore = create<EventState>()(
@@ -49,6 +50,13 @@ export const useEventStore = create<EventState>()(
 
         set((state) => ({
           events: [...state.events, event],
+        }));
+      },
+      updateEvent: (updatedEvent) => {
+        set((state) => ({
+          events: state.events.map((event) =>
+            event.id === updatedEvent.id ? updatedEvent : event
+          ),
         }));
       },
     }),

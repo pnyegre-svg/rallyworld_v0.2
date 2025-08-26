@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { useEventStore } from '@/hooks/use-event-store';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -158,7 +158,8 @@ export default function DashboardPage() {
                             <TableRow>
                                 <TableHead>Event Title</TableHead>
                                 <TableHead>Dates</TableHead>
-                                <TableHead className="text-right">Stages</TableHead>
+                                <TableHead className="text-center">Stages</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -168,7 +169,14 @@ export default function DashboardPage() {
                                     <TableCell className="text-muted-foreground">
                                         {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
                                     </TableCell>
-                                    <TableCell className="text-right font-mono">{event.stages.length}</TableCell>
+                                    <TableCell className="text-center font-mono">{event.stages.length}</TableCell>
+                                    <TableCell className="text-right">
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/organizer/event/edit/${event.id}`}>
+                                                <PenSquare className="mr-2 h-4 w-4" /> Edit
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

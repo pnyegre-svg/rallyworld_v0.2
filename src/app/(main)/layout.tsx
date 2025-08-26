@@ -41,6 +41,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/leaderboard')) return 'Leaderboard';
     if (path.startsWith('/admin')) return 'Admin';
     if (path.startsWith('/organizer/create-event')) return 'Create Event';
+    if (path.startsWith('/organizer/event/edit')) return 'Edit Event';
     if (path.startsWith('/organizer')) return 'Club Profile';
     if (path.startsWith('/community')) return 'Community';
     if (path.startsWith('/marketplace')) return 'Marketplace';
