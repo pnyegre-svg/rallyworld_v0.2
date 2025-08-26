@@ -33,7 +33,7 @@ export default function SignUpPage() {
         try {
             await createUserWithEmailAndPassword(auth, email, password);
             signInUser(email, name);
-            router.push('/dashboard');
+            router.push('/auth/choose-role');
         } catch(error: any) {
             toast({
                 title: 'Sign up failed',
