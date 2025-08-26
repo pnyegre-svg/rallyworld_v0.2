@@ -21,12 +21,6 @@ import { Building, Car, Flag, HardHat, Info, Mic, Shield, User, Users, Wrench } 
 
 const rolesConfig = [
   { 
-    id: 'organizer', 
-    name: 'Organizer / Club', 
-    description: 'Host events, manage competitors, and assign duties.',
-    icon: Building
-  },
-  { 
     id: 'competitor', 
     name: 'Competitor', 
     description: 'Pilot or Co-pilot. Create your profile, add vehicles, and register for events.',
