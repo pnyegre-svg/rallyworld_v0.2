@@ -78,7 +78,7 @@ export default function OrganizerProfilePage() {
     const auth = getAuth(app);
 
     React.useEffect(() => {
-        // This listener ensures we have the firebaseUser for the UID, which is crucial for uploads.
+        // This listener ensures we have the live firebaseUser object for the UID, which is crucial for uploads.
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setFirebaseUser(user);
         });
@@ -590,7 +590,17 @@ export default function OrganizerProfilePage() {
                                 {user?.organizerProfile && (
                                      <Button variant="outline" onClick={() => {
                                         setIsEditing(false);
-                                        form.reset(user.organizerProfile);
+                                        if (user.organizerProfile) { // Guard against null profile
+                                            form.reset({
+                                                ...user.organizerProfile,
+                                                website: user.organizerProfile.website || '',
+                                                facebook: user.organizerProfile.socials?.facebook || '',
+                                                instagram: user.organizerProfile.socials?.instagram || '',
+                                                youtube: user.organizerProfile.socials?.youtube || '',
+                                                tiktok: user.organizerProfile.socials?.tiktok || '',
+                                                x: user.organizerProfile.socials?.x || '',
+                                            });
+                                        }
                                      }}>Cancel</Button>
                                 )}
                             </div>
@@ -602,7 +612,3 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
-
-    
-
-    
