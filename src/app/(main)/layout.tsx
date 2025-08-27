@@ -18,16 +18,13 @@ import { Bell } from 'lucide-react';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthReady, initializeAuth } = useUserStore();
+  const { user, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
-    // onAuthStateChanged returns an unsubscribe function.
-    // We call it to set up the listener.
-    const unsubscribe = initializeAuth();
-
-    // The returned function will be called on component unmount to clean up the listener.
-    return () => unsubscribe();
-  }, [initializeAuth]); // initializeAuth is stable, so this only runs once on mount.
+    if (isAuthReady && !user) {
+        router.push('/auth/sign-in');
+    }
+  }, [isAuthReady, user, router]);
 
 
   const getTitle = (path: string) => {
@@ -48,17 +45,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  if (!isAuthReady) {
-    return <Loading />;
-  }
-
-  if (isAuthReady && !user) {
-    router.push('/auth/sign-in');
-    return <Loading />;
-  }
-
-  if (!user) {
-    return <Loading />;
+  if (!isAuthReady || !user) {
+    return <div className="flex h-screen items-center justify-center"><Loading /></div>;
   }
   
   return (

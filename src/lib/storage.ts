@@ -3,7 +3,6 @@
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage, requireUser } from './firebase'; // Import the initialized storage instance and requireUser
-import { appCheckReady } from './app-check';
 
 /**
  * Uploads a file to a specified path in Firebase Storage.
@@ -14,7 +13,6 @@ import { appCheckReady } from './app-check';
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File, type: 'organizer' | 'user'): Promise<string> => {
-  await appCheckReady; // Wait for App Check to be ready.
   const user = await requireUser(); // <-- Guarantees request.auth != null at rules time
   
   const folder = type === 'organizer' ? `public/organizers/${user.uid}/club-profile-picture` : `public/users/${user.uid}/profile-picture`;
