@@ -104,18 +104,17 @@ export default function MyEventsPage() {
                                 fill
                                 className="object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            {event.logoImage && (
-                                <div className="absolute bottom-3 left-3">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center p-4">
+                                {event.logoImage && (
                                     <Image 
                                         src={getResizedImageUrl(event.logoImage, '512x256')!}
                                         alt={`${event.title} logo`}
-                                        width={120}
-                                        height={60}
+                                        width={160}
+                                        height={80}
                                         className="object-contain drop-shadow-lg"
                                     />
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </Link>
                         <CardContent className="p-4 flex-grow flex flex-col">
                            <div className="flex gap-4 items-start flex-grow">
