@@ -2,7 +2,7 @@
 'use client';
 
 import { db } from './firebase'; // Import the initialized db instance
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where, orderBy } from 'firebase/firestore';
 import { z } from 'zod';
 
 const stageSchema = z.object({
@@ -99,9 +99,14 @@ export const addEvent = async (eventData: EventFormValues) => {
   }
 };
 
-export const getEvents = async (organizerId: string): Promise<Event[]> => {
+export const getEvents = async (organizerId?: string): Promise<Event[]> => {
     try {
-      const q = query(eventsCollection, where("organizerId", "==", organizerId));
+      let q;
+      if (organizerId) {
+        q = query(eventsCollection, where("organizerId", "==", organizerId), orderBy("dates.from", "asc"));
+      } else {
+        q = query(eventsCollection, orderBy("dates.from", "asc"));
+      }
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => doc.data() as Event);
     } catch (error) {

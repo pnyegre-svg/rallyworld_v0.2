@@ -6,84 +6,88 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { useUserStore } from '@/hooks/use-user';
-import { Eye, PenSquare, PlusCircle, Award } from 'lucide-react';
+import { Eye, MapPin, PenSquare, PlusCircle } from 'lucide-react';
 import { getEvents, Event } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getResizedImageUrl } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { getUser } from '@/lib/users';
+import { User } from '@/lib/data';
 
 export default function MyEventsPage() {
   const { user } = useUserStore();
   const [events, setEvents] = React.useState<Event[]>([]);
+  const [organizers, setOrganizers] = React.useState<Record<string, User>>({});
   const [loading, setLoading] = React.useState(true);
   const isOrganizer = user.currentRole === 'organizer';
 
   React.useEffect(() => {
-    if (isOrganizer && user.organizerProfile?.id) {
-      const fetchEvents = async () => {
+    async function loadEventsAndOrganizers() {
         setLoading(true);
-        const organizerEvents = await getEvents(user.organizerProfile.id);
-        setEvents(organizerEvents);
-        setLoading(false);
-      };
-      fetchEvents();
-    } else {
-      setLoading(false);
-    }
-  }, [isOrganizer, user.organizerProfile?.id]);
+        // This is where you would fetch all events from your database
+        // For now, it will be empty as we don't have a full user list yet.
+        const allEvents = await getEvents();
+        setEvents(allEvents);
 
-  if (!isOrganizer) {
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>My Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-center text-muted-foreground h-24 flex items-center justify-center">
-                    Event management is available for organizers.
-                </p>
-            </CardContent>
-        </Card>
-    )
-  }
+        // Fetch unique organizer details
+        const organizerIds = [...new Set(allEvents.map(e => e.organizerId))];
+        const organizerData: Record<string, User> = {};
+        for (const id of organizerIds) {
+            const orgUser = await getUser(id);
+            if (orgUser) {
+                organizerData[id] = orgUser;
+            }
+        }
+        setOrganizers(organizerData);
+        setLoading(false);
+    }
+    loadEventsAndOrganizers();
+  }, [])
 
   const LoadingSkeletons = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-40 w-full" />
-                <CardHeader>
-                    <Skeleton className="h-6 w-3/4 mb-2" />
-                    <Skeleton className="h-4 w-1/2" />
-                </CardHeader>
-                <CardFooter className="gap-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                </CardFooter>
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="p-4">
+                     <div className="flex gap-4 items-start">
+                        <div className="flex flex-col items-center">
+                            <Skeleton className="h-5 w-8 mb-1" />
+                            <Skeleton className="h-8 w-10" />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                             <Skeleton className="h-6 w-3/4" />
+                             <Skeleton className="h-4 w-1/2" />
+                             <Skeleton className="h-4 w-2/3" />
+                        </div>
+                    </div>
+                </CardContent>
             </Card>
         ))}
     </div>
     );
 
+  const getOrganizerName = (organizerId: string) => {
+    return organizers[organizerId]?.organizerProfile?.name || 'Unknown Organizer';
+  }
+
   return (
     <div className="space-y-6">
         <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold font-headline">My Events</h1>
-             <Button size="sm" className="gap-1 bg-accent hover:bg-accent/90" asChild>
-                <Link href="/organizer/create-event">
-                    <PlusCircle className="h-4 w-4" />
-                    Create New Event
-                </Link>
-            </Button>
+            <h1 className="text-3xl font-bold font-headline">Upcoming Events</h1>
+             {isOrganizer && (
+                <Button size="sm" className="gap-1 bg-accent hover:bg-accent/90" asChild>
+                    <Link href="/organizer/create-event">
+                        <PlusCircle className="h-4 w-4" />
+                        Create New Event
+                    </Link>
+                </Button>
+            )}
         </div>
       
       {loading ? (
@@ -91,50 +95,43 @@ export default function MyEventsPage() {
         ) : events.length > 0 ? (
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.map(event => (
-                    <Card key={event.id} className="group relative overflow-hidden rounded-xl text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105">
-                         <Link href={`/organizer/event/view/${event.id}`} className="absolute inset-0 z-10">
-                            <span className="sr-only">View Event</span>
-                         </Link>
-                         <Image
-                            src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
-                            alt={event.title}
-                            data-ai-hint="rally racing"
-                            width={400}
-                            height={400}
-                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
-                        />
-                         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
-                         
-                         {event.logoImage && (
-                             <div className="absolute top-4 right-4 z-20">
-                                <Image
-                                    src={getResizedImageUrl(event.logoImage, '200x200')!}
-                                    alt={`${event.title} logo`}
-                                    width={100}
-                                    height={50}
-                                    className="object-contain drop-shadow-lg"
-                                />
-                            </div>
-                         )}
-
-                         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-20">
-                            <h3 className="text-xl md:text-2xl font-headline font-bold">{event.title}</h3>
-                            <p className="text-sm text-muted-foreground font-mono uppercase tracking-wider">
-                                {format(new Date(event.dates.from), 'MMM dd')} - {format(new Date(event.dates.to), 'MMM dd, yyyy')}
-                            </p>
-                            <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                 <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/20 hover:bg-white/30 z-30 relative">
+                    <Card key={event.id} className="overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col">
+                        <Link href={`/organizer/event/view/${event.id}`} className="block relative h-48 w-full">
+                            <Image
+                                src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
+                                alt={event.title}
+                                data-ai-hint="rally racing"
+                                fill
+                                className="object-cover"
+                            />
+                        </Link>
+                        <CardContent className="p-4 flex-grow flex flex-col">
+                           <div className="flex gap-4 items-start flex-grow">
+                                <div className="flex flex-col items-center text-center">
+                                    <p className="font-mono text-sm uppercase text-accent">{format(event.dates.from, 'MMM')}</p>
+                                    <p className="font-headline text-3xl font-bold">{format(event.dates.from, 'dd')}</p>
+                                </div>
+                                <div className="flex flex-col flex-grow">
+                                    <h3 className="font-headline text-lg font-bold leading-tight">{event.title}</h3>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-1.5"><MapPin className="h-3 w-3"/>{event.hqLocation}</p>
+                                    <p className="text-xs text-muted-foreground mt-1">by {getOrganizerName(event.organizerId)}</p>
+                                </div>
+                           </div>
+                            <div className="mt-4 flex gap-2">
+                                 <Button asChild variant="outline" size="sm" className="w-full relative z-10">
                                     <Link href={`/organizer/event/view/${event.id}`}>
                                         <Eye className="mr-2 h-4 w-4" /> View
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/20 hover:bg-white/30 z-30 relative">
-                                    <Link href={`/organizer/event/edit/${event.id}`}>
-                                        <PenSquare className="mr-2 h-4 w-4" /> Edit
-                                    </Link>
-                                </Button>
+                                {isOrganizer && user.organizerProfile?.id === event.organizerId && (
+                                    <Button asChild variant="secondary" size="sm" className="w-full relative z-10">
+                                        <Link href={`/organizer/event/edit/${event.id}`}>
+                                            <PenSquare className="mr-2 h-4 w-4" /> Edit
+                                        </Link>
+                                    </Button>
+                                )}
                             </div>
-                         </div>
+                        </CardContent>
                     </Card>
                 ))}
             </div>
@@ -149,14 +146,16 @@ export default function MyEventsPage() {
                 />
                 <div className="z-10">
                     <CardContent className="space-y-4">
-                        <h2 className="text-2xl font-headline">You haven't created any events yet</h2>
-                        <p className="text-muted-foreground">Get started by creating your first rally event.</p>
-                        <Button className="bg-accent hover:bg-accent/90" asChild>
+                        <h2 className="text-2xl font-headline">No upcoming events</h2>
+                        <p className="text-muted-foreground">Check back later or create your first event if you're an organizer.</p>
+                       {isOrganizer && (
+                         <Button className="bg-accent hover:bg-accent/90" asChild>
                             <Link href="/organizer/create-event">
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Create Your First Event
                             </Link>
                         </Button>
+                       )}
                     </CardContent>
                 </div>
              </Card>
@@ -164,3 +163,4 @@ export default function MyEventsPage() {
     </div>
   );
 }
+
