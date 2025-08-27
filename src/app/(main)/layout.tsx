@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -51,7 +50,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [router, user, signInUser, signOutUser, app]);
+  }, []);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';

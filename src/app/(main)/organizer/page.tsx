@@ -179,7 +179,7 @@ export default function OrganizerProfilePage() {
             }
 
             let profileData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${user.id}`,
+                id: user?.organizerProfile?.id || user.id,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,
