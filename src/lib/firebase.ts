@@ -20,12 +20,17 @@ const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : get
 // Initialize App Check
 let appCheckInitialized = false;
 if (typeof window !== 'undefined') {
-    (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-    initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_FB_APPCHECK_SITE_KEY!),
-        isTokenAutoRefreshEnabled: true,
-    });
-    appCheckInitialized = true;
+    try {
+        (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_FB_APPCHECK_SITE_KEY!),
+            isTokenAutoRefreshEnabled: true,
+        });
+        appCheckInitialized = true;
+        console.log("App Check initialized");
+    } catch (e) {
+        console.error("Error initializing App Check", e);
+    }
 }
 
 
