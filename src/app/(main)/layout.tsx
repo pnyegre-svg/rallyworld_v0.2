@@ -21,7 +21,7 @@ import { Bell } from 'lucide-react';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, signInUser, signOutUser, isAuthReady } = useUserStore();
+  const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -60,8 +60,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  // This is the crucial check. We wait for both the initial loading AND the auth/profile readiness.
-  if (isLoading || !isAuthReady) {
+  // This is the crucial check. We wait for auth/profile readiness.
+  if (!isAuthReady) {
     return <Loading />;
   }
   

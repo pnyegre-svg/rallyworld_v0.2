@@ -159,8 +159,8 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const { user: storeUser } = useUserStore.getState();
-        if (!storeUser) {
+        const { user } = useUserStore.getState();
+        if (!user) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile. Please refresh and try again.",
@@ -175,12 +175,11 @@ export default function OrganizerProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 const path = `public/organizers/${storeUser.id}/club-profile-picture/${profilePictureFile.name}`;
-                 profilePictureUrl = await uploadFile(profilePictureFile, path);
+                 profilePictureUrl = await uploadFile(profilePictureFile, user.id, 'organizer', profilePictureFile.name);
             }
 
             let profileData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${storeUser.id}`,
+                id: user?.organizerProfile?.id || `org_${user.id}`,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,

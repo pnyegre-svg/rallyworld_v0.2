@@ -5,13 +5,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
-import { doc, collection, getFirestore } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 type UserState = {
   user: User | null;
-  isLoading: boolean; // For initial page load
   isAuthReady: boolean; // To confirm Firebase auth state is resolved AND user profile is loaded
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
@@ -24,13 +22,12 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: null,
-      isLoading: true,
       isAuthReady: false,
       signOutUser: () => {
-        set({ user: null, isAuthReady: false, isLoading: false });
+        set({ user: null, isAuthReady: false });
       },
       signInUser: async (email, name) => {
-        set({ isLoading: true, isAuthReady: false });
+        set({ isAuthReady: false });
         try {
             const firebaseUser = auth.currentUser;
             if (!firebaseUser) throw new Error("User not authenticated in Firebase");
@@ -58,10 +55,10 @@ export const useUserStore = create<UserState>()(
                 await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
             }
 
-            set({ user: userProfile, isLoading: false, isAuthReady: true });
+            set({ user: userProfile, isAuthReady: true });
         } catch (error) {
             console.error("Error signing in user:", error);
-            set({ isLoading: false, isAuthReady: false, user: null });
+            set({ isAuthReady: false, user: null });
         }
       },
       setRole: async (role: UserRole) => {

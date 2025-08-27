@@ -1,7 +1,7 @@
 
 'use client';
 
-import { db } from './firebase';
+import { db } from './firebase'; // Import the initialized db instance
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where } from 'firebase/firestore';
 import { z } from 'zod';
 

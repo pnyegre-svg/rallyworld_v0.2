@@ -1,6 +1,5 @@
 
-
-import { db } from './firebase';
+import { db } from './firebase'; // Import the initialized db instance
 import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
 import type { User, Organizer, UserRole } from './data';
 

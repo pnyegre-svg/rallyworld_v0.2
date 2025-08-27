@@ -60,8 +60,8 @@ export default function ProfilePage() {
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const { user: storeUser } = useUserStore.getState();
-        if (!storeUser) {
+        const { user } = useUserStore.getState();
+        if (!user) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile.",
@@ -76,8 +76,7 @@ export default function ProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 const path = `public/users/${storeUser.id}/profile-picture/${profilePictureFile.name}`;
-                 profilePictureUrl = await uploadFile(profilePictureFile, path);
+                 profilePictureUrl = await uploadFile(profilePictureFile, user.id, 'user', profilePictureFile.name);
             }
             
             await updateUserProfile({ 
