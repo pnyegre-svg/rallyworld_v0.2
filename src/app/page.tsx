@@ -30,8 +30,13 @@ export default function LandingPage() {
   if (loading) {
     return (
         <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
-            {/* You can add a more sophisticated loader here if you wish */}
-            <p className="text-muted-foreground">Loading...</p>
+            <Image
+              src="/RW_transp.svg"
+              alt="Rally World Logo"
+              width={80}
+              height={80}
+              className="animate-pulse"
+            />
         </div>
     )
   }

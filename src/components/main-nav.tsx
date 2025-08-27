@@ -50,9 +50,9 @@ export function MainNav() {
   ];
 
   const isAdmin = user?.email === 'admin@rally.world';
-  const logoSrc = '/RW_icon_transp.svg';
-  const logoWidth = 40;
-  const logoHeight = 40;
+  const logoSrc = '/RW_txt5.svg';
+  const logoWidth = 120;
+  const logoHeight = 35;
 
   return (
     <Sidebar>
