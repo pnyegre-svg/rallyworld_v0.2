@@ -1,5 +1,5 @@
 // src/lib/storage.ts
-import { app } from '@/lib/firebase';              // your initializeApp()
+import { app } from '@/lib/firebase';
 import { getAuth } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
