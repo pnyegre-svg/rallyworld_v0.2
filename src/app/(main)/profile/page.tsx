@@ -28,8 +28,6 @@ import { PenSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { uploadFile } from '@/lib/storage';
 
 const formSchema = z.object({
@@ -62,8 +60,8 @@ export default function ProfilePage() {
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const firebaseUser = auth.currentUser;
-        if (!firebaseUser) {
+        const storeUser = useUserStore.getState().user;
+        if (!storeUser) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile.",
@@ -78,7 +76,7 @@ export default function ProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 const path = `public/users/${firebaseUser.uid}/profile-picture/${profilePictureFile.name}`;
+                 const path = `public/users/${storeUser.id}/profile-picture/${profilePictureFile.name}`;
                  profilePictureUrl = await uploadFile(profilePictureFile, path);
             }
             

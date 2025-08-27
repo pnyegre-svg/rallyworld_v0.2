@@ -45,8 +45,6 @@ import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
 import { uploadFile } from '@/lib/storage';
 
 const formSchema = z.object({
@@ -161,8 +159,9 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const firebaseUser = auth.currentUser;
-        if (!firebaseUser) {
+        // Use the user from the store as the single source of truth
+        const storeUser = useUserStore.getState().user;
+        if (!storeUser) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile. Please refresh and try again.",
@@ -177,12 +176,13 @@ export default function OrganizerProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 const path = `public/organizers/${firebaseUser.uid}/club-profile-picture/${profilePictureFile.name}`;
+                 // Use the user ID from the store for the path
+                 const path = `public/organizers/${storeUser.id}/club-profile-picture/${profilePictureFile.name}`;
                  profilePictureUrl = await uploadFile(profilePictureFile, path);
             }
 
             let profileData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${firebaseUser.uid}`,
+                id: user?.organizerProfile?.id || `org_${storeUser.id}`,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,
@@ -603,5 +603,3 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
-
-    
