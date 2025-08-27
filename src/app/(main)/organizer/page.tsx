@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -45,6 +44,9 @@ import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User as FirebaseAuthUser } from 'firebase/auth';
+import { uploadFile } from '@/lib/storage';
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -72,6 +74,14 @@ export default function OrganizerProfilePage() {
     const [isManualEntry, setIsManualEntry] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false)
     const [isSubmitting, setIsSubmitting] = React.useState(false);
+    const [firebaseUser, setFirebaseUser] = React.useState<FirebaseAuthUser | null>(null);
+
+    React.useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setFirebaseUser(user);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -158,10 +168,10 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!user) {
+        if (!user || !firebaseUser) {
             toast({
                 title: "Authentication Error",
-                description: "You must be signed in to save your profile.",
+                description: "You must be signed in to save your profile. Please wait a moment and try again.",
                 variant: "destructive",
             });
             return;
@@ -169,6 +179,14 @@ export default function OrganizerProfilePage() {
 
         setIsSubmitting(true);
         try {
+            let profilePictureUrl = user.organizerProfile?.profilePicture || '';
+            const profilePictureFile = values.profilePicture;
+
+            if (profilePictureFile instanceof File) {
+                 const path = `public/organizers/${firebaseUser.uid}/profile-picture/${profilePictureFile.name}`;
+                 profilePictureUrl = await uploadFile(profilePictureFile, path);
+            }
+
             let profileData: Organizer = {
                 id: user?.organizerProfile?.id || `org_${user.id}`,
                 name: values.name,
@@ -185,7 +203,7 @@ export default function OrganizerProfilePage() {
                     tiktok: values.tiktok,
                     x: values.x,
                 },
-                profilePicture: user?.organizerProfile?.profilePicture || '',
+                profilePicture: profilePictureUrl,
             };
             
             await updateOrganizerProfile(profileData);
@@ -563,7 +581,7 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || !firebaseUser}>
                                     {isSubmitting ? 'Saving...' : 'Save Profile'}
                                 </Button>
                                 {user?.organizerProfile && (
@@ -591,3 +609,5 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
