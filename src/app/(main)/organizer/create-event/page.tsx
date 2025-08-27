@@ -109,7 +109,7 @@ export default function CreateEventPage() {
     try {
       const eventId = `evt_${Date.now()}`;
       
-      const dataToSave: EventFormValues = { 
+      const dataToSave: Omit<EventFormValues, 'coverImage' | 'logoImage'> & { coverImage?: string, logoImage?: string} = { 
         ...values,
         organizerId: user.organizerProfile.id,
       };
@@ -125,7 +125,7 @@ export default function CreateEventPage() {
       
       // TODO: Handle itineraryFiles and docsFiles uploads
 
-      await addEvent(dataToSave);
+      await addEvent(dataToSave as EventFormValues);
       
       toast({
         title: "Event Created Successfully!",

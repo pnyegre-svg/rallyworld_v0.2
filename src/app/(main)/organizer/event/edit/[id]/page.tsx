@@ -137,18 +137,23 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        const dataToUpdate = { ...values };
+        let coverImageUrl = values.coverImage;
+        let logoImageUrl = values.logoImage;
 
         if (values.coverImage instanceof File) {
-            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
-            dataToUpdate.coverImage = coverImageUrl;
+            coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
         }
 
         if (values.logoImage instanceof File) {
-            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
-            dataToUpdate.logoImage = logoImageUrl;
+            logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
         }
         
+        const dataToUpdate: EventFormValues = {
+          ...values,
+          coverImage: coverImageUrl,
+          logoImage: logoImageUrl
+        };
+
         await updateEvent(eventId, dataToUpdate);
 
         toast({
