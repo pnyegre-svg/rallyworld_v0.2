@@ -20,18 +20,16 @@ import { auth } from '@/lib/firebase';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
+  const { user, signOutUser, isAuthReady, initializeAuth } = useUserStore();
 
   React.useEffect(() => {
+    // Start the auth flow, which now waits for App Check
+    initializeAuth();
+
+    // Keep a continuous listener for auth state changes (e.g., user signs out in another tab)
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        // If we have a firebase user but no user in the store (e.g. page refresh),
-        // or the email doesn't match, we need to fetch their profile.
-        if (!user || user.email !== firebaseUser.email) {
-            signInUser(firebaseUser.email!);
-        }
-      } else {
-        // User is signed out.
+      if (!firebaseUser && isAuthReady) {
+        // If the user is signed out and the initial check has completed
         signOutUser();
         router.push('/auth/sign-in');
       }
@@ -39,7 +37,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, []);
+  }, []); // Run only once on mount
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
@@ -59,8 +57,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  // This is the crucial check. We wait for auth/profile readiness.
-  if (!isAuthReady) {
+  if (!isAuthReady || !user) {
     return <Loading />;
   }
   
