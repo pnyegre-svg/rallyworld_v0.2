@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -56,6 +56,8 @@ export default function EditEventPage() {
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
+      coverImage: undefined,
+      logoImage: undefined,
       itineraryLinks: [],
       itineraryFiles: [],
       docsLinks: [],
@@ -350,6 +352,34 @@ export default function EditEventPage() {
                             </FormControl>
                             <FormMessage />
                             </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="coverImage"
+                        render={({ field: { onChange, value, ...rest }}) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                            </FormControl>
+                            <FormDescription>Landscape-oriented image works best.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="logoImage"
+                        render={({ field: { onChange, value, ...rest }}) => (
+                        <FormItem>
+                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Optional)</FormLabel>
+                            <FormControl>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                            </FormControl>
+                            <FormDescription>Square image (e.g. 512x512) works best.</FormDescription>
+                            <FormMessage />
+                        </FormItem>
                         )}
                     />
                 </div>
