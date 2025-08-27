@@ -9,6 +9,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube, Video, MoreVertical, Edit } from 'lucide-react';
 import { Event, updateEvent } from '@/lib/events';
@@ -314,6 +315,8 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     </div>
   );
 }
+
+    
 
     
 
