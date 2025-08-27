@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Facebook, Instagram, Youtube, Globe, Mail, Phone, MapPin, Copy } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Globe, Mail, Phone, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Organizer } from '@/lib/data';
@@ -31,16 +31,6 @@ const XIcon = () => (
 
 const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label: string, value: string, isLink?: boolean }) => {
     if (!value) return null;
-    const { toast } = useToast();
-
-    const copyToClipboard = () => {
-        navigator.clipboard.writeText(value).then(() => {
-            toast({
-                title: 'Copied to clipboard',
-                description: `${label} has been copied.`,
-            });
-        });
-    };
 
     return (
         <div className="flex items-start gap-3">
@@ -53,9 +43,6 @@ const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label
                     <p className="text-sm font-medium">{value}</p>
                 )}
             </div>
-             <Button type="button" variant="ghost" size="icon" onClick={copyToClipboard}>
-                <Copy className="h-4 w-4" />
-            </Button>
         </div>
     )
 }
