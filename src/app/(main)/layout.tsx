@@ -8,7 +8,8 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
-import { auth } from '@/lib/firebase';
+import { auth, app } from '@/lib/firebase';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { onAuthStateChanged } from 'firebase/auth';
 import Loading from './loading';
 import { useUserStore } from '@/hooks/use-user';
@@ -24,6 +25,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
+    // Initialize App Check on the client
+    if (typeof window !== 'undefined') {
+      // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
+      // key is the counterpart to the secret key you set in the Firebase console.
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt'),
+        isTokenAutoRefreshEnabled: true
+      });
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // If we have a firebase user but no user in the store (e.g. page refresh),
@@ -40,7 +51,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [router, user, signInUser, signOutUser]);
+  }, [router, user, signInUser, signOutUser, app]);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
