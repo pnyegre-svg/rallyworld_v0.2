@@ -126,12 +126,9 @@ export default function CreateEventPage() {
         dataToSave.logoImage = logoImageUrl;
       }
       
-      const uploadAndGetURL = async (fileObj: { file?: File }, path: string) => {
-        if (fileObj.file instanceof File) {
-          const url = await uploadFile(fileObj.file, path);
-          return { url, name: fileObj.file.name, type: fileObj.file.type, size: fileObj.file.size };
-        }
-        return undefined; // If it's not a file, ignore it
+      const uploadAndGetMetadata = async (file: File, path: string) => {
+          const url = await uploadFile(file, path);
+          return { url, name: file.name, type: file.type, size: file.size };
       };
 
       if (values.itineraryFiles && values.itineraryFiles.length > 0) {
@@ -139,10 +136,10 @@ export default function CreateEventPage() {
               values.itineraryFiles
                 .filter(fileObj => fileObj.file instanceof File)
                 .map(async (fileObj) => 
-                  uploadAndGetURL(fileObj, `public/events/${eventId}/itinerary/${fileObj.file?.name}`)
+                  uploadAndGetMetadata(fileObj.file as File, `public/events/${eventId}/itinerary/${fileObj.file?.name}`)
               )
           );
-          dataToSave.itineraryFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
+          dataToSave.itineraryFiles = uploadedFiles;
       } else {
         dataToSave.itineraryFiles = [];
       }
@@ -152,10 +149,10 @@ export default function CreateEventPage() {
             values.docsFiles
                 .filter(fileObj => fileObj.file instanceof File)
                 .map(async (fileObj) => 
-                  uploadAndGetURL(fileObj, `public/events/${eventId}/docs/${fileObj.file?.name}`)
+                  uploadAndGetMetadata(fileObj.file as File, `public/events/${eventId}/docs/${fileObj.file?.name}`)
               )
           );
-          dataToSave.docsFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
+          dataToSave.docsFiles = uploadedFiles;
       } else {
         dataToSave.docsFiles = [];
       }

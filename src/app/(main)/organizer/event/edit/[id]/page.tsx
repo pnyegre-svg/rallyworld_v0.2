@@ -154,40 +154,31 @@ export default function EditEventPage() {
             dataToUpdate.logoImage = logoImageUrl;
         }
         
-        const uploadAndGetURL = async (file: any, path: string) => {
-            // Check if it's a new file to upload
-            if (file instanceof File) {
-                const url = await uploadFile(file, path);
-                return { url, name: file.name, type: file.type, size: file.size };
-            }
-            // If it's an existing file object, just return it
-            if (typeof file === 'object' && file !== null && file.url) {
-                return file;
-            }
-            return undefined;
+        const uploadAndGetMetadata = async (file: File, path: string) => {
+          const url = await uploadFile(file, path);
+          return { url, name: file.name, type: file.type, size: file.size };
         };
 
-        if (values.itineraryFiles && values.itineraryFiles.length > 0) {
-            const uploadedFiles = await Promise.all(
-                values.itineraryFiles.map(async (fileObj) => 
-                    uploadAndGetURL(fileObj.file, `public/events/${eventId}/itinerary/${(fileObj.file as File)?.name}`)
-                )
-            );
-            dataToUpdate.itineraryFiles = uploadedFiles.filter(Boolean);
-        } else {
-            dataToUpdate.itineraryFiles = [];
-        }
+        const processFiles = async (files: any[], pathPrefix: string) => {
+          const processedFiles = await Promise.all(
+            (files || []).map(async (fileObj) => {
+              const file = fileObj.file;
+              // If it's a new file, upload it and get metadata
+              if (file instanceof File) {
+                return uploadAndGetMetadata(file, `public/events/${eventId}/${pathPrefix}/${file.name}`);
+              }
+              // If it's an existing file object (from initial load), return it as is
+              if (typeof file === 'object' && file !== null && file.url) {
+                return file;
+              }
+              return null; // Ignore invalid entries
+            })
+          );
+          return processedFiles.filter(Boolean); // Filter out nulls
+        };
 
-        if (values.docsFiles && values.docsFiles.length > 0) {
-            const uploadedFiles = await Promise.all(
-                values.docsFiles.map(async (fileObj) => 
-                    uploadAndGetURL(fileObj.file, `public/events/${eventId}/docs/${(fileObj.file as File)?.name}`)
-                )
-            );
-            dataToUpdate.docsFiles = uploadedFiles.filter(Boolean);
-        } else {
-            dataToUpdate.docsFiles = [];
-        }
+        dataToUpdate.itineraryFiles = await processFiles(values.itineraryFiles, 'itinerary');
+        dataToUpdate.docsFiles = await processFiles(values.docsFiles, 'docs');
 
 
         await updateEvent(eventId, dataToUpdate);
@@ -599,5 +590,3 @@ export default function EditEventPage() {
     </Card>
   );
 }
-
-    
