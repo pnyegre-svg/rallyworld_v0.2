@@ -117,7 +117,7 @@ export default function DashboardPage() {
                            <span>{liveStage.distance.toFixed(2)} km</span>
                         </div>
                         <Button variant="ghost" size="sm" asChild>
-                            <Link href="/stages">Go to Stage <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                            <Link href="/myevents">Go to Stage <ArrowRight className="ml-2 h-4 w-4" /></Link>
                         </Button>
                     </CardContent>
                 </Card>
