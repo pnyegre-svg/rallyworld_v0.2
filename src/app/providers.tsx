@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
-import { app, auth, db, storage } from '@/lib/firebase';
+import { app } from '@/lib/firebase';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 // This is a one-time initialization component.
@@ -35,7 +35,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
             console.log('Firebase initialization complete.');
 
             // We can now consider the app ready.
-            // A small delay might help in some edge cases, but let's try without first.
             setIsReady(true);
             
             // Cleanup subscription on component unmount
