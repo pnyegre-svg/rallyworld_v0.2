@@ -24,6 +24,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
+    // This is the App Check initialization for the main application layout.
+    if (typeof window !== 'undefined') {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt'),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // If we have a firebase user but no user in the store (e.g. page refresh),
