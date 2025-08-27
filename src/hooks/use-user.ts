@@ -3,25 +3,18 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
+import { doc, collection, getFirestore } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type UserState = {
   user: User | null;
   isLoading: boolean; // For initial page load
-  isAuthReady: boolean; // To confirm Firebase auth state is resolved
+  isAuthReady: boolean; // To confirm Firebase auth state is resolved AND user profile is loaded
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
-  updateOrganizerProfile: (profile: Organizer) => Promise<User | null>;
+  updateOrganizerProfile: (profile: Organizer) => Promise<void>;
   setAuthReady: (isReady: boolean) => void;
-};
-
-const defaultUser: User = {
-    id: '',
-    name: 'Rally Fan',
-    email: '',
-    avatar: '/avatars/04.png',
-    roles: ['fan'],
-    currentRole: 'fan',
 };
 
 export const useUserStore = create<UserState>()(
@@ -31,33 +24,38 @@ export const useUserStore = create<UserState>()(
       isLoading: true,
       isAuthReady: false,
       setAuthReady: (isReady: boolean) => {
-        set({ isAuthReady: isReady });
+        set({ isAuthReady: isReady, isLoading: !isReady });
       },
       signInUser: async (email, name) => {
-        set({ isLoading: true });
-        let userProfile = await getUser(email);
+        set({ isLoading: true, isAuthReady: false });
+        try {
+            let userProfile = await getUser(email);
 
-        if (!userProfile) {
-            // User doesn't exist, so create them
-            const newUser: Omit<User, 'id'> = {
-                name: name || 'New User',
-                email: email,
-                avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
-                roles: ['fan'],
-                currentRole: 'fan',
-            };
-            const newUserId = await createUser(newUser);
-            userProfile = { ...newUser, id: newUserId };
-        }
-        
-        // Special case for admin to ensure they always have the organizer role
-        if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {
-            userProfile.roles.push('organizer');
-            userProfile.currentRole = 'organizer';
-            await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
-        }
+            if (!userProfile) {
+                // User doesn't exist, so create them
+                const newUser: Omit<User, 'id'> = {
+                    name: name || 'New User',
+                    email: email,
+                    avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
+                    roles: ['fan'],
+                    currentRole: 'fan',
+                };
+                const newUserId = await createUser(newUser);
+                userProfile = { ...newUser, id: newUserId };
+            }
+            
+            // Special case for admin to ensure they always have the organizer role
+            if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {
+                userProfile.roles.push('organizer');
+                userProfile.currentRole = 'organizer';
+                await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
+            }
 
-        set({ user: userProfile, isLoading: false, isAuthReady: true });
+            set({ user: userProfile, isLoading: false, isAuthReady: true });
+        } catch (error) {
+            console.error("Error signing in user:", error);
+            set({ isLoading: false, isAuthReady: false, user: null });
+        }
       },
       setRole: async (role: UserRole) => {
         const currentUser = get().user;
@@ -81,12 +79,12 @@ export const useUserStore = create<UserState>()(
       },
       updateOrganizerProfile: async (profile: Organizer) => {
         const currentUser = get().user;
-        if (!currentUser) return null;
+        if (!currentUser) return;
 
-        const updatedUser = await updateUser(currentUser.id, { organizerProfile: profile });
-
-        set({ user: updatedUser });
-        return updatedUser;
+        const updatedUserData = await updateUser(currentUser.id, { organizerProfile: profile });
+        if (updatedUserData) {
+          set({ user: updatedUserData });
+        }
       }
     }),
     {

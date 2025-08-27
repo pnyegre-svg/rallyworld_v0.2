@@ -68,7 +68,7 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, updateOrganizerProfile, isUserStoreReady } = useUserStore();
+    const { user, updateOrganizerProfile, isAuthReady } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
     const [selectedClubId, setSelectedClubId] = React.useState<string | undefined>(user?.organizerProfile?.id);
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -78,6 +78,7 @@ export default function OrganizerProfilePage() {
     const auth = getAuth(app);
 
     React.useEffect(() => {
+        // This listener ensures we have the firebaseUser for the UID, which is crucial for uploads.
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setFirebaseUser(user);
         });
@@ -111,7 +112,7 @@ export default function OrganizerProfilePage() {
     });
     
     React.useEffect(() => {
-        if (isUserStoreReady && user?.organizerProfile) {
+        if (isAuthReady && user?.organizerProfile) {
             const profile = user.organizerProfile;
             form.reset({
                 ...profile,
@@ -134,10 +135,10 @@ export default function OrganizerProfilePage() {
                  setIsManualEntry(true);
             }
             setIsEditing(false);
-        } else if (isUserStoreReady && !user?.organizerProfile) {
+        } else if (isAuthReady && !user?.organizerProfile) {
             setIsEditing(true);
         }
-    }, [user, form, isUserStoreReady]);
+    }, [user, form, isAuthReady]);
 
 
     const handleClubChange = (clubId: string) => {
@@ -169,7 +170,7 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!firebaseUser) {
+        if (!isAuthReady || !firebaseUser) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile. Please wait a moment and try again.",
@@ -190,7 +191,7 @@ export default function OrganizerProfilePage() {
             }
 
             let profileData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${Date.now()}`,
+                id: user?.organizerProfile?.id || `org_${firebaseUser.uid}`,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,
@@ -208,8 +209,7 @@ export default function OrganizerProfilePage() {
                 profilePicture: profilePictureUrl,
             };
             
-            const updatedUser = await updateOrganizerProfile(profileData);
-            profileData.id = updatedUser?.organizerProfile?.id || profileData.id;
+            await updateOrganizerProfile(profileData);
             
             toast({
                 title: "Profile Saved",
@@ -219,9 +219,10 @@ export default function OrganizerProfilePage() {
 
         } catch (error) {
             console.error("Error saving profile:", error);
+            const errorMessage = (error as Error).message || "An error occurred while saving. Please try again.";
             toast({
                 title: "Failed to save profile",
-                description: (error as Error).message || "An error occurred while saving. Please try again.",
+                description: errorMessage,
                 variant: "destructive"
             });
         } finally {
@@ -583,7 +584,7 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || !firebaseUser}>
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || !isAuthReady}>
                                     {isSubmitting ? 'Saving...' : 'Save Profile'}
                                 </Button>
                                 {user?.organizerProfile && (

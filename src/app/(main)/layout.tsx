@@ -28,7 +28,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         // If we have a firebase user but no user in the store, it means they re-opened the tab
         // We need to fetch their data from Firestore.
         // The signInUser function will handle setting isLoading to false and isAuthReady to true.
-        if (!user) {
+        if (!user || user.email !== firebaseUser.email) {
             signInUser(firebaseUser.email!);
         } else {
             // If we already have a user in the store, just confirm auth is ready.

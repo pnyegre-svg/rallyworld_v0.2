@@ -14,13 +14,7 @@ const userConverter = {
     if (user.roles !== undefined) data.roles = user.roles;
     if (user.currentRole !== undefined) data.currentRole = user.currentRole;
     if (user.organizerProfile !== undefined) {
-        // Ensure organizer profile has an ID. If it's new, it won't have one from the client.
-        // Firestore will generate one for the document, but we're dealing with a sub-object here.
-        const profile = user.organizerProfile;
-        if (!profile.id.startsWith('org_')) {
-            profile.id = doc(collection(db, 'users')).id; // Temporary, just to have a unique ID if needed, though this is a subcollection.
-        }
-        data.organizerProfile = profile;
+        data.organizerProfile = user.organizerProfile;
     }
     return data;
   },
@@ -71,12 +65,6 @@ export const createUser = async (userData: Omit<User, 'id'>): Promise<string> =>
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
     try {
         const userRef = doc(db, 'users', userId);
-
-        // If updating organizerProfile and it's new, assign a stable ID
-        if (userData.organizerProfile && userData.organizerProfile.id.startsWith('org_')) {
-            const newOrganizerId = doc(collection(db, 'dummy_ids')).id;
-            userData.organizerProfile.id = newOrganizerId;
-        }
         
         await updateDoc(userRef, userConverter.toFirestore(userData));
         
