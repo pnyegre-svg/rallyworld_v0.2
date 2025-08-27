@@ -5,12 +5,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  projectId: 'rally-world',
-  appId: '1:67027100425:web:832f96f8228d9346e4a9d8',
-  storageBucket: 'rally-world.appspot.com',
-  apiKey: 'AIzaSyD1SDoZo2M84Lqy6w6zbK3ZhWKtQcGQf-g',
-  authDomain: 'rally-world.firebaseapp.com',
-  messagingSenderId: '67027100425',
+  apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FB_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FB_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FB_APP_ID,
 };
 
 // Initialize Firebase
