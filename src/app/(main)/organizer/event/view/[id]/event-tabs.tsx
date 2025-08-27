@@ -11,10 +11,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Globe, Users, FileText, BarChart2 } from 'lucide-react';
+import { Download, Globe, Users, FileText, BarChart2, Video } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { competitors } from '@/lib/data';
 import { Event } from '@/lib/events';
+import { cn } from '@/lib/utils';
 
 
 type EventTabsProps = {
@@ -22,6 +23,35 @@ type EventTabsProps = {
 }
 
 export function EventTabs({ event }: EventTabsProps) {
+
+  const getYouTubeEmbedUrl = (url: string): string | null => {
+    if (!url) return null;
+    let videoId = null;
+    
+    // Standard watch URL
+    const urlParams = new URL(url).searchParams;
+    videoId = urlParams.get('v');
+    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+
+    // Shortened youtu.be URL
+    if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // Embed URL
+    if (url.includes('/embed/')) {
+        videoId = url.split('/embed/')[1].split('?')[0];
+        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    }
+    
+    // If it's another video provider, just return the raw link but we can't embed it.
+    // In a real app, you'd add parsers for Facebook, etc.
+    return null;
+  }
+
+  const embedUrl = getYouTubeEmbedUrl(event.livestreamLink || '');
+  const hasLivestream = !!event.livestreamLink;
 
   const renderLinks = (links: {value: string}[]) => {
     if (!links || links.length === 0 || links.every(l => !l.value)) return <p className="text-sm text-muted-foreground">No links provided.</p>;
@@ -57,7 +87,11 @@ export function EventTabs({ event }: EventTabsProps) {
 
   return (
     <Tabs defaultValue="results" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 md:w-auto md:inline-flex">
+        <TabsList className={cn(
+            "grid w-full md:w-auto md:inline-flex",
+            hasLivestream ? "grid-cols-5" : "grid-cols-4"
+        )}>
+            {hasLivestream && <TabsTrigger value="livestream"><span className="text-red-500 mr-2 animate-pulse">•</span>Live Stream</TabsTrigger>}
             <TabsTrigger value="results">Live Results</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="competitors">
@@ -65,6 +99,33 @@ export function EventTabs({ event }: EventTabsProps) {
             </TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
+
+        {hasLivestream && (
+            <TabsContent value="livestream">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Video /> Live Stream</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {embedUrl ? (
+                            <div className="aspect-video w-full rounded-lg overflow-hidden">
+                                <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    src={embedUrl}
+                                    title="YouTube video player" 
+                                    frameBorder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                    allowFullScreen
+                                ></iframe>
+                            </div>
+                        ) : (
+                             <p className="text-muted-foreground">The live stream link is not a valid YouTube URL. <a href={event.livestreamLink} target="_blank" rel="noopener noreferrer" className="text-primary underline">Watch here</a>.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        )}
 
         <TabsContent value="results">
             <Card>
