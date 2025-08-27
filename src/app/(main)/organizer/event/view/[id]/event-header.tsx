@@ -73,9 +73,10 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 type EventHeaderProps = {
   event: Event;
+  organizerName?: string;
 };
 
-export function EventHeader({ event }: EventHeaderProps) {
+export function EventHeader({ event, organizerName }: EventHeaderProps) {
   const { toast } = useToast();
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
@@ -122,7 +123,7 @@ export function EventHeader({ event }: EventHeaderProps) {
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-row items-end justify-between gap-6">
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 items-start">
                     {event.logoImage && (
                         <div className="relative w-48 h-24 flex-shrink-0">
                             <Image 
@@ -135,15 +136,22 @@ export function EventHeader({ event }: EventHeaderProps) {
                     )}
                     <div className="space-y-1">
                         <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
-                        <a 
-                           href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
-                           target="_blank"
-                           rel="noopener noreferrer"
-                           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <MapPin className="h-5 w-5" />
-                            <span>{event.hqLocation}</span>
-                        </a>
+                        <div className="flex flex-col items-start gap-1">
+                           <a 
+                             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
+                             target="_blank"
+                             rel="noopener noreferrer"
+                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                           >
+                              <MapPin className="h-5 w-5" />
+                              <span>{event.hqLocation}</span>
+                           </a>
+                           {organizerName && (
+                              <p className="text-sm text-muted-foreground pl-7">
+                                  hosted by <span className="font-semibold text-foreground/80">{organizerName}</span>
+                              </p>
+                           )}
+                        </div>
                     </div>
                 </div>
 

@@ -10,12 +10,15 @@ import { getEvent, Event } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { getUser } from '@/lib/users';
+import { User } from '@/lib/data';
 
 
 export default function ViewEventPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [event, setEvent] = React.useState<Event | null>(null);
+  const [organizer, setOrganizer] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const { user } = useUserStore();
   const { toast } = useToast();
@@ -40,6 +43,11 @@ export default function ViewEventPage() {
                 return;
             }
             setEvent(eventData);
+
+            // Fetch organizer details
+            const organizerData = await getUser(eventData.organizerId);
+            setOrganizer(organizerData);
+
         } else {
             toast({
                 title: "Event Not Found",
@@ -74,7 +82,7 @@ export default function ViewEventPage() {
 
   return (
     <div className="w-full mx-auto space-y-8">
-        <EventHeader event={event} />
+        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} />
         <EventTabs event={event} />
     </div>
   );
