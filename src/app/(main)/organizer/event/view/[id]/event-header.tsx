@@ -16,7 +16,6 @@ import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getResizedImageUrl } from '@/lib/utils';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -122,15 +121,19 @@ export function EventHeader({ event }: EventHeaderProps) {
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between">
-                <div className="flex items-center gap-4">
-                    {event.logoImage && (
-                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
-                            <AvatarImage src={getResizedImageUrl(event.logoImage, '512x512')} alt={`${event.title} logo`} />
-                            <AvatarFallback>{event.title.charAt(0)}</AvatarFallback>
-                        </Avatar>
+                <div className="flex items-start gap-4">
+                     {event.logoImage && (
+                        <div className="relative w-48 h-24 flex-shrink-0">
+                             <Image 
+                                src={getResizedImageUrl(event.logoImage, '512x512')!}
+                                alt={`${event.title} logo`}
+                                fill
+                                className="object-contain drop-shadow-lg"
+                             />
+                        </div>
                     )}
-                    <div className="space-y-2">
-                        <h1 className="text-4xl md:text-6xl font-headline font-bold">{event.title}</h1>
+                    <div className="space-y-2 pt-2">
+                        <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <MapPin className="h-5 w-5" />
                             <span>{event.hqLocation}</span>

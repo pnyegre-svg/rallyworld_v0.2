@@ -18,7 +18,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getResizedImageUrl } from '@/lib/utils';
 
 export default function MyEventsPage() {
@@ -100,17 +99,26 @@ export default function MyEventsPage() {
                                 fill
                                 className="object-cover"
                             />
-                             <div className="absolute -bottom-10 left-6">
-                                <Avatar className="h-20 w-20 border-4 border-card shadow-md">
-                                    <AvatarImage src={getResizedImageUrl(event.logoImage, '200x200')} alt={`${event.title} logo`} />
-                                    <AvatarFallback><Award /></AvatarFallback>
-                                </Avatar>
+                             <div className="absolute -bottom-8 left-4">
+                                {event.logoImage ? (
+                                    <Image
+                                        src={getResizedImageUrl(event.logoImage, '200x200')!}
+                                        alt={`${event.title} logo`}
+                                        width={120}
+                                        height={60}
+                                        className="object-contain rounded-md bg-background/80 backdrop-blur-sm p-1 border-2 border-card shadow-md"
+                                    />
+                                ) : (
+                                    <div className="h-16 w-16 flex items-center justify-center bg-card rounded-md border-2 border-card shadow-md">
+                                        <Award className="h-8 w-8 text-muted-foreground" />
+                                    </div>
+                                )}
                              </div>
                         </CardHeader>
-                        <CardContent className="pt-16 flex-grow">
+                        <CardContent className="pt-12 flex-grow">
                            <CardTitle className="font-headline text-lg">{event.title}</CardTitle>
                            <CardDescription className="text-xs">
-                             {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
+                             {format(new Date(event.dates.from), 'LLL dd, y')} - {format(new Date(event.dates.to), 'LLL dd, y')}
                            </CardDescription>
                         </CardContent>
                         <CardFooter className="bg-muted/50 p-2 gap-2">
