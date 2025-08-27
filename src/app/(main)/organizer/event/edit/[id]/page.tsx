@@ -412,7 +412,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
-                            <FormDescription>Recommended: 512x512px. {typeof value === 'string' && value && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
+                            <FormDescription>Recommended: 1242x525px. {typeof value === 'string' && value && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}

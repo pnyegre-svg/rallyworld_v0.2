@@ -355,7 +355,7 @@ export default function CreateEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
-                            <FormDescription>Recommended: 512x512px.</FormDescription>
+                            <FormDescription>Recommended: 1242x525px.</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
