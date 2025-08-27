@@ -68,7 +68,7 @@ export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
     const { user, updateOrganizerProfile } = useUserStore();
-    const [isEditing, setIsEditing] = React.useState(true); // Default to editing for setup
+    const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
     const [selectedClubId, setSelectedClubId] = React.useState<string>('');
     const [isManualEntry, setIsManualEntry] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false)
@@ -76,7 +76,15 @@ export default function OrganizerProfilePage() {
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: user?.organizerProfile || {
+        defaultValues: user?.organizerProfile ? {
+            ...user.organizerProfile,
+            website: user.organizerProfile.website || '',
+            facebook: user.organizerProfile.socials?.facebook || '',
+            instagram: user.organizerProfile.socials?.instagram || '',
+            youtube: user.organizerProfile.socials?.youtube || '',
+            tiktok: user.organizerProfile.socials?.tiktok || '',
+            x: user.organizerProfile.socials?.x || '',
+        } : {
             name: '',
             cis: '',
             cif: '',
@@ -93,9 +101,18 @@ export default function OrganizerProfilePage() {
     });
     
     React.useEffect(() => {
-        if(user?.organizerProfile) {
-            form.reset(user.organizerProfile);
-            const existingClub = clubs.find(c => c.name === user.organizerProfile?.name);
+        if (user?.organizerProfile) {
+            const profile = user.organizerProfile;
+            form.reset({
+                ...profile,
+                website: profile.website || '',
+                facebook: profile.socials?.facebook || '',
+                instagram: profile.socials?.instagram || '',
+                youtube: profile.socials?.youtube || '',
+                tiktok: profile.socials?.tiktok || '',
+                x: profile.socials?.x || '',
+            });
+            const existingClub = clubs.find(c => c.name === profile.name);
             if (existingClub) {
                 setSelectedClubId(existingClub.id);
                 setIsManualEntry(false);
@@ -143,10 +160,10 @@ export default function OrganizerProfilePage() {
         try {
             const organizerId = user?.organizerProfile?.id || values.clubId || `org_${Date.now()}`;
             
-            let profilePictureUrl = values.profilePicture;
+            let profilePictureUrl = user?.organizerProfile?.profilePicture || undefined;
             if (values.profilePicture instanceof File) {
                 const fileExtension = values.profilePicture.name.split('.').pop();
-                const path = `public/organizers/${organizerId}/profile.${fileExtension}`;
+                const path = `public/organizers/${organizerId}_profile.${fileExtension}`;
                 profilePictureUrl = await uploadFile(values.profilePicture, path);
             }
 
@@ -190,7 +207,7 @@ export default function OrganizerProfilePage() {
         }
     }
     
-    const copyToClipboard = (text: string, fieldName: string) => {
+    const copyToClipboard = (text: string | undefined, fieldName: string) => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
             toast({
@@ -214,7 +231,7 @@ export default function OrganizerProfilePage() {
     const profilePictureValue = form.watch('profilePicture');
     const displayImage = profilePictureValue instanceof File 
         ? URL.createObjectURL(profilePictureValue) 
-        : profilePictureValue;
+        : (typeof profilePictureValue === 'string' ? profilePictureValue : null);
 
     return (
         <Card>
@@ -316,12 +333,12 @@ export default function OrganizerProfilePage() {
                             <FormField
                                 control={form.control}
                                 name="profilePicture"
-                                render={({ field }) => (
+                                render={({ field: { onChange, value, ...rest } }) => (
                                 <FormItem>
                                     <FormControl>
                                     <div className="relative">
                                         <Avatar className="h-24 w-24">
-                                            <AvatarImage src={displayImage} alt="Club Profile Picture" />
+                                            <AvatarImage src={displayImage || undefined} alt="Club Profile Picture" />
                                             <AvatarFallback>CLUB</AvatarFallback>
                                         </Avatar>
                                         {isEditing && (
@@ -335,7 +352,8 @@ export default function OrganizerProfilePage() {
                                             className="sr-only" 
                                             accept="image/*"
                                             disabled={allFieldsDisabled}
-                                            onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)} 
+                                            onChange={(e) => onChange(e.target.files ? e.target.files[0] : null)}
+                                            {...rest}
                                         />
                                     </div>
                                     </FormControl>
