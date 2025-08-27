@@ -38,6 +38,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useUserStore } from '@/hooks/use-user';
 import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
 
 export default function EditEventPage() {
   const { toast } = useToast();
@@ -56,7 +57,9 @@ export default function EditEventPage() {
       whatsappLink: '',
       livestreamLink: '',
       itineraryLinks: [],
+      itineraryFiles: [],
       docsLinks: [],
+      docsFiles: [],
       stages: [],
       organizerId: user.organizerProfile?.id || '',
     },
@@ -112,15 +115,25 @@ export default function EditEventPage() {
     control: form.control,
     name: "itineraryLinks"
   });
+  const { fields: itineraryFileFields, append: appendItineraryFile, remove: removeItineraryFile } = useFieldArray({
+    control: form.control,
+    name: "itineraryFiles"
+  });
 
   const { fields: docsLinkFields, append: appendDocsLink, remove: removeDocsLink } = useFieldArray({
     control: form.control,
     name: "docsLinks"
   });
+  const { fields: docsFileFields, append: appendDocsFile, remove: removeDocsFile } = useFieldArray({
+    control: form.control,
+    name: "docsFiles"
+  });
 
 
   async function onSubmit(values: EventFormValues) {
     try {
+        // In a real app, handle file uploads here before saving.
+        console.log("Form Values:", values);
         await updateEvent(eventId, values);
         toast({
         title: "Event Updated Successfully!",
@@ -164,6 +177,40 @@ export default function EditEventPage() {
       </Button>
     </div>
   );
+  
+  const renderFileInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryFiles' | 'docsFiles') => (
+    <div className="space-y-2">
+      {fields.map((field: any, index: number) => (
+         <FormField
+            key={field.id}
+            control={form.control}
+            name={`${namePrefix}.${index}`}
+            render={({ field: { onChange, value, ...rest }}) => (
+                <FormItem>
+                    <div className="flex items-center gap-2">
+                         <FormControl>
+                            <Input 
+                                type="file" 
+                                onChange={(e) => onChange(e.target.files?.[0])} 
+                                {...rest}
+                                className="flex-1"
+                            />
+                        </FormControl>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                     <FormMessage />
+                </FormItem>
+            )}
+        />
+      ))}
+      <Button type="button" variant="outline" size="sm" onClick={() => append({})}>
+        <PlusCircle className="mr-2 h-4 w-4"/> Add File
+      </Button>
+    </div>
+  );
+
 
   const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
     <Button
@@ -214,8 +261,8 @@ export default function EditEventPage() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid md:grid-cols-2 gap-x-8 gap-y-6">
-                <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-x-8 gap-y-8">
+                <div className="space-y-8">
                      <FormField
                         control={form.control}
                         name="title"
@@ -306,7 +353,7 @@ export default function EditEventPage() {
                         )}
                     />
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-8">
                      <FormField
                         control={form.control}
                         name="whatsappLink"
@@ -414,10 +461,15 @@ export default function EditEventPage() {
                         <CardTitle className="flex items-center gap-2 text-base"><FileText/>Itinerary (Optional)</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormDescription>Provide links to the itinerary. File uploads are not yet supported.</FormDescription>
+                        <FormDescription>Provide links or upload files for the event itinerary.</FormDescription>
                         <div className="space-y-2">
                             <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Itinerary Link(s)</FormLabel>
                             {renderLinkInputs(itineraryLinkFields, removeItineraryLink, appendItineraryLink, 'itineraryLinks')}
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                            <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Upload File(s)</FormLabel>
+                            {renderFileInputs(itineraryFileFields, removeItineraryFile, appendItineraryFile, 'itineraryFiles')}
                         </div>
                     </CardContent>
                 </Card>
@@ -426,10 +478,15 @@ export default function EditEventPage() {
                         <CardTitle className="flex items-center gap-2 text-base"><FileText/>Documents (Optional)</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <FormDescription>Provide links to documents. File uploads are not yet supported.</FormDescription>
+                        <FormDescription>Provide links or upload files for event documents.</FormDescription>
                         <div className="space-y-2">
                             <FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/>Documents Link(s)</FormLabel>
                             {renderLinkInputs(docsLinkFields, removeDocsLink, appendDocsLink, 'docsLinks')}
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                            <FormLabel className="flex items-center gap-2"><Upload className="h-4 w-4"/>Upload File(s)</FormLabel>
+                            {renderFileInputs(docsFileFields, removeDocsFile, appendDocsFile, 'docsFiles')}
                         </div>
                     </CardContent>
                 </Card>

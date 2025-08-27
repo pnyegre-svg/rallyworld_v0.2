@@ -13,15 +13,6 @@ const linkSchema = z.object({
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
 });
 
-const fileSchema = z.object({
-  // Storing file metadata, not the file itself
-  value: z.object({
-    name: z.string(),
-    url: z.string().url(), // URL to the file in Firebase Storage
-  }).optional(),
-});
-
-
 export const eventFormSchema = z.object({
   title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
   dates: z.object({
@@ -32,7 +23,9 @@ export const eventFormSchema = z.object({
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
   itineraryLinks: z.array(linkSchema).optional(),
+  itineraryFiles: z.any().optional(),
   docsLinks: z.array(linkSchema).optional(),
+  docsFiles: z.any().optional(),
   stages: z.array(stageSchema).optional().default([]),
   organizerId: z.string(),
 });
