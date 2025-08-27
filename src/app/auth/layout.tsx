@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="w-full max-w-sm">
         <div className="mb-8 flex justify-center">
             <Link href="/" className="flex items-center gap-2 text-primary">
-                <Image src="/RW_txt2.svg" alt="Rally World Logo" width={180} height={50} />
+                <Image src="/RW_txt5.svg" alt="Rally World Logo" width={180} height={50} />
             </Link>
         </div>
         {children}
