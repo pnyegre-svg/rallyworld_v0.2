@@ -16,16 +16,9 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
-
-const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <title>Google</title>
-        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.05 1.05-2.48 2.04-4.26 2.04-4.81 0-8.73-3.86-8.73-8.64s3.92-8.64 8.73-8.64c2.73 0 4.51 1.05 5.54 2.04l2.5-2.5C20.49 1.82 17.13 0 12.48 0 5.88 0 .02 5.82 0 12.91s5.86 12.91 12.48 12.91c7.22 0 12.01-4.44 12.01-12.25 0-.82-.07-1.48-.18-2.18H12.48z" />
-    </svg>
-)
 
 export default function SignInPage() {
     const router = useRouter();
@@ -52,32 +45,6 @@ export default function SignInPage() {
              setIsLoading(false);
         }
     }
-    
-     const handleGoogleSignIn = async () => {
-        setIsLoading(true);
-        const provider = new GoogleAuthProvider();
-        try {
-            const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            await signInUser(user.email!, user.displayName || undefined);
-            
-            const isNewUser = result.additionalUserInfo?.isNewUser;
-            if (isNewUser) {
-                router.push('/auth/choose-role');
-            } else {
-                router.push('/dashboard');
-            }
-
-        } catch (error: any) {
-            toast({
-                title: 'Sign in with Google failed',
-                description: error.message,
-                variant: 'destructive'
-            });
-            setIsLoading(false);
-        }
-    };
-
 
   return (
     <Card>
@@ -86,18 +53,6 @@ export default function SignInPage() {
         <CardDescription>Enter your email below to sign in to your account</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-          <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading}>
-            <GoogleIcon className="mr-2 h-4 w-4" />
-            Sign in with Google
-          </Button>
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-            </div>
-          </div>
           <form onSubmit={handleSignIn} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -108,7 +63,7 @@ export default function SignInPage() {
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} disabled={isLoading} />
             </div>
              <Button type="submit" className="w-full bg-accent hover:bg-accent/90" disabled={isLoading}>
-                {isLoading ? 'Signing In...' : 'Sign In with Email'}
+                {isLoading ? 'Signing In...' : 'Sign In'}
              </Button>
           </form>
       </CardContent>
