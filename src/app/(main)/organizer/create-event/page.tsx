@@ -109,23 +109,51 @@ export default function CreateEventPage() {
     try {
       const eventId = `evt_${Date.now()}`;
       
-      const dataToSave: Omit<EventFormValues, 'coverImage' | 'logoImage'> & { coverImage?: string, logoImage?: string} = { 
+      const dataToSave: Omit<EventFormValues, 'coverImage' | 'logoImage' | 'itineraryFiles' | 'docsFiles'> & { coverImage?: string, logoImage?: string, itineraryFiles?: any[], docsFiles?: any[]} = { 
         ...values,
         organizerId: user.organizerProfile.id,
       };
 
       if (values.coverImage instanceof File) {
-        const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+        const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}/cover_${values.coverImage.name}`);
         dataToSave.coverImage = coverImageUrl;
       }
       if (values.logoImage instanceof File) {
-        const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+        const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}/logo_${values.logoImage.name}`);
         dataToSave.logoImage = logoImageUrl;
       }
       
-      // TODO: Handle itineraryFiles and docsFiles uploads
+      const uploadAndGetURL = async (file: File | undefined, path: string) => {
+        if (file instanceof File) {
+          const url = await uploadFile(file, path);
+          return { url, name: file.name, type: file.type, size: file.size };
+        }
+        return undefined; // If it's not a file, ignore it
+      };
 
-      await addEvent(dataToSave as EventFormValues);
+      if (values.itineraryFiles && values.itineraryFiles.length > 0) {
+          const uploadedFiles = await Promise.all(
+              values.itineraryFiles.map(async (fileObj) => 
+                  uploadAndGetURL(fileObj.file, `events/${eventId}/itinerary/${fileObj.file?.name}`)
+              )
+          );
+          dataToSave.itineraryFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
+      } else {
+        dataToSave.itineraryFiles = [];
+      }
+
+      if (values.docsFiles && values.docsFiles.length > 0) {
+          const uploadedFiles = await Promise.all(
+              values.docsFiles.map(async (fileObj) => 
+                  uploadAndGetURL(fileObj.file, `events/${eventId}/docs/${fileObj.file?.name}`)
+              )
+          );
+          dataToSave.docsFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
+      } else {
+        dataToSave.docsFiles = [];
+      }
+
+      await addEvent(dataToSave as any);
       
       toast({
         title: "Event Created Successfully!",
@@ -179,7 +207,7 @@ export default function CreateEventPage() {
          <FormField
             key={field.id}
             control={form.control}
-            name={`${namePrefix}.${index}`}
+            name={`${namePrefix}.${index}.file`}
             render={({ field: { onChange, value, ...rest }}) => (
                 <FormItem>
                     <div className="flex items-center gap-2">
@@ -200,7 +228,7 @@ export default function CreateEventPage() {
             )}
         />
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => append({})}>
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
         <PlusCircle className="mr-2 h-4 w-4"/> Add File
       </Button>
     </div>
@@ -494,3 +522,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    

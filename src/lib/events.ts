@@ -13,6 +13,11 @@ const linkSchema = z.object({
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
 });
 
+const fileSchema = z.object({
+  file: z.any().optional(),
+});
+
+
 export const eventFormSchema = z.object({
   title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
   dates: z.object({
@@ -25,19 +30,21 @@ export const eventFormSchema = z.object({
   whatsappLink: z.string().url().optional().or(z.literal('')),
   livestreamLink: z.string().url().optional().or(z.literal('')),
   itineraryLinks: z.array(linkSchema).optional(),
-  itineraryFiles: z.any().optional(),
+  itineraryFiles: z.array(fileSchema).optional(),
   docsLinks: z.array(linkSchema).optional(),
-  docsFiles: z.any().optional(),
+  docsFiles: z.array(fileSchema).optional(),
   stages: z.array(stageSchema).optional().default([]),
   organizerId: z.string(),
 });
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 
-export interface Event extends Omit<EventFormValues, 'coverImage' | 'logoImage'> {
+export interface Event extends Omit<EventFormValues, 'coverImage' | 'logoImage' | 'itineraryFiles' | 'docsFiles'> {
     id: string;
     coverImage?: string; // URL as string
     logoImage?: string; // URL as string
+    itineraryFiles?: { url: string, name: string, type: string, size: number }[];
+    docsFiles?: { url: string, name: string, type: string, size: number }[];
 }
 
 // Firestore converter
@@ -69,14 +76,16 @@ const eventConverter = {
       whatsappLink: data.whatsappLink || '',
       livestreamLink: data.livestreamLink || '',
       itineraryLinks: data.itineraryLinks || [],
+      itineraryFiles: data.itineraryFiles || [],
       docsLinks: data.docsLinks || [],
+      docsFiles: data.docsFiles || [],
       stages: data.stages || [],
     };
   }
 };
 
 
-const eventsCollection = collection(db, 'events').withConverter(eventConverter);
+const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
 
 export const addEvent = async (eventData: EventFormValues) => {
   try {
@@ -92,7 +101,7 @@ export const getEvents = async (organizerId: string): Promise<Event[]> => {
     try {
       const q = query(eventsCollection, where("organizerId", "==", organizerId));
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => doc.data());
+      return querySnapshot.docs.map(doc => doc.data() as Event);
     } catch (error) {
       console.error("Error getting events: ", error);
       return [];
@@ -101,10 +110,10 @@ export const getEvents = async (organizerId: string): Promise<Event[]> => {
 
 export const getEvent = async (eventId: string): Promise<Event | null> => {
     try {
-        const docRef = doc(db, 'events', eventId).withConverter(eventConverter);
+        const docRef = doc(db, 'events', eventId).withConverter(eventConverter as any);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            return docSnap.data();
+            return docSnap.data() as Event;
         }
         return null;
     } catch (error) {
@@ -132,3 +141,5 @@ export const updateEvent = async (eventId: string, eventData: Partial<EventFormV
         throw new Error("Could not update event.");
     }
 };
+
+    

@@ -86,7 +86,11 @@ export default function EditEventPage() {
                     router.push('/dashboard');
                     return;
                 }
-              form.reset(eventToEdit);
+              form.reset({
+                ...eventToEdit,
+                itineraryFiles: (eventToEdit.itineraryFiles || []).map(f => ({file: f})),
+                docsFiles: (eventToEdit.docsFiles || []).map(f => ({file: f})),
+              });
             } else {
                toast({
                     title: "Event Not Found",
@@ -137,22 +141,53 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        let coverImageUrl = values.coverImage;
-        let logoImageUrl = values.logoImage;
+        const dataToUpdate: any = { ...values };
 
         if (values.coverImage instanceof File) {
-            coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}/cover_${values.coverImage.name}`);
+            dataToUpdate.coverImage = coverImageUrl;
         }
 
         if (values.logoImage instanceof File) {
-            logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}/logo_${values.logoImage.name}`);
+            dataToUpdate.logoImage = logoImageUrl;
         }
         
-        const dataToUpdate: EventFormValues = {
-          ...values,
-          coverImage: coverImageUrl,
-          logoImage: logoImageUrl
+        const uploadAndGetURL = async (file: any, path: string) => {
+            // Check if it's a new file to upload
+            if (file instanceof File) {
+                const url = await uploadFile(file, path);
+                return { url, name: file.name, type: file.type, size: file.size };
+            }
+            // If it's an existing file object, just return it
+            if (typeof file === 'object' && file !== null && file.url) {
+                return file;
+            }
+            return undefined;
         };
+
+        if (values.itineraryFiles && values.itineraryFiles.length > 0) {
+            const uploadedFiles = await Promise.all(
+                values.itineraryFiles.map(async (fileObj) => 
+                    uploadAndGetURL(fileObj.file, `events/${eventId}/itinerary/${(fileObj.file as File)?.name}`)
+                )
+            );
+            dataToUpdate.itineraryFiles = uploadedFiles.filter(Boolean);
+        } else {
+            dataToUpdate.itineraryFiles = [];
+        }
+
+        if (values.docsFiles && values.docsFiles.length > 0) {
+            const uploadedFiles = await Promise.all(
+                values.docsFiles.map(async (fileObj) => 
+                    uploadAndGetURL(fileObj.file, `events/${eventId}/docs/${(fileObj.file as File)?.name}`)
+                )
+            );
+            dataToUpdate.docsFiles = uploadedFiles.filter(Boolean);
+        } else {
+            dataToUpdate.docsFiles = [];
+        }
+
 
         await updateEvent(eventId, dataToUpdate);
 
@@ -208,8 +243,12 @@ export default function EditEventPage() {
          <FormField
             key={field.id}
             control={form.control}
-            name={`${namePrefix}.${index}`}
-            render={({ field: { onChange, value, ...rest }}) => (
+            name={`${namePrefix}.${index}.file`}
+            render={({ field: { onChange, value, ...rest }}) => {
+                const currentFile = value;
+                const fileName = currentFile instanceof File ? currentFile.name : (typeof currentFile === 'object' && currentFile?.name) ? currentFile.name : 'No file selected';
+
+                return (
                 <FormItem>
                     <div className="flex items-center gap-2">
                          <FormControl>
@@ -224,12 +263,17 @@ export default function EditEventPage() {
                             <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
+                    {typeof currentFile === 'object' && currentFile?.url && (
+                        <FormDescription>
+                           Current file: <a href={currentFile.url} target="_blank" rel="noreferrer" className="text-primary underline">{currentFile.name}</a>
+                        </FormDescription>
+                    )}
                      <FormMessage />
                 </FormItem>
-            )}
+            )}}
         />
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => append({})}>
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
         <PlusCircle className="mr-2 h-4 w-4"/> Add File
       </Button>
     </div>
@@ -554,3 +598,5 @@ export default function EditEventPage() {
     </Card>
   );
 }
+
+    
