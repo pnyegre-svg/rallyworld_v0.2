@@ -24,16 +24,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
-    // Initialize App Check on the client
-    if (typeof window !== 'undefined') {
-      // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
-      // key is the counterpart to the secret key you set in the Firebase console.
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider('6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt'),
-        isTokenAutoRefreshEnabled: true
-      });
-    }
-
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // If we have a firebase user but no user in the store (e.g. page refresh),

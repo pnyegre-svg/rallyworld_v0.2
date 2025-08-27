@@ -1,8 +1,22 @@
 
+'use client';
+
+import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { app } from '@/lib/firebase';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt'),
+        isTokenAutoRefreshEnabled: true,
+      });
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
