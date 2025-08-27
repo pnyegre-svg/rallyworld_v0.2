@@ -2,27 +2,31 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files in the 'public' folder.
-    // This lets anyone using the app see event images, logos, etc.
+
+    // Default deny all reads and writes
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Allow public read access to all files under the /public directory
     match /public/{allPaths=**} {
       allow read;
     }
 
-    // Secure rule for organizer profile pictures.
-    // An authenticated user can only write to a path that matches their own user ID.
-    // The user ID is part of the organizer profile, but for simplicity and security,
-    // we assume the organizer's user ID is what's used in the path.
-    // NOTE: This assumes the app consistently uses the user's UID when constructing the path.
-    // For this to work, we'll need to align the app code, but this rule is the foundation.
-    match /public/organizers/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Secure rule for event files.
-    // Allows any authenticated user to upload event files.
-    // A more granular rule could check if the user is the event owner from a Firestore document.
-    match /public/events/{eventId}/{allPaths=**} {
+    // Allow authenticated users to write to the organizers folder.
+    // A more secure rule would be to check if the userId matches the path,
+    // but this requires the organizer ID to be the same as the user UID.
+    // e.g. match /public/organizers/{userId}/{allPaths=**}
+    match /public/organizers/{organizerId}/{allPaths=**} {
       allow write: if request.auth != null;
+    }
+    
+    // Allow authenticated users to write to event folders.
+    // This rule allows any authenticated user to upload event assets.
+    // For higher security, you could add a check to verify event ownership
+    // via a Firestore read from within the rule.
+    match /public/events/{eventId}/{allPaths=**} {
+        allow write: if request.auth != null;
     }
   }
 }
