@@ -86,5 +86,3 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
         throw new Error("Could not update user.");
     }
 };
-
-    

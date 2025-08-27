@@ -2,9 +2,9 @@
 'use client';
 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth } from './firebase';
+import { app, auth } from './firebase';
 
-const storage = getStorage();
+const storage = getStorage(app);
 
 /**
  * Uploads a file to a specified path in Firebase Storage.
@@ -14,11 +14,8 @@ const storage = getStorage();
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File, path: string): Promise<string> => {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error('You must be logged in to upload files.');
-  }
-
+  // The check for the user is now handled by the UI layer before this function is called,
+  // thanks to the app-wide isAuthReady state.
   const storageRef = ref(storage, path);
 
   try {
@@ -29,9 +26,9 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
     console.error('Firebase Storage upload error:', err);
 
     // Provide clearer error messages for common issues.
-    if (err?.code === 'storage/unauthorized') {
+    if (err?.code === 'storage/unauthorized' || err?.code === 'storage/unauthenticated') {
       throw new Error(
-        'Firebase Storage permission denied. Please ensure you are logged in.'
+        'Firebase Storage permission denied. Please ensure you are logged in and your storage rules are correct.'
       );
     }
     if (err?.code === 'storage/object-not-found') {
@@ -39,14 +36,7 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
             'File not found. This can happen if the storage rules are not deployed correctly.'
         )
     }
-     if (err?.code === 'storage/unauthenticated') {
-      throw new Error(
-        'Firebase Storage permission denied. Please ensure you are logged in and your storage rules are correct.'
-      );
-    }
     
     throw new Error('Could not upload file.');
   }
 };
-
-    
