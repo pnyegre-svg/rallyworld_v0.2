@@ -43,7 +43,9 @@ export const getUser = async (email: string): Promise<User | null> => {
     if (querySnapshot.empty) {
       return null;
     }
-    return querySnapshot.docs[0].data();
+    // Make sure to return the full User object including the id
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as User;
   } catch (error) {
     console.error("Error getting user: ", error);
     return null;
@@ -51,10 +53,11 @@ export const getUser = async (email: string): Promise<User | null> => {
 };
 
 // Create a new user
-export const createUser = async (userData: Omit<User, 'id'>): Promise<string> => {
+export const createUser = async (userId: string, userData: Omit<User, 'id'>): Promise<string> => {
     try {
-        const docRef = await addDoc(usersCollection, userData);
-        return docRef.id;
+        const userDocRef = doc(db, 'users', userId);
+        await setDoc(userDocRef, userData);
+        return userId;
     } catch (error) {
         console.error("Error creating user: ", error);
         throw new Error("Could not create user.");
@@ -80,3 +83,5 @@ export const updateUser = async (userId: string, userData: Partial<User>): Promi
         throw new Error("Could not update user.");
     }
 };
+
+    

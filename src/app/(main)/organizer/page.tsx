@@ -75,10 +75,13 @@ export default function OrganizerProfilePage() {
     const [popoverOpen, setPopoverOpen] = React.useState(false)
     const [isSubmitting, setIsSubmitting] = React.useState(false);
     const [firebaseUser, setFirebaseUser] = React.useState<FirebaseAuthUser | null>(null);
+    const [isAuthLoading, setIsAuthLoading] = React.useState(true);
+
 
     React.useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setFirebaseUser(user);
+            setIsAuthLoading(false);
         });
         return () => unsubscribe();
     }, []);
@@ -168,10 +171,10 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!user || !firebaseUser) {
+        if (!firebaseUser) {
             toast({
                 title: "Authentication Error",
-                description: "You must be signed in to save your profile. Please wait a moment and try again.",
+                description: "You must be signed in to save your profile. Please refresh and try again.",
                 variant: "destructive",
             });
             return;
@@ -179,7 +182,7 @@ export default function OrganizerProfilePage() {
 
         setIsSubmitting(true);
         try {
-            let profilePictureUrl = user.organizerProfile?.profilePicture || '';
+            let profilePictureUrl = user?.organizerProfile?.profilePicture || '';
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
@@ -188,7 +191,7 @@ export default function OrganizerProfilePage() {
             }
 
             let profileData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${user.id}`,
+                id: user?.organizerProfile?.id || `org_${firebaseUser.uid}`,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,
@@ -581,8 +584,8 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || !firebaseUser}>
-                                    {isSubmitting ? 'Saving...' : 'Save Profile'}
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || isAuthLoading}>
+                                    {isAuthLoading ? 'Authenticating...' : isSubmitting ? 'Saving...' : 'Save Profile'}
                                 </Button>
                                 {user?.organizerProfile && (
                                      <Button variant="outline" onClick={() => {
@@ -609,5 +612,7 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
 
     

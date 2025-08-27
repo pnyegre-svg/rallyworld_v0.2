@@ -4,7 +4,8 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
 import { doc, collection, getFirestore } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 type UserState = {
   user: User | null;
@@ -33,6 +34,9 @@ export const useUserStore = create<UserState>()(
 
             if (!userProfile) {
                 // User doesn't exist, so create them
+                const firebaseUser = auth.currentUser;
+                if (!firebaseUser) throw new Error("User not authenticated in Firebase");
+
                 const newUser: Omit<User, 'id'> = {
                     name: name || 'New User',
                     email: email,
@@ -40,7 +44,7 @@ export const useUserStore = create<UserState>()(
                     roles: ['fan'],
                     currentRole: 'fan',
                 };
-                const newUserId = await createUser(newUser);
+                const newUserId = await createUser(firebaseUser.uid, newUser);
                 userProfile = { ...newUser, id: newUserId };
             }
             
@@ -93,3 +97,5 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
+
+    
