@@ -159,8 +159,7 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        // Use the user from the store as the single source of truth
-        const storeUser = useUserStore.getState().user;
+        const { user: storeUser } = useUserStore.getState();
         if (!storeUser) {
             toast({
                 title: "Authentication Error",
@@ -176,7 +175,6 @@ export default function OrganizerProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 // Use the user ID from the store for the path
                  const path = `public/organizers/${storeUser.id}/club-profile-picture/${profilePictureFile.name}`;
                  profilePictureUrl = await uploadFile(profilePictureFile, path);
             }

@@ -60,7 +60,7 @@ export default function ProfilePage() {
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const storeUser = useUserStore.getState().user;
+        const { user: storeUser } = useUserStore.getState();
         if (!storeUser) {
             toast({
                 title: "Authentication Error",

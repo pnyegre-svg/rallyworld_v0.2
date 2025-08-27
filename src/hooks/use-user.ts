@@ -1,4 +1,6 @@
 
+'use client';
+
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
@@ -30,13 +32,13 @@ export const useUserStore = create<UserState>()(
       signInUser: async (email, name) => {
         set({ isLoading: true, isAuthReady: false });
         try {
-            let userProfile = await getUser(email);
+            const firebaseUser = auth.currentUser;
+            if (!firebaseUser) throw new Error("User not authenticated in Firebase");
+
+            let userProfile = await getUser(firebaseUser.uid);
 
             if (!userProfile) {
                 // User doesn't exist, so create them
-                const firebaseUser = auth.currentUser;
-                if (!firebaseUser) throw new Error("User not authenticated in Firebase");
-
                 const newUser: Omit<User, 'id'> = {
                     name: name || 'New User',
                     email: email,
@@ -45,8 +47,8 @@ export const useUserStore = create<UserState>()(
                     currentRole: 'fan',
                     profilePicture: '', // Initialize with empty string
                 };
-                const newUserId = await createUser(firebaseUser.uid, newUser);
-                userProfile = { ...newUser, id: newUserId };
+                await createUser(firebaseUser.uid, newUser);
+                userProfile = { ...newUser, id: firebaseUser.uid };
             }
             
             // Special case for admin to ensure they always have the organizer role

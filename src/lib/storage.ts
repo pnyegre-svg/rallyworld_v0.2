@@ -2,7 +2,7 @@
 'use client';
 
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { app, auth } from './firebase';
+import { app } from './firebase';
 
 const storage = getStorage(app);
 
@@ -14,8 +14,6 @@ const storage = getStorage(app);
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File, path: string): Promise<string> => {
-  // The check for the user is now handled by the UI layer before this function is called,
-  // thanks to the app-wide isAuthReady state.
   const storageRef = ref(storage, path);
 
   try {

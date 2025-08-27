@@ -38,22 +38,21 @@ const userConverter = {
 
 const usersCollection = collection(db, 'users').withConverter(userConverter);
 
-// Get a single user by email
-export const getUser = async (email: string): Promise<User | null> => {
+// Get a single user by ID (which is the Firebase Auth UID)
+export const getUser = async (userId: string): Promise<User | null> => {
   try {
-    const q = query(usersCollection, where("email", "==", email.toLowerCase()));
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
-      return null;
+    const docRef = doc(usersCollection, userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
     }
-    // Make sure to return the full User object including the id
-    const doc = querySnapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as User;
+    return null;
   } catch (error) {
-    console.error("Error getting user: ", error);
+    console.error("Error getting user by ID: ", error);
     return null;
   }
 };
+
 
 // Create a new user
 export const createUser = async (userId: string, userData: Omit<User, 'id'>): Promise<string> => {
