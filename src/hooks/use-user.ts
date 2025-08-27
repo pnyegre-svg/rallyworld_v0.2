@@ -6,11 +6,13 @@ import { getUser, createUser, updateUser } from '@/lib/users';
 
 type UserState = {
   user: User | null;
-  isLoading: boolean;
+  isLoading: boolean; // For initial page load
+  isAuthReady: boolean; // To confirm Firebase auth state is resolved
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
   updateOrganizerProfile: (profile: Organizer) => Promise<void>;
+  setAuthReady: (isReady: boolean) => void;
 };
 
 const defaultUser: User = {
@@ -27,6 +29,10 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       user: null,
       isLoading: true,
+      isAuthReady: false,
+      setAuthReady: (isReady: boolean) => {
+        set({ isAuthReady: isReady });
+      },
       signInUser: async (email, name) => {
         set({ isLoading: true });
         let userProfile = await getUser(email);
@@ -51,7 +57,7 @@ export const useUserStore = create<UserState>()(
             await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
 
-        set({ user: userProfile, isLoading: false });
+        set({ user: userProfile, isLoading: false, isAuthReady: true });
       },
       setRole: async (role: UserRole) => {
         const currentUser = get().user;
@@ -91,5 +97,3 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
-
-    

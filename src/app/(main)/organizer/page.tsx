@@ -66,7 +66,7 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, updateOrganizerProfile } = useUserStore();
+    const { user, updateOrganizerProfile, isAuthReady } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
     const [selectedClubId, setSelectedClubId] = React.useState<string | undefined>(user?.organizerProfile?.id);
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -158,6 +158,15 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!isAuthReady || !user) {
+            toast({
+                title: "Authentication Error",
+                description: "Please wait a moment and try again. User session is not ready.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             // Step 1: Prepare the base organizer data (without the picture)
@@ -567,7 +576,7 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || !isAuthReady}>
                                     {isSubmitting ? 'Saving...' : 'Save Profile'}
                                 </Button>
                                 {user?.organizerProfile && (
@@ -585,5 +594,3 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
-
-    

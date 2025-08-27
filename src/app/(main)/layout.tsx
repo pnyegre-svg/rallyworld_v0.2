@@ -20,24 +20,29 @@ import { Bell } from 'lucide-react';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, signInUser } = useUserStore();
+  const { user, isLoading, signInUser, setAuthReady } = useUserStore();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // If we have a firebase user but no user in the store, it means they re-opened the tab
         // We need to fetch their data from Firestore.
+        // The signInUser function will handle setting isLoading to false and isAuthReady to true.
         if (!user) {
             signInUser(firebaseUser.email!);
+        } else {
+            // If we already have a user in the store, just confirm auth is ready.
+            setAuthReady(true);
         }
       } else {
+        setAuthReady(false);
         router.push('/auth/sign-in');
       }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [router, user, signInUser]);
+  }, [router, user, signInUser, setAuthReady]);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
