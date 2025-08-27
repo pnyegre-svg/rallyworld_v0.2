@@ -46,6 +46,7 @@ export default function CreateEventPage() {
   const router = useRouter();
   const { user } = useUserStore();
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -102,7 +103,9 @@ export default function CreateEventPage() {
         });
         return;
     }
-
+    
+    setIsSubmitting(true);
+    
     try {
       // Create a mutable copy for file uploads
       const dataToSave: EventFormValues & { coverImage?: string | File; logoImage?: string | File } = { ...values, organizerId: user.organizerProfile.id };
@@ -130,6 +133,8 @@ export default function CreateEventPage() {
             description: "An error occurred while creating the event. Please try again.",
             variant: "destructive"
         })
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -474,8 +479,8 @@ export default function CreateEventPage() {
                 </Card>
             </div>
 
-            <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Creating..." : "Create Event"}
+            <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                {isSubmitting ? "Creating..." : "Create Event"}
             </Button>
           </form>
         </Form>
