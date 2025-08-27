@@ -31,17 +31,31 @@ const XIcon = () => (
 
 const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label: string, value: string, isLink?: boolean }) => {
     if (!value) return null;
+    
+    let content;
+
+    if (label === 'Address') {
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(value)}`;
+        content = (
+             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">
+                {value}
+            </a>
+        );
+    } else if (isLink) {
+        content = (
+            <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">{value.replace(/^(https?:\/\/)?(www\.)?/, '')}</a>
+        );
+    } else {
+        content = <p className="text-sm font-medium">{value}</p>;
+    }
+
 
     return (
         <div className="flex items-start gap-3">
             <div className="text-muted-foreground mt-1">{icon}</div>
             <div className="flex-1">
                 <p className="text-xs text-muted-foreground">{label}</p>
-                {isLink ? (
-                    <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">{value.replace(/^(https?:\/\/)?(www\.)?/, '')}</a>
-                ) : (
-                    <p className="text-sm font-medium">{value}</p>
-                )}
+                {content}
             </div>
         </div>
     )
