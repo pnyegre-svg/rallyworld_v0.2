@@ -180,7 +180,7 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
                            </a>
                            {organizerName && (
                               <p className="text-sm text-muted-foreground pl-7">
-                                  hosted by <span className="font-semibold text-foreground/80">{organizerName}</span>
+                                  hosted by <Link href={`/organizer/${event.organizerId}`} className="font-semibold text-foreground/80 hover:underline">{organizerName}</Link>
                               </p>
                            )}
                         </div>
