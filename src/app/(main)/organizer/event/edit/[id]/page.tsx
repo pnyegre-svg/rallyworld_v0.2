@@ -137,27 +137,23 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        let coverImageUrl = values.coverImage;
+        const dataToUpdate = { ...values };
+
         if (values.coverImage instanceof File) {
-            coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+            dataToUpdate.coverImage = coverImageUrl;
         }
 
-        let logoImageUrl = values.logoImage;
         if (values.logoImage instanceof File) {
-            logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+            dataToUpdate.logoImage = logoImageUrl;
         }
         
-        const dataToUpdate = {
-            ...values,
-            coverImage: coverImageUrl,
-            logoImage: logoImageUrl,
-        };
-
         await updateEvent(eventId, dataToUpdate);
 
         toast({
-        title: "Event Updated Successfully!",
-        description: `The event "${values.title}" has been updated.`,
+            title: "Event Updated Successfully!",
+            description: `The event "${values.title}" has been updated.`,
         });
         router.push('/dashboard');
     } catch (error) {

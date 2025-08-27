@@ -108,22 +108,20 @@ export default function CreateEventPage() {
     
     try {
       const eventId = `evt_${Date.now()}`;
-      let coverImageUrl: string | undefined = undefined;
-      let logoImageUrl: string | undefined = undefined;
-
-      if (values.coverImage instanceof File) {
-        coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
-      }
-      if (values.logoImage instanceof File) {
-        logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
-      }
       
       const dataToSave: EventFormValues = { 
         ...values,
         organizerId: user.organizerProfile.id,
-        coverImage: coverImageUrl,
-        logoImage: logoImageUrl,
       };
+
+      if (values.coverImage instanceof File) {
+        const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+        dataToSave.coverImage = coverImageUrl;
+      }
+      if (values.logoImage instanceof File) {
+        const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+        dataToSave.logoImage = logoImageUrl;
+      }
       
       // TODO: Handle itineraryFiles and docsFiles uploads
 
