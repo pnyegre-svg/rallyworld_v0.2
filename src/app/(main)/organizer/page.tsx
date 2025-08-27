@@ -111,13 +111,16 @@ export default function OrganizerProfilePage() {
                 youtube: profile.socials?.youtube || '',
                 tiktok: profile.socials?.tiktok || '',
                 x: profile.socials?.x || '',
+                profilePicture: profile.profilePicture
             });
             const existingClub = clubs.find(c => c.name === profile.name);
             if (existingClub) {
                 setSelectedClubId(existingClub.id);
+                form.setValue("clubId", existingClub.id);
                 setIsManualEntry(false);
             } else {
                  setSelectedClubId('new');
+                 form.setValue("clubId", 'new');
                  setIsManualEntry(true);
             }
             setIsEditing(false);
@@ -158,16 +161,10 @@ export default function OrganizerProfilePage() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
         try {
+            // Step 1: Prepare the initial data, excluding the picture for now.
             const organizerId = user?.organizerProfile?.id || values.clubId || `org_${Date.now()}`;
             
-            let profilePictureUrl = user?.organizerProfile?.profilePicture || undefined;
-            if (values.profilePicture instanceof File) {
-                const fileExtension = values.profilePicture.name.split('.').pop();
-                const path = `public/organizers/${organizerId}_profile.${fileExtension}`;
-                profilePictureUrl = await uploadFile(values.profilePicture, path);
-            }
-
-            const organizerData: Organizer = {
+            const initialOrganizerData: Organizer = {
                 id: organizerId,
                 name: values.name,
                 cis: values.cis,
@@ -183,10 +180,23 @@ export default function OrganizerProfilePage() {
                     tiktok: values.tiktok,
                     x: values.x,
                 },
-                profilePicture: profilePictureUrl,
+                profilePicture: user?.organizerProfile?.profilePicture || '',
             };
 
-            await updateOrganizerProfile(organizerData);
+            // Step 2: Save the initial profile data to get a stable ID.
+            await updateOrganizerProfile(initialOrganizerData);
+
+            let profilePictureUrl = initialOrganizerData.profilePicture;
+
+            // Step 3: If there's a new picture, upload it now using the stable ID.
+            if (values.profilePicture instanceof File) {
+                const fileExtension = values.profilePicture.name.split('.').pop();
+                const path = `public/organizers/${organizerId}_profile.${fileExtension}`;
+                profilePictureUrl = await uploadFile(values.profilePicture, path);
+
+                // Step 4: Update the profile again with the new picture URL.
+                await updateOrganizerProfile({ ...initialOrganizerData, profilePicture: profilePictureUrl });
+            }
             
             toast({
                 title: "Profile Saved",
@@ -579,5 +589,7 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
 
     
