@@ -49,6 +49,7 @@ export default {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         orange: 'hsl(var(--orange))',
+        'vibrant-blue': 'hsl(var(--vibrant-blue))',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',
