@@ -170,7 +170,7 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        if (!isAuthReady || !firebaseUser) {
+        if (!firebaseUser) {
             toast({
                 title: "Authentication Error",
                 description: "You must be signed in to save your profile. Please wait a moment and try again.",
@@ -602,5 +602,7 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
 
     
