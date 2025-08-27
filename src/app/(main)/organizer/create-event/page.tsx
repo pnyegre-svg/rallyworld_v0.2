@@ -5,8 +5,9 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, ArrowRight } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
+import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
 import { uploadFile } from '@/lib/storage';
+import { ActionCard } from '@/components/ui/action-card';
 
 
 export default function CreateEventPage() {
@@ -123,10 +125,10 @@ export default function CreateEventPage() {
         dataToSave.logoImage = logoImageUrl;
       }
       
-      const uploadAndGetURL = async (file: File | undefined, path: string) => {
-        if (file instanceof File) {
-          const url = await uploadFile(file, path);
-          return { url, name: file.name, type: file.type, size: file.size };
+      const uploadAndGetURL = async (fileObj: { file?: File }, path: string) => {
+        if (fileObj.file instanceof File) {
+          const url = await uploadFile(fileObj.file, path);
+          return { url, name: fileObj.file.name, type: fileObj.file.type, size: fileObj.file.size };
         }
         return undefined; // If it's not a file, ignore it
       };
@@ -134,7 +136,7 @@ export default function CreateEventPage() {
       if (values.itineraryFiles && values.itineraryFiles.length > 0) {
           const uploadedFiles = await Promise.all(
               values.itineraryFiles.map(async (fileObj) => 
-                  uploadAndGetURL(fileObj.file, `events/${eventId}/itinerary/${fileObj.file?.name}`)
+                  uploadAndGetURL(fileObj, `events/${eventId}/itinerary/${fileObj.file?.name}`)
               )
           );
           dataToSave.itineraryFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
@@ -145,7 +147,7 @@ export default function CreateEventPage() {
       if (values.docsFiles && values.docsFiles.length > 0) {
           const uploadedFiles = await Promise.all(
               values.docsFiles.map(async (fileObj) => 
-                  uploadAndGetURL(fileObj.file, `events/${eventId}/docs/${fileObj.file?.name}`)
+                  uploadAndGetURL(fileObj, `events/${eventId}/docs/${fileObj.file?.name}`)
               )
           );
           dataToSave.docsFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
@@ -243,6 +245,18 @@ export default function CreateEventPage() {
       {label}
     </Button>
   );
+
+  if (!user.organizerProfile?.id) {
+    return (
+        <ActionCard
+            title="Complete Your Club Profile"
+            description="You need to set up your club profile before you can create an event. This allows competitors to identify who is organizing the event."
+            buttonText="Go to Club Profile"
+            buttonIcon={<ArrowRight />}
+            href="/organizer"
+        />
+    )
+  }
 
   return (
     <Card>
@@ -522,5 +536,3 @@ export default function CreateEventPage() {
     </Card>
   );
 }
-
-    
