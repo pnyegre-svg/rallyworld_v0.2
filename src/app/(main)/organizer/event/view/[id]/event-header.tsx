@@ -120,10 +120,10 @@ export function EventHeader({ event }: EventHeaderProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between">
-                <div className="flex items-start gap-4">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+                <div className="space-y-4">
                      {event.logoImage && (
-                        <div className="relative w-48 h-24 flex-shrink-0">
+                        <div className="relative w-64 h-24">
                              <Image 
                                 src={getResizedImageUrl(event.logoImage, '512x512')!}
                                 alt={`${event.title} logo`}
@@ -132,7 +132,7 @@ export function EventHeader({ event }: EventHeaderProps) {
                              />
                         </div>
                     )}
-                    <div className="space-y-2 pt-2">
+                    <div className="space-y-1">
                         <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <MapPin className="h-5 w-5" />
@@ -141,7 +141,7 @@ export function EventHeader({ event }: EventHeaderProps) {
                     </div>
                 </div>
 
-                <div className="flex-shrink-0 mt-6 md:mt-0 md:ml-8">
+                <div className="flex-shrink-0">
                     <DateDisplay event={event} />
                 </div>
             </div>
