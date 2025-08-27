@@ -75,18 +75,7 @@ export default function OrganizerProfilePage() {
     const [isManualEntry, setIsManualEntry] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false)
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [firebaseUser, setFirebaseUser] = React.useState<FirebaseAuthUser | null>(null);
-    const [isAuthLoading, setIsAuthLoading] = React.useState(true);
-
-
-    React.useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setFirebaseUser(user);
-            setIsAuthLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-
+    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: user?.organizerProfile ? {
@@ -172,6 +161,7 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        const firebaseUser = auth.currentUser;
         if (!firebaseUser) {
             toast({
                 title: "Authentication Error",
@@ -585,8 +575,8 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || isAuthLoading}>
-                                    {isAuthLoading ? 'Authenticating...' : isSubmitting ? 'Saving...' : 'Save Profile'}
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Saving...' : 'Save Profile'}
                                 </Button>
                                 {user?.organizerProfile && (
                                      <Button variant="outline" onClick={() => {

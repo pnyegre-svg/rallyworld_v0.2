@@ -21,29 +21,26 @@ import { Bell } from 'lucide-react';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, signInUser, setAuthReady, isAuthReady } = useUserStore();
+  const { user, isLoading, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // If we have a firebase user but no user in the store, it means they re-opened the tab
-        // We need to fetch their data from Firestore.
-        // The signInUser function will handle setting isLoading to false and isAuthReady to true.
+        // If we have a firebase user but no user in the store (e.g. page refresh),
+        // or the email doesn't match, we need to fetch their profile.
         if (!user || user.email !== firebaseUser.email) {
             signInUser(firebaseUser.email!);
-        } else {
-            // If we already have a user in the store, just confirm auth is ready.
-            setAuthReady(true);
         }
       } else {
-        setAuthReady(false);
+        // User is signed out.
+        signOutUser();
         router.push('/auth/sign-in');
       }
     });
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [router, user, signInUser, setAuthReady]);
+  }, [router, user, signInUser, signOutUser]);
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
@@ -63,7 +60,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  if (isLoading || !isAuthReady || !user) {
+  // This is the crucial check. We wait for both the initial loading AND the auth/profile readiness.
+  if (isLoading || !isAuthReady) {
     return <Loading />;
   }
   

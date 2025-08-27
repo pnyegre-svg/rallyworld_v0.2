@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -41,8 +42,6 @@ export default function ProfilePage() {
     const router = useRouter();
     const { user, updateUserProfile } = useUserStore();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
-    const [firebaseUser, setFirebaseUser] = React.useState<FirebaseAuthUser | null>(null);
-    const [isAuthLoading, setIsAuthLoading] = React.useState(true);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -52,14 +51,6 @@ export default function ProfilePage() {
         },
     });
 
-    React.useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setFirebaseUser(user);
-            setIsAuthLoading(false);
-        });
-        return () => unsubscribe();
-    }, []);
-    
     React.useEffect(() => {
         if (user) {
             form.reset({
@@ -71,6 +62,7 @@ export default function ProfilePage() {
 
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
+        const firebaseUser = auth.currentUser;
         if (!firebaseUser) {
             toast({
                 title: "Authentication Error",
@@ -190,8 +182,8 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting || isAuthLoading}>
-                            {isAuthLoading ? 'Authenticating...' : isSubmitting ? 'Saving...' : 'Save Changes'}
+                        <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </Button>
                     </form>
                 </Form>

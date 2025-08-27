@@ -15,7 +15,7 @@ type UserState = {
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
   updateUserProfile: (data: Partial<Omit<User, 'id' | 'email'>>) => Promise<void>;
-  setAuthReady: (isReady: boolean) => void;
+  signOutUser: () => void;
 };
 
 export const useUserStore = create<UserState>()(
@@ -24,8 +24,8 @@ export const useUserStore = create<UserState>()(
       user: null,
       isLoading: true,
       isAuthReady: false,
-      setAuthReady: (isReady: boolean) => {
-        set({ isAuthReady: isReady, isLoading: !isReady });
+      signOutUser: () => {
+        set({ user: null, isAuthReady: false, isLoading: false });
       },
       signInUser: async (email, name) => {
         set({ isLoading: true, isAuthReady: false });
@@ -105,5 +105,3 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
-
-    
