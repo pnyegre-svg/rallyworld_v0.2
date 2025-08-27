@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getResizedImageUrl } from '@/lib/utils';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -111,7 +112,7 @@ export function EventHeader({ event }: EventHeaderProps) {
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
         <Image
-            src={event.coverImage || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
+            src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
             alt={event.title}
             data-ai-hint="rally car racing"
             fill
@@ -124,7 +125,7 @@ export function EventHeader({ event }: EventHeaderProps) {
                 <div className="flex items-center gap-4">
                     {event.logoImage && (
                         <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
-                            <AvatarImage src={event.logoImage} alt={`${event.title} logo`} />
+                            <AvatarImage src={getResizedImageUrl(event.logoImage, '512x512')} alt={`${event.title} logo`} />
                             <AvatarFallback><Award /></AvatarFallback>
                         </Avatar>
                     )}
