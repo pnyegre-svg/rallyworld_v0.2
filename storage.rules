@@ -1,27 +1,27 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default: deny all
+    // Default: deny all read/write access.
     match /{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Public read access
+    // Allow public read access to any file in the /public/ directory.
     match /public/{allPaths=**} {
       allow read: if true;
     }
 
-    // Authenticated user can write to their own folder
+    // Allow an authenticated user to write to their own organizer folder.
+    // The {userId} wildcard must match the UID of the person making the request.
     match /public/organizers/{userId}/{allPaths=**} {
-      allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Event-specific uploads (only owner can write)
+    // Allow an authenticated user to write to an event folder they own.
+    // This rule assumes your event documents in Firestore have an 'organizerId' field.
     match /public/events/{eventId}/{allPaths=**} {
-      allow read: if true;
       allow write: if request.auth != null &&
-        get(/databases/(default)/documents/events/$(eventId)).data.ownerUid == request.auth.uid;
+        get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
   }
 }
