@@ -44,6 +44,7 @@ export default function EditEventPage() {
   const router = useRouter();
   const params = useParams();
   const { user } = useUserStore();
+  const [loading, setLoading] = React.useState(true);
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
   const eventId = params.id as string;
   
@@ -64,26 +65,38 @@ export default function EditEventPage() {
   React.useEffect(() => {
     if (eventId) {
       const fetchEventData = async () => {
-        const eventToEdit = await getEvent(eventId);
-        if (eventToEdit) {
-            // Ensure the current user is the owner of the event
-            if (eventToEdit.organizerId !== user.organizerProfile?.id) {
-                 toast({
-                    title: "Permission Denied",
-                    description: "You are not authorized to edit this event.",
+        setLoading(true);
+        try {
+            const eventToEdit = await getEvent(eventId);
+            if (eventToEdit) {
+                // Ensure the current user is the owner of the event
+                if (eventToEdit.organizerId !== user.organizerProfile?.id) {
+                     toast({
+                        title: "Permission Denied",
+                        description: "You are not authorized to edit this event.",
+                        variant: "destructive",
+                    });
+                    router.push('/dashboard');
+                    return;
+                }
+              form.reset(eventToEdit);
+            } else {
+               toast({
+                    title: "Event Not Found",
+                    description: "Could not find the event you are trying to edit.",
                     variant: "destructive",
                 });
-                router.push('/dashboard');
-                return;
+               router.push('/dashboard');
             }
-          form.reset(eventToEdit);
-        } else {
-           toast({
-                title: "Event Not Found",
-                description: "Could not find the event you are trying to edit.",
+        } catch (error) {
+             toast({
+                title: "Error loading event",
+                description: "There was a problem fetching the event data.",
                 variant: "destructive",
             });
-           router.push('/dashboard');
+            router.push('/dashboard');
+        } finally {
+            setLoading(false);
         }
       };
       fetchEventData();
@@ -162,7 +175,7 @@ export default function EditEventPage() {
     </Button>
   );
 
-  if (!form.formState.isDirty) {
+  if (loading) {
     return (
         <Card>
             <CardHeader>
