@@ -94,7 +94,7 @@ export default function MyEventsPage() {
                     <Card key={event.id} className="overflow-hidden flex flex-col">
                         <CardHeader className="p-0 relative h-40">
                              <Image
-                                src={getResizedImageUrl(event.coverImage, '1200x630') || `https://picsum.photos/seed/${event.id}/400/200`}
+                                src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
                                 alt={event.title}
                                 data-ai-hint="rally racing"
                                 fill
@@ -102,7 +102,7 @@ export default function MyEventsPage() {
                             />
                              <div className="absolute -bottom-10 left-6">
                                 <Avatar className="h-20 w-20 border-4 border-card shadow-md">
-                                    <AvatarImage src={getResizedImageUrl(event.logoImage, '512x512')} alt={`${event.title} logo`} />
+                                    <AvatarImage src={getResizedImageUrl(event.logoImage, '200x200')} alt={`${event.title} logo`} />
                                     <AvatarFallback><Award /></AvatarFallback>
                                 </Avatar>
                              </div>
