@@ -137,19 +137,24 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        const dataToUpdate: any = { ...values };
-
+        let coverImageUrl = values.coverImage;
         if (values.coverImage instanceof File) {
-            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
-            dataToUpdate.coverImage = coverImageUrl;
+            coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
         }
 
+        let logoImageUrl = values.logoImage;
         if (values.logoImage instanceof File) {
-            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
-            dataToUpdate.logoImage = logoImageUrl;
+            logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
         }
         
-        await updateEvent(eventId, dataToUpdate as Partial<EventFormValues>);
+        const dataToUpdate: Partial<EventFormValues> = {
+            ...values,
+            coverImage: coverImageUrl,
+            logoImage: logoImageUrl,
+        };
+
+        await updateEvent(eventId, dataToUpdate);
+
         toast({
         title: "Event Updated Successfully!",
         description: `The event "${values.title}" has been updated.`,
@@ -548,3 +553,5 @@ export default function EditEventPage() {
     </Card>
   );
 }
+
+    
