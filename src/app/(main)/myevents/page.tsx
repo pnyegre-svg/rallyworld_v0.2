@@ -106,7 +106,7 @@ export default function MyEventsPage() {
                                         alt={`${event.title} logo`}
                                         width={120}
                                         height={60}
-                                        className="object-contain rounded-md bg-background/80 backdrop-blur-sm p-1 border-2 border-card shadow-md"
+                                        className="object-contain drop-shadow-lg"
                                     />
                                 ) : (
                                     <div className="h-16 w-16 flex items-center justify-center bg-card rounded-md border-2 border-card shadow-md">
