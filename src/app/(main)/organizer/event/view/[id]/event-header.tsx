@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube, Video, MoreVertical, Edit } from 'lucide-react';
@@ -84,7 +83,9 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
   const [isUploading, setIsUploading] = React.useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const logoFileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     setEventUrl(window.location.href);
@@ -141,6 +142,33 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
         setIsUploading(false);
     }
   };
+  
+   const handleLogoImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+        const newLogoImageUrl = await uploadFile(file, 'organizer');
+        await updateEvent(event.id, { logoImage: newLogoImageUrl });
+        
+        setEvent(prevEvent => prevEvent ? { ...prevEvent, logoImage: newLogoImageUrl } : null);
+
+        toast({
+            title: 'Logo Image Updated',
+            description: 'Your event logo has been changed successfully.',
+        });
+    } catch (error) {
+        toast({
+            title: 'Upload Failed',
+            description: 'There was a problem changing your event logo. Please try again.',
+            variant: 'destructive',
+        });
+        console.error(error);
+    } finally {
+        setIsUploadingLogo(false);
+    }
+  };
 
 
   return (
@@ -152,6 +180,14 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
             onChange={handleCoverImageChange}
             accept="image/*"
             disabled={isUploading}
+        />
+        <input 
+            type="file" 
+            ref={logoFileInputRef} 
+            className="hidden" 
+            onChange={handleLogoImageChange}
+            accept="image/*"
+            disabled={isUploadingLogo}
         />
         <Image
             src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWlseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
@@ -166,13 +202,25 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
             <div className="flex flex-row items-end justify-between gap-6">
                 <div className="flex flex-col gap-4 items-start flex-1">
                     {event.logoImage && (
-                        <div className="relative w-48 h-24 flex-shrink-0">
+                        <div className="relative w-48 h-24 flex-shrink-0 group">
                             <Image 
                                 src={getResizedImageUrl(event.logoImage, '512x256')!}
                                 alt={`${event.title} logo`}
                                 fill
                                 className="object-contain drop-shadow-lg"
                             />
+                            {isOwner && (
+                                <Button 
+                                    variant="outline"
+                                    size="icon"
+                                    className="absolute top-0 right-0 h-7 w-7 rounded-full bg-black/50 border-white/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                    onClick={() => logoFileInputRef.current?.click()}
+                                    disabled={isUploadingLogo}
+                                >
+                                    {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
+                                    <span className="sr-only">Change Logo</span>
+                                </Button>
+                            )}
                         </div>
                     )}
                     <div className="space-y-1 w-full">
@@ -266,5 +314,7 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     </div>
   );
 }
+
+    
 
     
