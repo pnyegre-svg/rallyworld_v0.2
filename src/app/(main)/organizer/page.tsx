@@ -69,7 +69,7 @@ export default function OrganizerProfilePage() {
     const router = useRouter();
     const { user, updateOrganizerProfile } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
-    const [selectedClubId, setSelectedClubId] = React.useState<string>('');
+    const [selectedClubId, setSelectedClubId] = React.useState<string | undefined>(user?.organizerProfile?.id);
     const [isManualEntry, setIsManualEntry] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false)
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -161,10 +161,9 @@ export default function OrganizerProfilePage() {
     async function onSubmit(values: z.infer<typeof formSchema>) {
         setIsSubmitting(true);
         try {
-            // Step 1: Prepare the initial data, excluding the picture for now.
-            const organizerId = user?.organizerProfile?.id || values.clubId || `org_${Date.now()}`;
+            const organizerId = user?.organizerProfile?.id || `org_${Date.now()}`;
             
-            const initialOrganizerData: Organizer = {
+            let organizerData: Organizer = {
                 id: organizerId,
                 name: values.name,
                 cis: values.cis,
@@ -183,27 +182,20 @@ export default function OrganizerProfilePage() {
                 profilePicture: user?.organizerProfile?.profilePicture || '',
             };
 
-            // Step 2: Save the initial profile data to get a stable ID.
-            await updateOrganizerProfile(initialOrganizerData);
-
-            let profilePictureUrl = initialOrganizerData.profilePicture;
-
-            // Step 3: If there's a new picture, upload it now using the stable ID.
             if (values.profilePicture instanceof File) {
                 const fileExtension = values.profilePicture.name.split('.').pop();
-                const path = `public/organizers/${organizerId}_profile.${fileExtension}`;
-                profilePictureUrl = await uploadFile(values.profilePicture, path);
-
-                // Step 4: Update the profile again with the new picture URL.
-                await updateOrganizerProfile({ ...initialOrganizerData, profilePicture: profilePictureUrl });
+                const path = `public/organizers/${organizerId}/profile.${fileExtension}`;
+                const profilePictureUrl = await uploadFile(values.profilePicture, path);
+                organizerData.profilePicture = profilePictureUrl;
             }
+
+            await updateOrganizerProfile(organizerData);
             
             toast({
                 title: "Profile Saved",
                 description: "Your club profile has been successfully updated.",
             });
             setIsEditing(false);
-            router.push('/dashboard');
 
         } catch (error) {
             console.error("Error saving profile:", error);
@@ -589,7 +581,5 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
-
-    
 
     
