@@ -128,6 +128,8 @@ export default function PublicClubProfilePage() {
         return null;
     }
     
+    const hasSocials = profile.socials && Object.values(profile.socials).some(link => !!link);
+
     return (
         <Card>
             <CardHeader className="text-center items-center">
@@ -150,22 +152,23 @@ export default function PublicClubProfilePage() {
 
                  <div className="space-y-4">
                     {profile.website && <InfoItem icon={<Globe size={20} />} label="Website" value={profile.website} isLink />}
-                    <div className="flex items-center gap-3">
-                         <div className="text-muted-foreground"><Facebook size={20} /></div>
-                        <div className="flex-1">
-                             <p className="text-xs text-muted-foreground">Socials</p>
-                            <div className="flex gap-2 pt-1">
-                                <SocialLink href={profile.socials?.facebook} icon={<Facebook />} name="Facebook" />
-                                <SocialLink href={profile.socials?.instagram} icon={<Instagram />} name="Instagram" />
-                                <SocialLink href={profile.socials?.youtube} icon={<Youtube />} name="YouTube" />
-                                <SocialLink href={profile.socials?.tiktok} icon={<TikTokIcon />} name="TikTok" />
-                                <SocialLink href={profile.socials?.x} icon={<XIcon />} name="X" />
+                     {hasSocials && (
+                        <div className="flex items-start gap-3">
+                            <div className="text-muted-foreground mt-1"><Facebook size={20} /></div>
+                            <div className="flex-1">
+                                <p className="text-xs text-muted-foreground">Socials</p>
+                                <div className="flex gap-2 pt-1 flex-wrap">
+                                    <SocialLink href={profile.socials?.facebook} icon={<Facebook />} name="Facebook" />
+                                    <SocialLink href={profile.socials?.instagram} icon={<Instagram />} name="Instagram" />
+                                    <SocialLink href={profile.socials?.youtube} icon={<Youtube />} name="YouTube" />
+                                    <SocialLink href={profile.socials?.tiktok} icon={<TikTokIcon />} name="TikTok" />
+                                    <SocialLink href={profile.socials?.x} icon={<XIcon />} name="X" />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                  </div>
             </CardContent>
         </Card>
     );
 }
-
