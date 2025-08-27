@@ -7,6 +7,7 @@ import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { appCheckReady } from '@/lib/app-check';
 
 type UserState = {
   user: User | null;
@@ -26,6 +27,9 @@ export const useUserStore = create<UserState>()(
       isAuthReady: false,
       initializeAuth: () => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            // First, wait for App Check to be ready
+            await appCheckReady;
+            
             if (firebaseUser) {
               if (!get().user || get().user?.email !== firebaseUser.email) {
                   await get().signInUser(firebaseUser.email!);
