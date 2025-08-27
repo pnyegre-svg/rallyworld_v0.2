@@ -36,7 +36,7 @@ const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label
     let finalHref: string | undefined;
 
     if (label === 'Address') {
-        finalHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(value)}`;
+        finalHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(value)}`;
     } else if (typeof isLink === 'string') {
         finalHref = isLink;
     } else if (isLink === true && typeof value === 'string' && (value.startsWith('http') || value.startsWith('mailto') || value.startsWith('tel'))) {
