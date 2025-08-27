@@ -28,23 +28,26 @@ export function EventTabs({ event }: EventTabsProps) {
     if (!url) return null;
     let videoId = null;
     
-    // Standard watch URL
-    const urlParams = new URL(url).searchParams;
-    videoId = urlParams.get('v');
-    if (videoId) return `https://www.youtube.com/embed/${videoId}`;
-
-    // Shortened youtu.be URL
-    if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1].split('?')[0];
-        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
-    }
-
-    // Embed URL
-    if (url.includes('/embed/')) {
-        videoId = url.split('/embed/')[1].split('?')[0];
-        if (videoId) return `https://www.youtube.com/embed/${videoId}`;
+    try {
+        // Standard watch URL
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+             videoId = urlObj.searchParams.get('v');
+        } else if (urlObj.hostname === 'youtu.be') {
+             videoId = urlObj.pathname.slice(1);
+        }
+    } catch (e) {
+        // Fallback for invalid URLs or other formats
     }
     
+    if (!videoId && url.includes('/embed/')) {
+        videoId = url.split('/embed/')[1].split('?')[0];
+    } else if (!videoId && url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+    }
+
+    if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`;
+
     // If it's another video provider, just return the raw link but we can't embed it.
     // In a real app, you'd add parsers for Facebook, etc.
     return null;
