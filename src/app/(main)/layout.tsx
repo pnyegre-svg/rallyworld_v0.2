@@ -20,7 +20,7 @@ import { Bell } from 'lucide-react';
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, signInUser, setAuthReady } = useUserStore();
+  const { user, isLoading, signInUser, setAuthReady, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -54,14 +54,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/organizer/event/edit')) return 'Edit Event';
     if (path.startsWith('/organizer/event/view')) return 'Event Details';
     if (path.startsWith('/organizer')) return 'Club Profile';
-    if (path.startsWith('/community')) return 'Community';
+    if (path.startsWith('/feed')) return 'Feed';
     if (path.startsWith('/marketplace')) return 'Marketplace';
-    if (path.startsWith('/shop')) return 'Shop';
+    if (path.startsWith('/shop')) return 'MyShop';
     if (path.startsWith('/news')) return 'News';
     return 'Rally World';
   };
   
-  if (isLoading || !user) {
+  if (isLoading || !isAuthReady || !user) {
     return <Loading />;
   }
   
