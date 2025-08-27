@@ -39,6 +39,7 @@ import { useUserStore } from '@/hooks/use-user';
 import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { uploadFile } from '@/lib/storage';
 
 export default function EditEventPage() {
   const { toast } = useToast();
@@ -134,9 +135,19 @@ export default function EditEventPage() {
 
   async function onSubmit(values: EventFormValues) {
     try {
-        // In a real app, handle file uploads here before saving.
-        console.log("Form Values:", values);
-        await updateEvent(eventId, values);
+        const dataToUpdate: Partial<EventFormValues> = { ...values };
+
+        if (values.coverImage instanceof File) {
+            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
+            dataToUpdate.coverImage = coverImageUrl;
+        }
+
+        if (values.logoImage instanceof File) {
+            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
+            dataToUpdate.logoImage = logoImageUrl;
+        }
+        
+        await updateEvent(eventId, dataToUpdate);
         toast({
         title: "Event Updated Successfully!",
         description: `The event "${values.title}" has been updated.`,

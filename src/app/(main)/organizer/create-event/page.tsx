@@ -38,6 +38,7 @@ import { useRouter } from 'next/navigation';
 import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
+import { uploadFile } from '@/lib/storage';
 
 
 export default function CreateEventPage() {
@@ -103,9 +104,19 @@ export default function CreateEventPage() {
     }
 
     try {
-      // In a real app, handle file uploads here before saving.
-      console.log("Form Values:", values);
-      await addEvent({ ...values, organizerId: user.organizerProfile.id });
+      const dataToSave = { ...values, organizerId: user.organizerProfile.id };
+
+      // Handle file uploads
+      if (values.coverImage instanceof File) {
+        const coverImageUrl = await uploadFile(values.coverImage, `events/${Date.now()}_${values.coverImage.name}`);
+        dataToSave.coverImage = coverImageUrl;
+      }
+      if (values.logoImage instanceof File) {
+        const logoImageUrl = await uploadFile(values.logoImage, `events/${Date.now()}_${values.logoImage.name}`);
+        dataToSave.logoImage = logoImageUrl;
+      }
+
+      await addEvent(dataToSave);
       toast({
         title: "Event Created Successfully!",
         description: `The event "${values.title}" has been created.`,

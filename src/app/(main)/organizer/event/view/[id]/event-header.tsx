@@ -10,12 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare } from 'lucide-react';
+import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award } from 'lucide-react';
 import { Event } from '@/lib/events';
 import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -110,8 +111,8 @@ export function EventHeader({ event }: EventHeaderProps) {
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
         <Image
-            src="https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"
-            alt="Rally car background"
+            src={event.coverImage || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
+            alt={event.title}
             data-ai-hint="rally car racing"
             fill
             className="object-cover"
@@ -120,12 +121,19 @@ export function EventHeader({ event }: EventHeaderProps) {
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between">
-                <div className="space-y-4">
-                    <h1 className="text-4xl md:text-6xl font-headline font-bold">{event.title}</h1>
-                    <p className="text-lg text-muted-foreground">Evenimente Restrictionate</p>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-5 w-5" />
-                        <span>{event.hqLocation}</span>
+                <div className="flex items-center gap-4">
+                    {event.logoImage && (
+                        <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                            <AvatarImage src={event.logoImage} alt={`${event.title} logo`} />
+                            <AvatarFallback><Award /></AvatarFallback>
+                        </Avatar>
+                    )}
+                    <div className="space-y-2">
+                        <h1 className="text-4xl md:text-6xl font-headline font-bold">{event.title}</h1>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="h-5 w-5" />
+                            <span>{event.hqLocation}</span>
+                        </div>
                     </div>
                 </div>
 

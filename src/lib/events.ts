@@ -34,18 +34,22 @@ export const eventFormSchema = z.object({
 
 export type EventFormValues = z.infer<typeof eventFormSchema>;
 
-export interface Event extends EventFormValues {
+export interface Event extends Omit<EventFormValues, 'coverImage' | 'logoImage'> {
     id: string;
+    coverImage?: string; // URL as string
+    logoImage?: string; // URL as string
 }
 
 // Firestore converter
 const eventConverter = {
   toFirestore: (event: EventFormValues) => {
+    // Dates are converted to Timestamps when creating the document
+    const { dates, ...remaiingEventData } = event;
     return {
-      ...event,
+      ...remaiingEventData,
       dates: {
-        from: Timestamp.fromDate(event.dates.from),
-        to: Timestamp.fromDate(event.dates.to),
+        from: Timestamp.fromDate(dates.from),
+        to: Timestamp.fromDate(dates.to),
       }
     };
   },
@@ -60,14 +64,13 @@ const eventConverter = {
         from: data.dates.from.toDate(),
         to: data.dates.to.toDate(),
       },
+      coverImage: data.coverImage,
+      logoImage: data.logoImage,
       whatsappLink: data.whatsappLink || '',
       livestreamLink: data.livestreamLink || '',
       itineraryLinks: data.itineraryLinks || [],
       docsLinks: data.docsLinks || [],
       stages: data.stages || [],
-      // Note: we are not handling file data from Firestore yet
-      coverImage: data.coverImage,
-      logoImage: data.logoImage,
     };
   }
 };
