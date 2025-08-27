@@ -9,8 +9,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube, Video } from 'lucide-react';
+import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube, Video, MoreVertical, Edit } from 'lucide-react';
 import { Event, updateEvent } from '@/lib/events';
 import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
@@ -144,8 +145,16 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
 
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
+        <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            onChange={handleCoverImageChange}
+            accept="image/*"
+            disabled={isUploading}
+        />
         <Image
-            src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWxseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
+            src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWlseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
             alt={event.title}
             data-ai-hint="rally car racing"
             fill
@@ -193,32 +202,14 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
             </div>
         </div>
 
-        <div className="absolute top-6 left-6">
-            {isOwner && (
-                 <>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden" 
-                        onChange={handleCoverImageChange}
-                        accept="image/*"
-                        disabled={isUploading}
-                    />
-                    <Button 
-                        variant="outline" 
-                        className="bg-black/20 border-white/20 hover:bg-black/50"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                    >
-                        {isUploading ? <Loader2 className="mr-2 animate-spin" /> : <Camera className="mr-2" />}
-                        {isUploading ? 'Uploading...' : 'Edit Cover'}
-                    </Button>
-                </>
-            )}
-        </div>
-
-
         <div className="absolute top-6 right-6 flex items-center gap-2">
+             {event.livestreamLink && (
+                 <Button asChild variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
+                    <a href={event.livestreamLink} target="_blank" rel="noopener noreferrer">
+                        <Youtube className="mr-2" /> Watch Live
+                    </a>
+                </Button>
+            )}
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
@@ -247,11 +238,25 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
                 </DropdownMenuContent>
             </DropdownMenu>
             {isOwner ? (
-                <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <Link href={`/organizer/event/edit/${event.id}`}>
-                        <PenSquare className="mr-2"/> Edit Event
-                    </Link>
-                </Button>
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                            <Edit className="mr-2"/> Edit
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <Link href={`/organizer/event/edit/${event.id}`}>
+                                <PenSquare className="mr-2 h-4 w-4" />
+                                <span>Edit Event Details</span>
+                            </Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={() => fileInputRef.current?.click()} disabled={isUploading}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                            <span>{isUploading ? 'Uploading...' : 'Change Cover Photo'}</span>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                 </DropdownMenu>
             ) : (
                 <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
                     <UserPlus className="mr-2"/> Register
@@ -261,3 +266,5 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     </div>
   );
 }
+
+    
