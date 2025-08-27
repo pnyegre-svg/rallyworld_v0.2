@@ -40,6 +40,7 @@ import { useUserStore } from '@/hooks/use-user';
 import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { uploadFile } from '@/lib/storage';
 
 export default function EditEventPage() {
   const { toast } = useToast();
@@ -141,7 +142,23 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        await updateEvent(eventId, values);
+        let coverImageUrl: string | undefined = values.coverImage as string | undefined;
+        let logoImageUrl: string | undefined = values.logoImage as string | undefined;
+
+        if (values.coverImage instanceof File) {
+          coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+        }
+        if (values.logoImage instanceof File) {
+          logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+        }
+
+        const dataToUpdate = {
+            ...values,
+            coverImage: coverImageUrl,
+            logoImage: logoImageUrl,
+        };
+
+        await updateEvent(eventId, dataToUpdate);
 
         toast({
             title: "Event Updated Successfully!",
@@ -378,9 +395,9 @@ export default function EditEventPage() {
                         name="coverImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Disabled)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
                             <FormDescription>Recommended: 1200x630px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
@@ -392,9 +409,9 @@ export default function EditEventPage() {
                         name="logoImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Disabled)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
                             <FormDescription>Recommended: 512x512px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />

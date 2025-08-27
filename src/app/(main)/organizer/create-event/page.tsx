@@ -41,6 +41,7 @@ import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
 import { ActionCard } from '@/components/ui/action-card';
+import { uploadFile } from '@/lib/storage';
 
 
 export default function CreateEventPage() {
@@ -109,8 +110,20 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
+      let coverImageUrl: string | undefined = undefined;
+      let logoImageUrl: string | undefined = undefined;
+
+      if (values.coverImage instanceof File) {
+        coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+      }
+      if (values.logoImage instanceof File) {
+        logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+      }
+
       const dataToSave = { 
         ...values,
+        coverImage: coverImageUrl,
+        logoImage: logoImageUrl,
         organizerId: user.organizerProfile.id,
       };
 
@@ -323,9 +336,9 @@ export default function CreateEventPage() {
                         name="coverImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Disabled)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
                             <FormDescription>Recommended: 1200x630px.</FormDescription>
                             <FormMessage />
@@ -337,9 +350,9 @@ export default function CreateEventPage() {
                         name="logoImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Disabled)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
                             <FormDescription>Recommended: 512x512px.</FormDescription>
                             <FormMessage />
