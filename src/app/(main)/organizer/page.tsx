@@ -38,7 +38,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube, Copy } from 'lucide-react';
+import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube, Copy, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club, Organizer } from '@/lib/data';
@@ -46,6 +46,7 @@ import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
 import { uploadFile } from '@/lib/storage';
+import Link from 'next/link';
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -264,9 +265,16 @@ export default function OrganizerProfilePage() {
                         </CardDescription>
                     </div>
                     {!isEditing && user?.organizerProfile && (
-                        <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-                            <PenSquare className="mr-2 h-4 w-4" /> Edit Profile
-                        </Button>
+                         <div className="flex items-center gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <Link href={`/organizer/${user.id}`}>
+                                    <Eye className="mr-2 h-4 w-4" /> View as Public
+                                </Link>
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                                <PenSquare className="mr-2 h-4 w-4" /> Edit Profile
+                            </Button>
+                        </div>
                     )}
                 </div>
             </CardHeader>
@@ -404,7 +412,7 @@ export default function OrganizerProfilePage() {
                                                 <FormLabel>Club CIS</FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
-                                                        <Input placeholder="Club's Sport Identity Card" {...field} disabled={allFieldsDisabled} />
+                                                        <Input placeholder="Club's Sport Identity Card" {...field} disabled={!isEditing} />
                                                     </FormControl>
                                                     <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIS')}>
                                                         <Copy className="h-4 w-4" />
@@ -422,7 +430,7 @@ export default function OrganizerProfilePage() {
                                                 <FormLabel>Club CIF</FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
-                                                        <Input placeholder="Club's Fiscal ID Code" {...field} disabled={allFieldsDisabled}/>
+                                                        <Input placeholder="Club's Fiscal ID Code" {...field} disabled={!isEditing}/>
                                                     </FormControl>
                                                     <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIF')}>
                                                         <Copy className="h-4 w-4" />
@@ -445,7 +453,7 @@ export default function OrganizerProfilePage() {
                                         <FormLabel>Address</FormLabel>
                                         <div className="flex items-start gap-2">
                                             <FormControl>
-                                                <Textarea placeholder="Club's full address" {...field} disabled={allFieldsDisabled} />
+                                                <Textarea placeholder="Club's full address" {...field} disabled={!isEditing} />
                                             </FormControl>
                                             <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'Address')} className="mt-1">
                                                 <Copy className="h-4 w-4" />
