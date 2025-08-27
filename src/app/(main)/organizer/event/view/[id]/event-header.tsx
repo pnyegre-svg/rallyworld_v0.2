@@ -123,7 +123,7 @@ export function EventHeader({ event, organizerName }: EventHeaderProps) {
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-row items-end justify-between gap-6">
-                <div className="flex flex-col gap-4 items-start">
+                <div className="flex flex-col gap-4 items-start flex-1">
                     {event.logoImage && (
                         <div className="relative w-48 h-24 flex-shrink-0">
                             <Image 
@@ -134,7 +134,7 @@ export function EventHeader({ event, organizerName }: EventHeaderProps) {
                             />
                         </div>
                     )}
-                    <div className="space-y-1">
+                    <div className="space-y-1 w-full">
                         <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
                         <div className="flex flex-col items-start gap-1">
                            <a 
