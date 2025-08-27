@@ -7,8 +7,6 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
-import { auth, app } from '@/lib/firebase';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 import { onAuthStateChanged } from 'firebase/auth';
 import Loading from './loading';
 import { useUserStore } from '@/hooks/use-user';
@@ -16,6 +14,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
+import { auth } from '@/lib/firebase';
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -24,14 +23,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const { user, signInUser, signOutUser, isAuthReady } = useUserStore();
 
   React.useEffect(() => {
-    // This is the App Check initialization for the main application layout.
-    if (typeof window !== 'undefined') {
-      initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider('6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt'),
-        isTokenAutoRefreshEnabled: true,
-      });
-    }
-    
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // If we have a firebase user but no user in the store (e.g. page refresh),

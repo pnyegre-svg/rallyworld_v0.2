@@ -10,17 +10,16 @@ const firebaseConfig = {
   storageBucket: 'rally-world.appspot.com',
   apiKey: 'AIzaSyD1SDoZo2M84Lqy6w6zbK3ZhWKtQcGQf-g',
   authDomain: 'rally-world.firebaseapp.com',
-  measurementId: '',
   messagingSenderId: '67027100425',
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize and export Firebase services
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 // Helper that waits for auth to be ready
 export async function requireUser(): Promise<User> {
@@ -34,5 +33,3 @@ export async function requireUser(): Promise<User> {
     });
   });
 }
-
-export { app, auth, db, storage };
