@@ -36,7 +36,7 @@ export function EventHeader({ event }: EventHeaderProps) {
                 </div>
 
                 <div className="flex-shrink-0 mt-6 md:mt-0 md:ml-8">
-                    <DateDisplay from={event.dates.from} to={event.dates.to} />
+                    <DateDisplay event={event} />
                 </div>
             </div>
         </div>

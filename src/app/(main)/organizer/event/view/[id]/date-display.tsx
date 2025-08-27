@@ -1,26 +1,47 @@
 
 'use client';
 
-import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
-import { CalendarPlus } from 'lucide-react';
+import { format, formatISO } from 'date-fns';
+import { CalendarPlus, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Event } from '@/lib/events';
 
 type DateDisplayProps = {
-    from: Date;
-    to: Date;
+    event: Event;
 }
 
-export function DateDisplay({ from, to }: DateDisplayProps) {
-    const { toast } = useToast();
+export function DateDisplay({ event }: DateDisplayProps) {
 
-    const handleAddToCalendar = () => {
-        // In a real implementation, this would generate an .ics file or a link
-        // to Google Calendar, Outlook, etc.
-        toast({
-            title: "Coming Soon!",
-            description: "Ability to add this event to your calendar is on its way.",
-        });
-    };
+    const formatForGoogle = (date: Date) => {
+        return format(date, "yyyyMMdd'T'HHmmss'Z'");
+    }
+
+    const formatForIcs = (date: Date) => {
+        return format(date, "yyyyMMdd'T'HHmmss'Z'");
+    }
+    
+    const googleCalendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${formatForGoogle(event.dates.from)}/${formatForGoogle(event.dates.to)}&location=${encodeURIComponent(event.hqLocation)}&details=${encodeURIComponent(`Details for ${event.title}`)}`;
+
+    const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        `UID:${event.id}@rally.world`,
+        `DTSTAMP:${formatForIcs(new Date())}`,
+        `DTSTART:${formatForIcs(event.dates.from)}`,
+        `DTEND:${formatForIcs(event.dates.to)}`,
+        `SUMMARY:${event.title}`,
+        `LOCATION:${event.hqLocation}`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].join('\n');
+    
+    const icsUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
 
 
     const renderDatePart = (date: Date) => {
@@ -36,15 +57,30 @@ export function DateDisplay({ from, to }: DateDisplayProps) {
     }
 
     return (
-       <button 
-        onClick={handleAddToCalendar}
-        className="group flex items-end gap-4 rounded-lg p-4 transition-all hover:bg-white/10 hover:shadow-xl hover:scale-105"
-        >
-            {renderDatePart(from)}
-            <span className="text-5xl text-muted-foreground">-</span>
-            {renderDatePart(to)}
-            <CalendarPlus className="ml-4 h-8 w-8 text-muted-foreground transition-all group-hover:text-accent" />
-        </button>
+       <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <button 
+                    className="group flex items-end gap-4 rounded-lg p-4 transition-all hover:bg-white/10 hover:shadow-xl hover:scale-105"
+                >
+                    {renderDatePart(event.dates.from)}
+                    <span className="text-5xl text-muted-foreground">-</span>
+                    {renderDatePart(event.dates.to)}
+                    <CalendarPlus className="ml-4 h-8 w-8 text-muted-foreground transition-all group-hover:text-accent" />
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                    <a href={googleCalendarUrl} target="_blank" rel="noopener noreferrer">
+                        Add to Google Calendar
+                    </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                     <a href={icsUrl} download={`${event.title}.ics`}>
+                        Add to Apple/Outlook (.ics)
+                    </a>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+       </DropdownMenu>
     )
 
 }
