@@ -135,7 +135,7 @@ export default function EditEventPage() {
 
   async function onSubmit(values: EventFormValues) {
     try {
-        const dataToUpdate: Partial<EventFormValues> = { ...values };
+        const dataToUpdate: Partial<EventFormValues> & { coverImage?: string | File; logoImage?: string | File } = { ...values };
 
         if (values.coverImage instanceof File) {
             const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
@@ -147,13 +147,14 @@ export default function EditEventPage() {
             dataToUpdate.logoImage = logoImageUrl;
         }
         
-        await updateEvent(eventId, dataToUpdate);
+        await updateEvent(eventId, dataToUpdate as Partial<EventFormValues>);
         toast({
         title: "Event Updated Successfully!",
         description: `The event "${values.title}" has been updated.`,
         });
         router.push('/dashboard');
     } catch (error) {
+        console.error(error);
         toast({
             title: "Failed to update event",
             description: "An error occurred while saving the event. Please try again.",
@@ -309,11 +310,11 @@ export default function EditEventPage() {
                                   {field.value?.from ? (
                                     field.value.to ? (
                                       <>
-                                        {format(field.value.from, 'LLL dd, y')} -{' '}
-                                        {format(field.value.to, 'LLL dd, y')}
+                                        {format(new Date(field.value.from), 'LLL dd, y')} -{' '}
+                                        {format(new Date(field.value.to), 'LLL dd, y')}
                                       </>
                                     ) : (
-                                      format(field.value.from, 'LLL dd, y')
+                                      format(new Date(field.value.from), 'LLL dd, y')
                                     )
                                   ) : (
                                     <span>Pick a date range</span>
@@ -324,20 +325,20 @@ export default function EditEventPage() {
                             <PopoverContent className="w-auto p-0" align="start">
                                 <div className="flex">
                                      <div className="flex flex-col space-y-1 p-3 pr-2 border-r">
-                                        <DatePresetButton label="Today" range={{ from: new Date(), to: new Date() }} setRange={field.onChange} />
-                                        <DatePresetButton label="This Week" range={{ from: startOfWeek(new Date()), to: endOfWeek(new Date()) }} setRange={field.onChange} />
-                                        <DatePresetButton label="This Month" range={{ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }} setRange={field.onChange} />
-                                        <DatePresetButton label="Last Month" range={{ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }} setRange={field.onChange} />
-                                        <DatePresetButton label="This Year" range={{ from: startOfYear(new Date()), to: endOfYear(new Date()) }} setRange={field.onChange} />
-                                        <DatePresetButton label="Last Year" range={{ from: startOfYear(subYears(new Date(), 1)), to: endOfYear(subYears(new Date(), 1)) }} setRange={field.onChange} />
+                                        <DatePresetButton label="Today" range={{ from: new Date(), to: new Date() }} setRange={(range) => field.onChange(range)} />
+                                        <DatePresetButton label="This Week" range={{ from: startOfWeek(new Date()), to: endOfWeek(new Date()) }} setRange={(range) => field.onChange(range)} />
+                                        <DatePresetButton label="This Month" range={{ from: startOfMonth(new Date()), to: endOfMonth(new Date()) }} setRange={(range) => field.onChange(range)} />
+                                        <DatePresetButton label="Last Month" range={{ from: startOfMonth(subMonths(new Date(), 1)), to: endOfMonth(subMonths(new Date(), 1)) }} setRange={(range) => field.onChange(range)} />
+                                        <DatePresetButton label="This Year" range={{ from: startOfYear(new Date()), to: endOfYear(new Date()) }} setRange={(range) => field.onChange(range)} />
+                                        <DatePresetButton label="Last Year" range={{ from: startOfYear(subYears(new Date(), 1)), to: endOfYear(subYears(new Date(), 1)) }} setRange={(range) => field.onChange(range)} />
                                     </div>
                                     <div className="flex flex-col">
                                         <Calendar
                                             initialFocus
                                             mode="range"
-                                            defaultMonth={field.value?.from}
-                                            selected={field.value}
-                                            onSelect={field.onChange}
+                                            defaultMonth={field.value?.from ? new Date(field.value.from) : undefined}
+                                            selected={{from: field.value?.from ? new Date(field.value.from) : undefined, to: field.value?.to ? new Date(field.value.to) : undefined}}
+                                            onSelect={(range) => field.onChange(range)}
                                             numberOfMonths={2}
                                         />
                                         <div className="flex justify-end gap-2 p-3 border-t">
@@ -374,7 +375,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
                             </FormControl>
-                            <FormDescription>Recommended: 1200x630px.</FormDescription>
+                            <FormDescription>Recommended: 1200x630px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -388,7 +389,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
                             </FormControl>
-                            <FormDescription>Recommended: 512x512px.</FormDescription>
+                            <FormDescription>Recommended: 512x512px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}

@@ -104,7 +104,8 @@ export default function CreateEventPage() {
     }
 
     try {
-      const dataToSave = { ...values, organizerId: user.organizerProfile.id };
+      // Create a mutable copy for file uploads
+      const dataToSave: EventFormValues & { coverImage?: string | File; logoImage?: string | File } = { ...values, organizerId: user.organizerProfile.id };
 
       // Handle file uploads
       if (values.coverImage instanceof File) {
@@ -116,13 +117,14 @@ export default function CreateEventPage() {
         dataToSave.logoImage = logoImageUrl;
       }
 
-      await addEvent(dataToSave);
+      await addEvent(dataToSave as EventFormValues);
       toast({
         title: "Event Created Successfully!",
         description: `The event "${values.title}" has been created.`,
       });
       router.push('/dashboard');
     } catch (error) {
+        console.error(error);
         toast({
             title: "Failed to create event",
             description: "An error occurred while creating the event. Please try again.",
