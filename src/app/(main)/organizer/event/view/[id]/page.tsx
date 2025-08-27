@@ -31,17 +31,6 @@ export default function ViewEventPage() {
         setLoading(true);
         const eventData = await getEvent(eventId);
          if (eventData) {
-            // Note: In a real app, you'd have security rules to prevent unauthorized access.
-            // This is a client-side check for prototyping purposes.
-            if (eventData.organizerId !== user.organizerProfile?.id && user.currentRole === 'organizer') {
-                 toast({
-                    title: "Access Denied",
-                    description: "You do not have permission to view this event's details.",
-                    variant: "destructive",
-                });
-                router.push('/dashboard');
-                return;
-            }
             setEvent(eventData);
 
             // Fetch organizer details
@@ -60,7 +49,7 @@ export default function ViewEventPage() {
       };
       fetchEventData();
     }
-  }, [eventId, user.organizerProfile?.id, router, toast, user.currentRole]);
+  }, [eventId, router, toast]);
 
 
   if (loading) {
@@ -82,7 +71,7 @@ export default function ViewEventPage() {
 
   return (
     <div className="w-full mx-auto space-y-8">
-        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} />
+        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} setEvent={setEvent} />
         <EventTabs event={event} />
     </div>
   );

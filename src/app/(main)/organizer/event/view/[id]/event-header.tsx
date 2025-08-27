@@ -10,13 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award } from 'lucide-react';
-import { Event } from '@/lib/events';
+import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2 } from 'lucide-react';
+import { Event, updateEvent } from '@/lib/events';
 import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
 import { getResizedImageUrl } from '@/lib/utils';
+import { uploadFile } from '@/lib/storage';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -74,12 +75,15 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
 type EventHeaderProps = {
   event: Event;
   organizerName?: string;
+  setEvent: React.Dispatch<React.SetStateAction<Event | null>>;
 };
 
-export function EventHeader({ event, organizerName }: EventHeaderProps) {
+export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps) {
   const { toast } = useToast();
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
+  const [isUploading, setIsUploading] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     setEventUrl(window.location.href);
@@ -108,7 +112,35 @@ export function EventHeader({ event, organizerName }: EventHeaderProps) {
   };
 
   const isOwner = user?.organizerProfile?.id === event.organizerId;
-  const getInitials = (name: string) => name?.[0]?.toUpperCase() || 'E';
+
+  const handleCoverImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+        const newCoverImageUrl = await uploadFile(file, 'organizer');
+        await updateEvent(event.id, { coverImage: newCoverImageUrl });
+        
+        // Update the parent component's state
+        setEvent(prevEvent => prevEvent ? { ...prevEvent, coverImage: newCoverImageUrl } : null);
+
+        toast({
+            title: 'Cover Image Updated',
+            description: 'Your event cover image has been changed successfully.',
+        });
+    } catch (error) {
+        toast({
+            title: 'Upload Failed',
+            description: 'There was a problem changing your cover image. Please try again.',
+            variant: 'destructive',
+        });
+        console.error(error);
+    } finally {
+        setIsUploading(false);
+    }
+  };
+
 
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
@@ -135,7 +167,7 @@ export function EventHeader({ event, organizerName }: EventHeaderProps) {
                         </div>
                     )}
                     <div className="space-y-1 w-full">
-                        <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
+                        <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md w-full">{event.title}</h1>
                         <div className="flex flex-col items-start gap-1">
                            <a 
                              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
@@ -160,6 +192,31 @@ export function EventHeader({ event, organizerName }: EventHeaderProps) {
                 </div>
             </div>
         </div>
+
+        <div className="absolute top-6 left-6">
+            {isOwner && (
+                 <>
+                    <input 
+                        type="file" 
+                        ref={fileInputRef} 
+                        className="hidden" 
+                        onChange={handleCoverImageChange}
+                        accept="image/*"
+                        disabled={isUploading}
+                    />
+                    <Button 
+                        variant="outline" 
+                        className="bg-black/20 border-white/20 hover:bg-black/50"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? <Loader2 className="mr-2 animate-spin" /> : <Camera className="mr-2" />}
+                        {isUploading ? 'Uploading...' : 'Edit Cover'}
+                    </Button>
+                </>
+            )}
+        </div>
+
 
         <div className="absolute top-6 right-6 flex items-center gap-2">
              <DropdownMenu>
