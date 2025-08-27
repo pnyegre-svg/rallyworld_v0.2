@@ -1,4 +1,6 @@
 
+'use client';
+
 import { db } from './firebase';
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where } from 'firebase/firestore';
 import { z } from 'zod';
@@ -128,7 +130,7 @@ export const updateEvent = async (eventId: string, eventData: Partial<EventFormV
         
         // Handle Date to Timestamp conversion for partial updates
         const dataToUpdate: any = { ...eventData };
-        if (eventData.dates) {
+        if (eventData.dates?.from && eventData.dates?.to) {
             dataToUpdate.dates = {
                 from: Timestamp.fromDate(eventData.dates.from),
                 to: Timestamp.fromDate(eventData.dates.to)
@@ -141,5 +143,3 @@ export const updateEvent = async (eventId: string, eventData: Partial<EventFormV
         throw new Error("Could not update event.");
     }
 };
-
-    
