@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -117,11 +118,11 @@ export default function CreateEventPage() {
       };
 
       if (values.coverImage instanceof File) {
-        const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}/cover_${values.coverImage.name}`);
+        const coverImageUrl = await uploadFile(values.coverImage, `public/events/${eventId}/cover_${values.coverImage.name}`);
         dataToSave.coverImage = coverImageUrl;
       }
       if (values.logoImage instanceof File) {
-        const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}/logo_${values.logoImage.name}`);
+        const logoImageUrl = await uploadFile(values.logoImage, `public/events/${eventId}/logo_${values.logoImage.name}`);
         dataToSave.logoImage = logoImageUrl;
       }
       
@@ -135,8 +136,10 @@ export default function CreateEventPage() {
 
       if (values.itineraryFiles && values.itineraryFiles.length > 0) {
           const uploadedFiles = await Promise.all(
-              values.itineraryFiles.map(async (fileObj) => 
-                  uploadAndGetURL(fileObj, `events/${eventId}/itinerary/${fileObj.file?.name}`)
+              values.itineraryFiles
+                .filter(fileObj => fileObj.file instanceof File)
+                .map(async (fileObj) => 
+                  uploadAndGetURL(fileObj, `public/events/${eventId}/itinerary/${fileObj.file?.name}`)
               )
           );
           dataToSave.itineraryFiles = uploadedFiles.filter(Boolean); // Filter out undefined results
@@ -146,8 +149,10 @@ export default function CreateEventPage() {
 
       if (values.docsFiles && values.docsFiles.length > 0) {
           const uploadedFiles = await Promise.all(
-              values.docsFiles.map(async (fileObj) => 
-                  uploadAndGetURL(fileObj, `events/${eventId}/docs/${fileObj.file?.name}`)
+            values.docsFiles
+                .filter(fileObj => fileObj.file instanceof File)
+                .map(async (fileObj) => 
+                  uploadAndGetURL(fileObj, `public/events/${eventId}/docs/${fileObj.file?.name}`)
               )
           );
           dataToSave.docsFiles = uploadedFiles.filter(Boolean); // Filter out undefined results

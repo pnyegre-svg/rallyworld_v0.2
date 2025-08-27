@@ -146,7 +146,7 @@ export default function OrganizerProfilePage() {
             let profilePictureUrl = values.profilePicture;
             if (values.profilePicture instanceof File) {
                 const fileExtension = values.profilePicture.name.split('.').pop();
-                const path = `organizers/${organizerId}_profile.${fileExtension}`;
+                const path = `public/organizers/${organizerId}/profile.${fileExtension}`;
                 profilePictureUrl = await uploadFile(values.profilePicture, path);
             }
 

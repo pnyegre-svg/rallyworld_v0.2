@@ -2,27 +2,26 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Default rule: By default, deny all reads and writes.
-    // We will then open up specific paths.
     
-    // Rule 1: Allow anyone to read any file.
-    // This is required so the app can display event cover images, logos,
-    // and organizer profile pictures to all users, including those not signed in.
+    // Deny all reads and writes by default.
+    // This is a security best practice.
     match /{allPaths=**} {
+      allow read, write: if false;
+    }
+    
+    // Allow public read access to all files within the /public/ directory.
+    // This is where all event images, logos, and documents will be stored.
+    match /public/{allPaths=**} {
       allow read;
     }
 
-    // Rule 2: Allow authenticated users to write to the 'events' folder.
-    // This allows organizers to upload cover images, logos, and documents
-    // when creating or editing an event.
-    match /events/{allPaths=**} {
+    // Allow authenticated users to write to the organizer and event directories.
+    // This ensures only logged-in organizers can upload files.
+    match /public/organizers/{organizerId}/{allPaths=**} {
       allow write: if request.auth != null;
     }
-
-    // Rule 3: Allow authenticated users to write to the 'organizers' folder.
-    // This allows an organizer to upload their club's profile picture.
-    match /organizers/{allPaths=**} {
+    
+    match /public/events/{eventId}/{allPaths=**} {
       allow write: if request.auth != null;
     }
   }

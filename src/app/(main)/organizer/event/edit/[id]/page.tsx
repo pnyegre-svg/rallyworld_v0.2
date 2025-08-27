@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -144,12 +145,12 @@ export default function EditEventPage() {
         const dataToUpdate: any = { ...values };
 
         if (values.coverImage instanceof File) {
-            const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}/cover_${values.coverImage.name}`);
+            const coverImageUrl = await uploadFile(values.coverImage, `public/events/${eventId}/cover_${values.coverImage.name}`);
             dataToUpdate.coverImage = coverImageUrl;
         }
 
         if (values.logoImage instanceof File) {
-            const logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}/logo_${values.logoImage.name}`);
+            const logoImageUrl = await uploadFile(values.logoImage, `public/events/${eventId}/logo_${values.logoImage.name}`);
             dataToUpdate.logoImage = logoImageUrl;
         }
         
@@ -169,7 +170,7 @@ export default function EditEventPage() {
         if (values.itineraryFiles && values.itineraryFiles.length > 0) {
             const uploadedFiles = await Promise.all(
                 values.itineraryFiles.map(async (fileObj) => 
-                    uploadAndGetURL(fileObj.file, `events/${eventId}/itinerary/${(fileObj.file as File)?.name}`)
+                    uploadAndGetURL(fileObj.file, `public/events/${eventId}/itinerary/${(fileObj.file as File)?.name}`)
                 )
             );
             dataToUpdate.itineraryFiles = uploadedFiles.filter(Boolean);
@@ -180,7 +181,7 @@ export default function EditEventPage() {
         if (values.docsFiles && values.docsFiles.length > 0) {
             const uploadedFiles = await Promise.all(
                 values.docsFiles.map(async (fileObj) => 
-                    uploadAndGetURL(fileObj.file, `events/${eventId}/docs/${(fileObj.file as File)?.name}`)
+                    uploadAndGetURL(fileObj.file, `public/events/${eventId}/docs/${(fileObj.file as File)?.name}`)
                 )
             );
             dataToUpdate.docsFiles = uploadedFiles.filter(Boolean);
