@@ -1,4 +1,5 @@
 
+
 import { db } from './firebase';
 import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
 import type { User, Organizer, UserRole } from './data';
@@ -11,6 +12,7 @@ const userConverter = {
     if (user.name !== undefined) data.name = user.name;
     if (user.email !== undefined) data.email = user.email;
     if (user.avatar !== undefined) data.avatar = user.avatar;
+    if (user.profilePicture !== undefined) data.profilePicture = user.profilePicture;
     if (user.roles !== undefined) data.roles = user.roles;
     if (user.currentRole !== undefined) data.currentRole = user.currentRole;
     if (user.organizerProfile !== undefined) {
@@ -25,6 +27,7 @@ const userConverter = {
       name: data.name,
       email: data.email,
       avatar: data.avatar,
+      profilePicture: data.profilePicture,
       roles: data.roles,
       currentRole: data.currentRole,
       organizerProfile: data.organizerProfile,

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -54,6 +55,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/organizer/event/edit')) return 'Edit Event';
     if (path.startsWith('/organizer/event/view')) return 'Event Details';
     if (path.startsWith('/organizer')) return 'Club Profile';
+    if (path.startsWith('/profile')) return 'My Profile';
     if (path.startsWith('/feed')) return 'Feed';
     if (path.startsWith('/marketplace')) return 'Marketplace';
     if (path.startsWith('/shop')) return 'MyShop';

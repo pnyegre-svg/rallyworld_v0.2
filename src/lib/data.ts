@@ -15,10 +15,11 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  avatar: string;
+  avatar: string; // This will now be the profile picture URL
   roles: UserRole[];
   currentRole: UserRole;
   organizerProfile?: Organizer;
+  profilePicture?: string; // Standardized field for all users
 };
 
 export type Organizer = {
@@ -37,11 +38,11 @@ export type Organizer = {
         tiktok?: string;
         x?: string;
     }
-    profilePicture?: string;
+    profilePicture?: string; // This is now legacy, will be removed from UI but kept for data model stability
 }
 
 export type Club = {
-    id: string;
+    id:string;
     name: string;
     cis: string;
     cif: string;

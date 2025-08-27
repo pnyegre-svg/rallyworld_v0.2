@@ -14,6 +14,7 @@ type UserState = {
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
+  updateUserProfile: (data: { name?: string, profilePicture?: string }) => Promise<void>;
   updateOrganizerProfile: (profile: Organizer) => Promise<void>;
   setAuthReady: (isReady: boolean) => void;
 };
@@ -40,9 +41,10 @@ export const useUserStore = create<UserState>()(
                 const newUser: Omit<User, 'id'> = {
                     name: name || 'New User',
                     email: email,
-                    avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
+                    avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`, // Default generic avatar
                     roles: ['fan'],
                     currentRole: 'fan',
+                    profilePicture: '', // Initialize with empty string
                 };
                 const newUserId = await createUser(firebaseUser.uid, newUser);
                 userProfile = { ...newUser, id: newUserId };
@@ -81,6 +83,22 @@ export const useUserStore = create<UserState>()(
         set({ user: { ...currentUser, currentRole: role } });
         await updateUser(currentUser.id, { currentRole: role });
       },
+      updateUserProfile: async (data: { name?: string, profilePicture?: string }) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
+        const updatedData: Partial<User> = {};
+        if (data.name) updatedData.name = data.name;
+        if (data.profilePicture) {
+          updatedData.profilePicture = data.profilePicture;
+          updatedData.avatar = data.profilePicture; // Sync avatar with profile picture
+        }
+        
+        const updatedUser = await updateUser(currentUser.id, updatedData);
+        if (updatedUser) {
+          set({ user: updatedUser });
+        }
+      },
       updateOrganizerProfile: async (profile: Organizer) => {
         const currentUser = get().user;
         if (!currentUser) return;
@@ -97,5 +115,3 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
-
-    

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -186,7 +187,7 @@ export default function OrganizerProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 const path = `public/organizers/${firebaseUser.uid}/profile-picture/${profilePictureFile.name}`;
+                 const path = `public/organizers/${firebaseUser.uid}/club-profile-picture/${profilePictureFile.name}`;
                  profilePictureUrl = await uploadFile(profilePictureFile, path);
             }
 

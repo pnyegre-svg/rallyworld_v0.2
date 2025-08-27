@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -26,7 +27,7 @@ import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Check, UserSquare } from 'lucide-react';
+import { Check, UserSquare, User as UserIcon, Building } from 'lucide-react';
 import { UserRole } from '@/lib/data';
 
 export function UserNav() {
@@ -45,7 +46,7 @@ export function UserNav() {
     if (names.length > 1) {
       return `${names[0][0]}${names[names.length - 1][0]}`;
     }
-    return names[0].substring(0, 2);
+    return name.substring(0, 2);
   };
   
   return (
@@ -72,8 +73,19 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
          <DropdownMenuItem asChild>
-          <Link href="/organizer">Profile</Link>
+          <Link href="/profile">
+            <UserIcon className="mr-2 h-4 w-4" />
+            <span>Profile</span>
+          </Link>
         </DropdownMenuItem>
+         {user.roles.includes('organizer') && (
+            <DropdownMenuItem asChild>
+                <Link href="/organizer">
+                    <Building className="mr-2 h-4 w-4" />
+                    <span>Club Profile</span>
+                </Link>
+            </DropdownMenuItem>
+        )}
         <DropdownMenuSub>
             <DropdownMenuSubTrigger>
                 <UserSquare className="mr-2 h-4 w-4" />
@@ -91,9 +103,6 @@ export function UserNav() {
                 </DropdownMenuSubContent>
             </DropdownMenuPortal>
         </DropdownMenuSub>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard">Dashboard</Link>
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           Log out
