@@ -19,6 +19,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getResizedImageUrl } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 export default function MyEventsPage() {
   const { user } = useUserStore();
@@ -88,66 +89,76 @@ export default function MyEventsPage() {
       {loading ? (
             <LoadingSkeletons />
         ) : events.length > 0 ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.map(event => (
-                    <Card key={event.id} className="overflow-hidden flex flex-col">
-                        <CardHeader className="p-0 relative h-40">
-                             <Image
-                                src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
-                                alt={event.title}
-                                data-ai-hint="rally racing"
-                                fill
-                                className="object-cover"
-                            />
-                             <div className="absolute -bottom-8 left-4">
-                                {event.logoImage ? (
-                                    <Image
-                                        src={getResizedImageUrl(event.logoImage, '200x200')!}
-                                        alt={`${event.title} logo`}
-                                        width={120}
-                                        height={60}
-                                        className="object-contain drop-shadow-lg"
-                                    />
-                                ) : (
-                                    <div className="h-16 w-16 flex items-center justify-center bg-card rounded-md border-2 border-card shadow-md">
-                                        <Award className="h-8 w-8 text-muted-foreground" />
-                                    </div>
-                                )}
-                             </div>
-                        </CardHeader>
-                        <CardContent className="pt-12 flex-grow">
-                           <CardTitle className="font-headline text-lg">{event.title}</CardTitle>
-                           <CardDescription className="text-xs">
-                             {format(new Date(event.dates.from), 'LLL dd, y')} - {format(new Date(event.dates.to), 'LLL dd, y')}
-                           </CardDescription>
-                        </CardContent>
-                        <CardFooter className="bg-muted/50 p-2 gap-2">
-                             <Button asChild variant="outline" size="sm" className="w-full">
-                                <Link href={`/organizer/event/view/${event.id}`}>
-                                    <Eye className="mr-2 h-4 w-4" /> View
-                                </Link>
-                            </Button>
-                            <Button asChild variant="outline" size="sm" className="w-full">
-                                <Link href={`/organizer/event/edit/${event.id}`}>
-                                    <PenSquare className="mr-2 h-4 w-4" /> Edit
-                                </Link>
-                            </Button>
-                        </CardFooter>
+                    <Card key={event.id} className="group relative overflow-hidden rounded-xl text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-105">
+                         <Link href={`/organizer/event/view/${event.id}`} className="absolute inset-0 z-10">
+                            <span className="sr-only">View Event</span>
+                         </Link>
+                         <Image
+                            src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
+                            alt={event.title}
+                            data-ai-hint="rally racing"
+                            width={400}
+                            height={400}
+                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                        />
+                         <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
+                         
+                         {event.logoImage && (
+                             <div className="absolute top-4 right-4 z-20">
+                                <Image
+                                    src={getResizedImageUrl(event.logoImage, '200x200')!}
+                                    alt={`${event.title} logo`}
+                                    width={100}
+                                    height={50}
+                                    className="object-contain drop-shadow-lg"
+                                />
+                            </div>
+                         )}
+
+                         <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 z-20">
+                            <h3 className="text-xl md:text-2xl font-headline font-bold">{event.title}</h3>
+                            <p className="text-sm text-muted-foreground font-mono uppercase tracking-wider">
+                                {format(new Date(event.dates.from), 'MMM dd')} - {format(new Date(event.dates.to), 'MMM dd, yyyy')}
+                            </p>
+                            <div className="mt-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                 <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/20 hover:bg-white/30 z-30 relative">
+                                    <Link href={`/organizer/event/view/${event.id}`}>
+                                        <Eye className="mr-2 h-4 w-4" /> View
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="outline" size="sm" className="bg-background/20 backdrop-blur-sm border-white/20 hover:bg-white/30 z-30 relative">
+                                    <Link href={`/organizer/event/edit/${event.id}`}>
+                                        <PenSquare className="mr-2 h-4 w-4" /> Edit
+                                    </Link>
+                                </Button>
+                            </div>
+                         </div>
                     </Card>
                 ))}
             </div>
         ) : (
-             <Card className="flex flex-col items-center justify-center py-20 text-center">
-                <CardContent className="space-y-4">
-                    <h2 className="text-2xl font-headline">You haven't created any events yet</h2>
-                    <p className="text-muted-foreground">Get started by creating your first rally event.</p>
-                    <Button className="bg-accent hover:bg-accent/90" asChild>
-                        <Link href="/organizer/create-event">
-                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Create Your First Event
-                        </Link>
-                    </Button>
-                </CardContent>
+             <Card className="relative flex flex-col items-center justify-center py-20 text-center overflow-hidden bg-muted/30">
+                <Image 
+                    src="https://images.unsplash.com/photo-1599751495924-e22129413b4e?w=800&q=80"
+                    alt="Empty rally stage"
+                    data-ai-hint="empty road rally"
+                    fill
+                    className="object-cover opacity-10"
+                />
+                <div className="z-10">
+                    <CardContent className="space-y-4">
+                        <h2 className="text-2xl font-headline">You haven't created any events yet</h2>
+                        <p className="text-muted-foreground">Get started by creating your first rally event.</p>
+                        <Button className="bg-accent hover:bg-accent/90" asChild>
+                            <Link href="/organizer/create-event">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Create Your First Event
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </div>
              </Card>
         )}
     </div>
