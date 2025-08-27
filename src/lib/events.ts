@@ -109,7 +109,11 @@ export const getEvents = async (organizerId?: string): Promise<Event[]> => {
       }
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => doc.data() as Event);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'failed-precondition') {
+        console.warn("Firestore index not found. Please create it in the Firebase console. The query will return an empty list until the index is built.");
+        return [];
+      }
       console.error("Error getting events: ", error);
       return [];
     }
