@@ -363,7 +363,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
                             </FormControl>
-                            <FormDescription>Landscape-oriented image works best.</FormDescription>
+                            <FormDescription>Recommended: 1200x630px.</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -377,7 +377,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
                             </FormControl>
-                            <FormDescription>Square image (e.g. 512x512) works best.</FormDescription>
+                            <FormDescription>Recommended: 512x512px.</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
