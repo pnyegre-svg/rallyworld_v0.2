@@ -68,7 +68,7 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, updateOrganizerProfile, isAuthReady: isUserStoreReady } = useUserStore();
+    const { user, updateOrganizerProfile, isUserStoreReady } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
     const [selectedClubId, setSelectedClubId] = React.useState<string | undefined>(user?.organizerProfile?.id);
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -172,7 +172,7 @@ export default function OrganizerProfilePage() {
         if (!firebaseUser) {
             toast({
                 title: "Authentication Error",
-                description: "User is not authenticated. Please sign in and try again.",
+                description: "You must be signed in to save your profile. Please wait a moment and try again.",
                 variant: "destructive",
             });
             return;
@@ -180,6 +180,15 @@ export default function OrganizerProfilePage() {
 
         setIsSubmitting(true);
         try {
+            let profilePictureUrl = user?.organizerProfile?.profilePicture || '';
+
+            if (values.profilePicture instanceof File) {
+                const file = values.profilePicture;
+                const fileExtension = file.name.split('.').pop();
+                const path = `public/organizers/${firebaseUser.uid}/profile.${fileExtension}`;
+                profilePictureUrl = await uploadFile(file, path);
+            }
+
             let profileData: Organizer = {
                 id: user?.organizerProfile?.id || `org_${Date.now()}`,
                 name: values.name,
@@ -196,27 +205,11 @@ export default function OrganizerProfilePage() {
                     tiktok: values.tiktok,
                     x: values.x,
                 },
-                profilePicture: user?.organizerProfile?.profilePicture || '',
+                profilePicture: profilePictureUrl,
             };
-
-            const updatedUserWithProfile = await updateOrganizerProfile(profileData);
-            const finalOrganizerId = updatedUserWithProfile?.organizerProfile?.id;
-
-            if (!finalOrganizerId) {
-                throw new Error("Failed to get organizer ID after saving profile.");
-            }
-
-            profileData.id = finalOrganizerId;
             
-            if (values.profilePicture instanceof File) {
-                const file = values.profilePicture;
-                const fileExtension = file.name.split('.').pop();
-                const path = `public/organizers/${firebaseUser.uid}/profile.${fileExtension}`;
-                const profilePictureUrl = await uploadFile(file, path);
-                
-                profileData.profilePicture = profilePictureUrl;
-                await updateOrganizerProfile(profileData);
-            }
+            const updatedUser = await updateOrganizerProfile(profileData);
+            profileData.id = updatedUser?.organizerProfile?.id || profileData.id;
             
             toast({
                 title: "Profile Saved",
