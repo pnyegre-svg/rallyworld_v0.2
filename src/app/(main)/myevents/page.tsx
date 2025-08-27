@@ -96,7 +96,7 @@ export default function MyEventsPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.map(event => (
                     <Card key={event.id} className="overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col">
-                        <Link href={`/organizer/event/view/${event.id}`} className="block relative h-48 w-full">
+                        <Link href={`/organizer/event/view/${event.id}`} className="block relative h-48 w-full group">
                             <Image
                                 src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
                                 alt={event.title}
@@ -104,6 +104,18 @@ export default function MyEventsPage() {
                                 fill
                                 className="object-cover"
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                            {event.logoImage && (
+                                <div className="absolute bottom-3 left-3">
+                                    <Image 
+                                        src={getResizedImageUrl(event.logoImage, '512x256')!}
+                                        alt={`${event.title} logo`}
+                                        width={120}
+                                        height={60}
+                                        className="object-contain drop-shadow-lg"
+                                    />
+                                </div>
+                            )}
                         </Link>
                         <CardContent className="p-4 flex-grow flex flex-col">
                            <div className="flex gap-4 items-start flex-grow">
@@ -163,4 +175,3 @@ export default function MyEventsPage() {
     </div>
   );
 }
-
