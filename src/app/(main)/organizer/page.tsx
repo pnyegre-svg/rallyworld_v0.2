@@ -76,15 +76,7 @@ export default function OrganizerProfilePage() {
     
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: user?.organizerProfile ? {
-            ...user.organizerProfile,
-            website: user.organizerProfile.website || '',
-            facebook: user.organizerProfile.socials?.facebook || '',
-            instagram: user.organizerProfile.socials?.instagram || '',
-            youtube: user.organizerProfile.socials?.youtube || '',
-            tiktok: user.organizerProfile.socials?.tiktok || '',
-            x: user.organizerProfile.socials?.x || '',
-        } : {
+        defaultValues: {
             name: '',
             cis: '',
             cif: '',
@@ -100,8 +92,10 @@ export default function OrganizerProfilePage() {
         },
     });
     
-    React.useEffect(() => {
-        if (isAuthReady && user?.organizerProfile) {
+     React.useEffect(() => {
+        if (!isAuthReady) return;
+
+        if (user?.organizerProfile) {
             const profile = user.organizerProfile;
             form.reset({
                 ...profile,
@@ -113,6 +107,7 @@ export default function OrganizerProfilePage() {
                 x: profile.socials?.x || '',
                 profilePicture: profile.profilePicture
             });
+
             const existingClub = clubs.find(c => c.name === profile.name);
             if (existingClub) {
                 setSelectedClubId(existingClub.id);
@@ -124,10 +119,24 @@ export default function OrganizerProfilePage() {
                  setIsManualEntry(true);
             }
             setIsEditing(false);
-        } else if (isAuthReady && !user?.organizerProfile) {
+        } else {
+            form.reset({
+                name: '',
+                cis: '',
+                cif: '',
+                address: '',
+                phone: '',
+                email: user?.email || '',
+                website: '',
+                facebook: '',
+                instagram: '',
+                youtube: '',
+                tiktok: '',
+                x: '',
+            })
             setIsEditing(true);
         }
-    }, [user, form, isAuthReady]);
+    }, [user, isAuthReady, form.reset]);
 
 
     const handleClubChange = (clubId: string) => {
