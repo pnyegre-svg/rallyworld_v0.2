@@ -142,21 +142,21 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        let coverImageUrl: string | undefined = values.coverImage as string | undefined;
-        let logoImageUrl: string | undefined = values.logoImage as string | undefined;
+        const dataToUpdate: Partial<EventFormValues> = { ...values };
 
         if (values.coverImage instanceof File) {
-          coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+          dataToUpdate.coverImage = await uploadFile(values.coverImage, 'organizer');
         }
         if (values.logoImage instanceof File) {
-          logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+          dataToUpdate.logoImage = await uploadFile(values.logoImage, 'organizer');
         }
 
-        const dataToUpdate = {
-            ...values,
-            coverImage: coverImageUrl,
-            logoImage: logoImageUrl,
-        };
+        // Remove undefined properties before saving to Firestore
+        Object.keys(dataToUpdate).forEach(key => {
+            if (dataToUpdate[key as keyof typeof dataToUpdate] === undefined) {
+            delete dataToUpdate[key as keyof typeof dataToUpdate];
+            }
+        });
 
         await updateEvent(eventId, dataToUpdate);
 
@@ -226,7 +226,6 @@ export default function EditEventPage() {
                                 onChange={(e) => onChange(e.target.files?.[0])} 
                                 {...rest}
                                 className="flex-1"
-                                disabled={true}
                             />
                         </FormControl>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -244,7 +243,7 @@ export default function EditEventPage() {
         />
       ))}
       <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
-        <PlusCircle className="mr-2 h-4 w-4"/> Add File (Disabled)
+        <PlusCircle className="mr-2 h-4 w-4"/> Add File
       </Button>
     </div>
   );
@@ -252,6 +251,7 @@ export default function EditEventPage() {
 
   const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
     <Button
+      type="button"
       variant="ghost"
       className="w-full justify-start px-2 py-1.5 text-left h-auto font-normal"
       onClick={() => setRange(range)}
@@ -366,8 +366,8 @@ export default function EditEventPage() {
                                             numberOfMonths={2}
                                         />
                                         <div className="flex justify-end gap-2 p-3 border-t">
-                                            <Button variant="ghost" onClick={() => setDatePopoverOpen(false)}>Cancel</Button>
-                                            <Button className="bg-accent hover:bg-accent/90" onClick={() => setDatePopoverOpen(false)}>Apply</Button>
+                                            <Button type="button" variant="ghost" onClick={() => setDatePopoverOpen(false)}>Cancel</Button>
+                                            <Button type="button" className="bg-accent hover:bg-accent/90" onClick={() => setDatePopoverOpen(false)}>Apply</Button>
                                         </div>
                                     </div>
                                 </div>

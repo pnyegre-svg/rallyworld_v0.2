@@ -110,24 +110,25 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
-      let coverImageUrl: string | undefined = undefined;
-      let logoImageUrl: string | undefined = undefined;
-
+      const dataToSave: Partial<EventFormValues> = { ...values };
+      
       if (values.coverImage instanceof File) {
-        coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+        dataToSave.coverImage = await uploadFile(values.coverImage, 'organizer');
       }
       if (values.logoImage instanceof File) {
-        logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+        dataToSave.logoImage = await uploadFile(values.logoImage, 'organizer');
       }
 
-      const dataToSave = { 
-        ...values,
-        coverImage: coverImageUrl,
-        logoImage: logoImageUrl,
-        organizerId: user.organizerProfile.id,
-      };
+      dataToSave.organizerId = user.organizerProfile.id;
 
-      await addEvent(dataToSave as any);
+      // Remove undefined properties before saving to Firestore
+      Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
+          delete dataToSave[key as keyof typeof dataToSave];
+        }
+      });
+
+      await addEvent(dataToSave as EventFormValues);
       
       toast({
         title: "Event Created Successfully!",
@@ -191,7 +192,6 @@ export default function CreateEventPage() {
                                 onChange={(e) => onChange(e.target.files?.[0])} 
                                 {...rest}
                                 className="flex-1"
-                                disabled={true}
                             />
                         </FormControl>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -204,13 +204,14 @@ export default function CreateEventPage() {
         />
       ))}
       <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
-        <PlusCircle className="mr-2 h-4 w-4"/> Add File (Disabled)
+        <PlusCircle className="mr-2 h-4 w-4"/> Add File
       </Button>
     </div>
   );
 
   const DatePresetButton = ({ label, range, setRange }: { label: string, range: DateRange, setRange: (range: DateRange | undefined) => void }) => (
     <Button
+      type="button"
       variant="ghost"
       className="w-full justify-start px-2 py-1.5 text-left h-auto font-normal"
       onClick={() => setRange(range)}
@@ -307,8 +308,8 @@ export default function CreateEventPage() {
                                             numberOfMonths={2}
                                         />
                                         <div className="flex justify-end gap-2 p-3 border-t">
-                                            <Button variant="ghost" onClick={() => setDatePopoverOpen(false)}>Cancel</Button>
-                                            <Button className="bg-accent hover:bg-accent/90" onClick={() => setDatePopoverOpen(false)}>Apply</Button>
+                                            <Button type="button" variant="ghost" onClick={() => setDatePopoverOpen(false)}>Cancel</Button>
+                                            <Button type="button" className="bg-accent hover:bg-accent/90" onClick={() => setDatePopoverOpen(false)}>Apply</Button>
                                         </div>
                                     </div>
                                 </div>
