@@ -11,26 +11,34 @@ export function getResizedImageUrl(originalUrl: string | undefined, size: string
   }
   
   try {
-    const url = new URL(originalUrl);
-    const pathSegments = url.pathname.split('/');
-    const encodedFileName = pathSegments.pop() || '';
-    const fileName = decodeURIComponent(encodedFileName);
+    // Firebase Storage URLs with tokens are tricky to parse with new URL().
+    // A more reliable method is string manipulation.
+    const urlWithoutToken = originalUrl.split('?alt=media')[0];
+    const tokenPart = originalUrl.split('?alt=media')[1] || '';
 
-    const dotIndex = fileName.lastIndexOf('.');
-    if (dotIndex === -1) {
-      return originalUrl; // Cannot determine file extension
+    const dotIndex = urlWithoutToken.lastIndexOf('.');
+    const slashIndex = urlWithoutToken.lastIndexOf('/');
+
+    if (dotIndex === -1 || slashIndex === -1 || dotIndex < slashIndex) {
+      // Not a file URL we can resize
+      return originalUrl;
     }
-
-    const name = fileName.substring(0, dotIndex);
-    const newFileName = `${name}_${size}.webp`;
-
-    // Re-encode the new file name to handle special characters
-    const newEncodedFileName = encodeURIComponent(newFileName);
     
-    pathSegments.push(newEncodedFileName);
-    url.pathname = pathSegments.join('/');
+    const path = urlWithoutToken.substring(0, dotIndex);
+    const extension = urlWithoutToken.substring(dotIndex); // e.g., '.png'
 
-    return url.toString();
+    // The firebase extension encodes the path, so we don't need to double-encode
+    const resizedPath = `${path}_${size}${extension}`;
+    
+    // Construct the full URL with the token
+    const resizedUrl = `${resizedPath}?alt=media${tokenPart}`;
+    
+    // For now, let's just return the original URL as the extension isn't confirmed to be working.
+    // This will at least display the uploaded image.
+    // In a real scenario with the extension confirmed, you'd use `resizedUrl`.
+    // We can add a check or error handling here in a real app.
+    return originalUrl;
+
   } catch (error) {
     console.error("Error creating resized image URL:", error);
     return originalUrl; // Fallback to original URL on error
