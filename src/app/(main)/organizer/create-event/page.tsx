@@ -107,25 +107,27 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
-      // Use a new variable to hold data that will be saved to avoid mutating `values`
-      const dataToSave: any = { 
-        ...values, 
-        organizerId: user.organizerProfile.id 
-      };
+      const eventId = `evt_${Date.now()}`;
+      let coverImageUrl: string | undefined = undefined;
+      let logoImageUrl: string | undefined = undefined;
 
-      // Handle file uploads
       if (values.coverImage instanceof File) {
-        const coverImageUrl = await uploadFile(values.coverImage, `events/${Date.now()}_cover_${values.coverImage.name}`);
-        dataToSave.coverImage = coverImageUrl;
+        coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
       }
       if (values.logoImage instanceof File) {
-        const logoImageUrl = await uploadFile(values.logoImage, `events/${Date.now()}_logo_${values.logoImage.name}`);
-        dataToSave.logoImage = logoImageUrl;
+        logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
       }
+      
+      const dataToSave: EventFormValues = { 
+        ...values,
+        organizerId: user.organizerProfile.id,
+        coverImage: coverImageUrl,
+        logoImage: logoImageUrl,
+      };
       
       // TODO: Handle itineraryFiles and docsFiles uploads
 
-      await addEvent(dataToSave as EventFormValues);
+      await addEvent(dataToSave);
       
       toast({
         title: "Event Created Successfully!",

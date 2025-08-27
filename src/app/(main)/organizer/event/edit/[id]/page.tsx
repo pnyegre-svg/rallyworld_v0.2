@@ -147,7 +147,7 @@ export default function EditEventPage() {
             logoImageUrl = await uploadFile(values.logoImage, `events/${eventId}_logo_${values.logoImage.name}`);
         }
         
-        const dataToUpdate: Partial<EventFormValues> = {
+        const dataToUpdate = {
             ...values,
             coverImage: coverImageUrl,
             logoImage: logoImageUrl,
@@ -553,5 +553,3 @@ export default function EditEventPage() {
     </Card>
   );
 }
-
-    
