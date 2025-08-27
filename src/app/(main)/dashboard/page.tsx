@@ -39,7 +39,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (user.organizerProfile?.id) {
+    if (user.currentRole === 'organizer' && user.organizerProfile?.id) {
         const fetchEvents = async () => {
             setLoading(true);
             const organizerEvents = await getEvents(user.organizerProfile.id);
@@ -50,7 +50,7 @@ export default function DashboardPage() {
     } else {
         setLoading(false);
     }
-  }, [user.organizerProfile?.id]);
+  }, [user.currentRole, user.organizerProfile?.id]);
 
 
   const getInitials = (name: string) => {
@@ -70,7 +70,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-             <Card className={cn(isOrganizer ? "lg:col-span-2" : "lg:col-span-1")}>
+             <Card className="lg:col-span-2">
                 <CardHeader className="flex flex-row items-center gap-4">
                     <Avatar className="h-16 w-16">
                         <AvatarImage src={user.avatar} alt={user.name} />
@@ -206,50 +206,52 @@ export default function DashboardPage() {
             </Card>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle className="font-bold flex items-center gap-2"><Calendar /> Upcoming Stages</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Stage</TableHead>
-                                <TableHead>Location</TableHead>
-                                <TableHead className="text-right">Distance</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {upcomingStages.map(stage => (
-                                <TableRow key={stage.id}>
-                                    <TableCell className="font-medium">{stage.name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{stage.location}</TableCell>
-                                    <TableCell className="text-right font-mono">{stage.distance.toFixed(2)} km</TableCell>
+        {!isOrganizer && (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="font-bold flex items-center gap-2"><Calendar /> Upcoming Stages</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Stage</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead className="text-right">Distance</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {upcomingStages.map(stage => (
+                                    <TableRow key={stage.id}>
+                                        <TableCell className="font-medium">{stage.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{stage.location}</TableCell>
+                                        <TableCell className="text-right font-mono">{stage.distance.toFixed(2)} km</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-bold flex items-center gap-2"><Newspaper /> Recent News</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {recentNews.map(post => (
-                        <div key={post.id} className="p-3 rounded-md bg-muted/50">
-                            <h4 className="font-semibold">{post.title}</h4>
-                            <p className="text-xs text-muted-foreground">{post.content}</p>
-                        </div>
-                    ))}
-                     <Button variant="outline" className="w-full" asChild>
-                        <Link href="/news">View All News</Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-bold flex items-center gap-2"><Newspaper /> Recent News</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {recentNews.map(post => (
+                            <div key={post.id} className="p-3 rounded-md bg-muted/50">
+                                <h4 className="font-semibold">{post.title}</h4>
+                                <p className="text-xs text-muted-foreground">{post.content}</p>
+                            </div>
+                        ))}
+                         <Button variant="outline" className="w-full" asChild>
+                            <Link href="/news">View All News</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )}
     </div>
   );
 }
