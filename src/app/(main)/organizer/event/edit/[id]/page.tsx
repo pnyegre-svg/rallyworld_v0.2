@@ -47,6 +47,7 @@ export default function EditEventPage() {
   const params = useParams();
   const { user } = useUserStore();
   const [loading, setLoading] = React.useState(true);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
   const eventId = params.id as string;
   
@@ -134,6 +135,7 @@ export default function EditEventPage() {
 
 
   async function onSubmit(values: EventFormValues) {
+    setIsSubmitting(true);
     try {
         const dataToUpdate: Partial<EventFormValues> & { coverImage?: string | File; logoImage?: string | File } = { ...values };
 
@@ -160,6 +162,8 @@ export default function EditEventPage() {
             description: "An error occurred while saving the event. Please try again.",
             variant: "destructive"
         })
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -535,8 +539,8 @@ export default function EditEventPage() {
             </div>
 
 
-            <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Saving..." : "Save Changes"}
+            <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </form>
         </Form>
