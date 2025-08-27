@@ -29,21 +29,25 @@ const XIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
 )
 
-const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label: string, value: string, isLink?: boolean }) => {
+const InfoItem = ({ icon, label, value, isLink }: { icon: React.ReactNode, label: string, value?: string, isLink?: boolean | string }) => {
     if (!value) return null;
     
     let content;
+    let finalHref: string | undefined;
 
     if (label === 'Address') {
-        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(value)}`;
-        content = (
-             <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">
-                {value}
+        finalHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(value)}`;
+    } else if (typeof isLink === 'string') {
+        finalHref = isLink;
+    } else if (isLink === true && typeof value === 'string' && (value.startsWith('http') || value.startsWith('mailto') || value.startsWith('tel'))) {
+        finalHref = value;
+    }
+    
+    if (finalHref) {
+         content = (
+            <a href={finalHref} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">
+                {label === 'Website' ? value.replace(/^(https?:\/\/)?(www\.)?/, '') : value}
             </a>
-        );
-    } else if (isLink) {
-        content = (
-            <a href={value} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-vibrant-blue hover:underline">{value.replace(/^(https?:\/\/)?(www\.)?/, '')}</a>
         );
     } else {
         content = <p className="text-sm font-medium">{value}</p>;
@@ -144,15 +148,12 @@ export default function PublicClubProfilePage() {
                     <span>CIF: {profile.cif}</span>
                 </div>
             </CardHeader>
-            <CardContent className="max-w-4xl mx-auto w-full grid md:grid-cols-2 gap-x-12 gap-y-6 pt-6">
+            <CardContent className="max-w-2xl mx-auto w-full pt-6">
                 <div className="space-y-4">
                      <InfoItem icon={<MapPin size={20} />} label="Address" value={profile.address} />
                      <InfoItem icon={<Mail size={20} />} label="Email" value={profile.email} isLink={`mailto:${profile.email}`} />
-                     {profile.phone && <InfoItem icon={<Phone size={20} />} label="Phone" value={profile.phone} isLink={`tel:${profile.phone}`} />}
-                </div>
-
-                 <div className="space-y-4">
-                    {profile.website && <InfoItem icon={<Globe size={20} />} label="Website" value={profile.website} isLink />}
+                     <InfoItem icon={<Phone size={20} />} label="Phone" value={profile.phone} isLink={`tel:${profile.phone}`} />
+                     <InfoItem icon={<Globe size={20} />} label="Website" value={profile.website} isLink />
                      {hasSocials && (
                         <div className="flex items-start gap-3">
                             <div className="text-muted-foreground mt-1"><Facebook size={20} /></div>
