@@ -137,7 +137,7 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        const dataToUpdate: Partial<EventFormValues> & { coverImage?: string | File; logoImage?: string | File } = { ...values };
+        const dataToUpdate: any = { ...values };
 
         if (values.coverImage instanceof File) {
             const coverImageUrl = await uploadFile(values.coverImage, `events/${eventId}_cover_${values.coverImage.name}`);
@@ -156,7 +156,7 @@ export default function EditEventPage() {
         });
         router.push('/dashboard');
     } catch (error) {
-        console.error(error);
+        console.error("Error updating event:", error);
         toast({
             title: "Failed to update event",
             description: "An error occurred while saving the event. Please try again.",

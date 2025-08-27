@@ -107,27 +107,33 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
-      // Create a mutable copy for file uploads
-      const dataToSave: EventFormValues & { coverImage?: string | File; logoImage?: string | File } = { ...values, organizerId: user.organizerProfile.id };
+      // Use a new variable to hold data that will be saved to avoid mutating `values`
+      const dataToSave: any = { 
+        ...values, 
+        organizerId: user.organizerProfile.id 
+      };
 
       // Handle file uploads
       if (values.coverImage instanceof File) {
-        const coverImageUrl = await uploadFile(values.coverImage, `events/${Date.now()}_${values.coverImage.name}`);
+        const coverImageUrl = await uploadFile(values.coverImage, `events/${Date.now()}_cover_${values.coverImage.name}`);
         dataToSave.coverImage = coverImageUrl;
       }
       if (values.logoImage instanceof File) {
-        const logoImageUrl = await uploadFile(values.logoImage, `events/${Date.now()}_${values.logoImage.name}`);
+        const logoImageUrl = await uploadFile(values.logoImage, `events/${Date.now()}_logo_${values.logoImage.name}`);
         dataToSave.logoImage = logoImageUrl;
       }
+      
+      // TODO: Handle itineraryFiles and docsFiles uploads
 
       await addEvent(dataToSave as EventFormValues);
+      
       toast({
         title: "Event Created Successfully!",
         description: `The event "${values.title}" has been created.`,
       });
       router.push('/dashboard');
     } catch (error) {
-        console.error(error);
+        console.error("Error creating event:", error);
         toast({
             title: "Failed to create event",
             description: "An error occurred while creating the event. Please try again.",
