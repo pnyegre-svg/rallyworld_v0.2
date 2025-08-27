@@ -2,24 +2,14 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // PUBLIC FILES: Allow anyone to read files from the /public directory.
-    // This is useful for event images, logos, etc., that everyone needs to see.
-    match /public/{allPaths=**} {
+    match /{allPaths=**} {
+      // Allow public read access to all files.
+      // This is useful for public assets like event images and documents.
       allow read;
-    }
 
-    // USER UPLOADS: Allow authenticated users to upload files.
-    // We match on a user-specific path to ensure users can only write to their own folder.
-    match /users/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && request.auth.uid == userId; // Optional: Also allow users to read their own files
-    }
-    
-    // ORGANIZER/EVENT UPLOADS: Allow authenticated organizers to write to public paths.
-    // This rule allows any signed-in user to upload event-related or organizer-related files.
-    // In a production app, you might add a check to ensure the user has an "organizer" role.
-    match /public/{path=**} {
-       allow write: if request.auth != null;
+      // Allow write access (upload, update, delete) only to authenticated users.
+      // This is the core of the fix for the 'storage/unauthenticated' error.
+      allow write: if request.auth != null;
     }
   }
 }
