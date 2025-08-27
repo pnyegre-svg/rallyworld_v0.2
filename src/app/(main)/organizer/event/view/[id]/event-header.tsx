@@ -107,6 +107,7 @@ export function EventHeader({ event }: EventHeaderProps) {
   };
 
   const isOwner = user?.organizerProfile?.id === event.organizerId;
+  const getInitials = (name: string) => name?.[0]?.toUpperCase() || 'E';
 
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
@@ -121,23 +122,28 @@ export function EventHeader({ event }: EventHeaderProps) {
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                <div className="space-y-4">
-                     {event.logoImage && (
-                        <div className="relative w-64 h-24">
-                             <Image 
-                                src={getResizedImageUrl(event.logoImage, '512x512')!}
+                 <div className="flex items-end gap-6">
+                    {event.logoImage && (
+                        <div className="relative w-48 h-24 flex-shrink-0">
+                            <Image 
+                                src={getResizedImageUrl(event.logoImage, '512x256')!}
                                 alt={`${event.title} logo`}
                                 fill
                                 className="object-contain drop-shadow-lg"
-                             />
+                            />
                         </div>
                     )}
                     <div className="space-y-1">
                         <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md">{event.title}</h1>
-                        <div className="flex items-center gap-2 text-muted-foreground">
+                        <a 
+                           href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
                             <MapPin className="h-5 w-5" />
                             <span>{event.hqLocation}</span>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
