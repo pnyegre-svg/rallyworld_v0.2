@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -21,5 +21,18 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+
+// Helper that waits for auth to be ready
+export async function requireUser(): Promise<User> {
+  const existing = auth.currentUser;
+  if (existing) return existing;
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      unsub();
+      if (u) resolve(u);
+      else reject(new Error('Not signed in'));
+    });
+  });
+}
 
 export { app, auth, db, storage };

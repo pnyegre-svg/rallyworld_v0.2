@@ -2,21 +2,21 @@
 'use client';
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from './firebase'; // Import the initialized storage instance
+import { storage, requireUser } from './firebase'; // Import the initialized storage instance and requireUser
 
 /**
  * Uploads a file to a specified path in Firebase Storage.
+ * This function now ensures a user is authenticated before proceeding.
  *
  * @param file The file to upload.
- * @param userId The authenticated user's ID.
  * @param type The type of upload, determines the folder path.
- * @param fileName The name of the file to be saved.
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
-export const uploadFile = async (file: File, userId: string, type: 'organizer' | 'user', fileName: string): Promise<string> => {
-  const path = type === 'organizer' 
-    ? `public/organizers/${userId}/club-profile-picture/${fileName}`
-    : `public/users/${userId}/profile-picture/${fileName}`;
+export const uploadFile = async (file: File, type: 'organizer' | 'user'): Promise<string> => {
+  const user = await requireUser(); // <-- Guarantees request.auth != null at rules time
+  
+  const folder = type === 'organizer' ? `public/organizers/${user.uid}/club-profile-picture` : `public/users/${user.uid}/profile-picture`;
+  const path = `${folder}/${Date.now()}-${file.name}`;
   
   const storageRef = ref(storage, path);
 
