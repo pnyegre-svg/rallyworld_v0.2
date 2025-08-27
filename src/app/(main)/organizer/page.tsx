@@ -45,6 +45,7 @@ import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
+import { uploadFile } from '@/lib/storage';
 
 const formSchema = z.object({
   clubId: z.string().optional(),
@@ -71,6 +72,7 @@ export default function OrganizerProfilePage() {
     const [selectedClubId, setSelectedClubId] = React.useState<string>('');
     const [isManualEntry, setIsManualEntry] = React.useState(false);
     const [popoverOpen, setPopoverOpen] = React.useState(false)
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -137,32 +139,55 @@ export default function OrganizerProfilePage() {
     }
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        const organizerData: Organizer = {
-            id: values.clubId || `org_${Date.now()}`,
-            name: values.name,
-            cis: values.cis,
-            cif: values.cif,
-            address: values.address,
-            phone: values.phone,
-            email: values.email,
-            website: values.website,
-            socials: {
-                facebook: values.facebook,
-                instagram: values.instagram,
-                youtube: values.youtube,
-                tiktok: values.tiktok,
-                x: values.x,
-            },
-            // Note: Profile picture handling would require actual upload logic
-            profilePicture: values.profilePicture ? URL.createObjectURL(values.profilePicture) : undefined,
+        setIsSubmitting(true);
+        try {
+            const organizerId = user?.organizerProfile?.id || values.clubId || `org_${Date.now()}`;
+            
+            let profilePictureUrl = values.profilePicture;
+            if (values.profilePicture instanceof File) {
+                const fileExtension = values.profilePicture.name.split('.').pop();
+                const path = `organizers/${organizerId}_profile.${fileExtension}`;
+                profilePictureUrl = await uploadFile(values.profilePicture, path);
+            }
+
+            const organizerData: Organizer = {
+                id: organizerId,
+                name: values.name,
+                cis: values.cis,
+                cif: values.cif,
+                address: values.address,
+                phone: values.phone,
+                email: values.email,
+                website: values.website,
+                socials: {
+                    facebook: values.facebook,
+                    instagram: values.instagram,
+                    youtube: values.youtube,
+                    tiktok: values.tiktok,
+                    x: values.x,
+                },
+                profilePicture: profilePictureUrl,
+            };
+
+            await updateOrganizerProfile(organizerData);
+            
+            toast({
+                title: "Profile Saved",
+                description: "Your club profile has been successfully updated.",
+            });
+            setIsEditing(false);
+            router.push('/dashboard');
+
+        } catch (error) {
+            console.error("Error saving profile:", error);
+            toast({
+                title: "Failed to save profile",
+                description: "An error occurred while saving. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
         }
-        await updateOrganizerProfile(organizerData)
-        toast({
-            title: "Profile Saved",
-            description: "Your club profile has been successfully updated.",
-        });
-        setIsEditing(false);
-        router.push('/dashboard');
     }
     
     const copyToClipboard = (text: string, fieldName: string) => {
@@ -176,7 +201,7 @@ export default function OrganizerProfilePage() {
     };
     
     const TikTokIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04-.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11-2.7-1.65-4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7 1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04.15.05-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.11-2.7-1.65-4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
     )
 
     const XIcon = () => (
@@ -185,6 +210,11 @@ export default function OrganizerProfilePage() {
 
     const fieldsDisabled = !isEditing || (!isManualEntry && selectedClubId !== '' && selectedClubId !== 'new');
     const allFieldsDisabled = !isEditing;
+
+    const profilePictureValue = form.watch('profilePicture');
+    const displayImage = profilePictureValue instanceof File 
+        ? URL.createObjectURL(profilePictureValue) 
+        : profilePictureValue;
 
     return (
         <Card>
@@ -291,7 +321,7 @@ export default function OrganizerProfilePage() {
                                     <FormControl>
                                     <div className="relative">
                                         <Avatar className="h-24 w-24">
-                                            <AvatarImage src={field.value} alt="Club Profile Picture" />
+                                            <AvatarImage src={displayImage} alt="Club Profile Picture" />
                                             <AvatarFallback>CLUB</AvatarFallback>
                                         </Avatar>
                                         {isEditing && (
@@ -513,7 +543,9 @@ export default function OrganizerProfilePage() {
 
                         {isEditing && (
                             <div className="flex gap-2">
-                                <Button type="submit" className="bg-accent hover:bg-accent/90">Save Profile</Button>
+                                <Button type="submit" className="bg-accent hover:bg-accent/90" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Saving...' : 'Save Profile'}
+                                </Button>
                                 {user?.organizerProfile && (
                                      <Button variant="outline" onClick={() => {
                                         setIsEditing(false);
@@ -529,3 +561,5 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    
