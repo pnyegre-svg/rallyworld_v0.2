@@ -11,7 +11,7 @@ type UserState = {
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
-  updateOrganizerProfile: (profile: Organizer) => Promise<void>;
+  updateOrganizerProfile: (profile: Organizer) => Promise<User | null>;
   setAuthReady: (isReady: boolean) => void;
 };
 
@@ -81,14 +81,12 @@ export const useUserStore = create<UserState>()(
       },
       updateOrganizerProfile: async (profile: Organizer) => {
         const currentUser = get().user;
-        if (!currentUser) return;
+        if (!currentUser) return null;
 
-        const updatedUser = { ...currentUser, organizerProfile: profile };
+        const updatedUser = await updateUser(currentUser.id, { organizerProfile: profile });
 
         set({ user: updatedUser });
-
-        // Use dot notation to update a nested object field in Firestore.
-        await updateUser(currentUser.id, { organizerProfile: profile });
+        return updatedUser;
       }
     }),
     {

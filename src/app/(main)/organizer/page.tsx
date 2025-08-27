@@ -100,7 +100,7 @@ export default function OrganizerProfilePage() {
     });
     
     React.useEffect(() => {
-        if (user?.organizerProfile) {
+        if (isAuthReady && user?.organizerProfile) {
             const profile = user.organizerProfile;
             form.reset({
                 ...profile,
@@ -123,10 +123,10 @@ export default function OrganizerProfilePage() {
                  setIsManualEntry(true);
             }
             setIsEditing(false);
-        } else {
+        } else if (isAuthReady && !user?.organizerProfile) {
             setIsEditing(true);
         }
-    }, [user, form]);
+    }, [user, form, isAuthReady]);
 
 
     const handleClubChange = (clubId: string) => {
@@ -169,9 +169,9 @@ export default function OrganizerProfilePage() {
 
         setIsSubmitting(true);
         try {
-            // Step 1: Prepare the base organizer data (without the picture)
-            let organizerData: Organizer = {
-                id: user?.organizerProfile?.id || `org_${Date.now()}`,
+            // Step 1: Prepare the profile data from the form
+            let profileData: Organizer = {
+                id: user.organizerProfile?.id || `org_${Date.now()}`,
                 name: values.name,
                 cis: values.cis,
                 cif: values.cif,
@@ -186,22 +186,31 @@ export default function OrganizerProfilePage() {
                     tiktok: values.tiktok,
                     x: values.x,
                 },
-                profilePicture: user?.organizerProfile?.profilePicture || '',
+                profilePicture: user.organizerProfile?.profilePicture || '',
             };
 
-            // Step 2: Save the base data to establish the document and get a stable ID
-            await updateOrganizerProfile(organizerData);
+            // Step 2: Save the profile data to get a stable ID
+            // The updateOrganizerProfile function will now return the updated user object
+            const updatedUser = await updateOrganizerProfile(profileData);
+            const finalOrganizerId = updatedUser?.organizerProfile?.id;
 
-            // Step 3: If there's a new picture, upload it now using the stable ID
+            if (!finalOrganizerId) {
+                throw new Error("Failed to get organizer ID after saving profile.");
+            }
+            
+            // Step 3: If there's a new picture, upload it using the stable ID
             if (values.profilePicture instanceof File) {
                 const file = values.profilePicture;
                 const fileExtension = file.name.split('.').pop();
-                const path = `public/organizers/${organizerData.id}/profile.${fileExtension}`;
+                const path = `public/organizers/${finalOrganizerId}/profile.${fileExtension}`;
                 const profilePictureUrl = await uploadFile(file, path);
-                organizerData.profilePicture = profilePictureUrl;
                 
+                // Prepare for final update
+                profileData.profilePicture = profilePictureUrl;
+                profileData.id = finalOrganizerId;
+
                 // Step 4: Update the profile again with the picture URL
-                await updateOrganizerProfile(organizerData);
+                await updateOrganizerProfile(profileData);
             }
             
             toast({
@@ -214,7 +223,7 @@ export default function OrganizerProfilePage() {
             console.error("Error saving profile:", error);
             toast({
                 title: "Failed to save profile",
-                description: "An error occurred while saving. Please try again.",
+                description: (error as Error).message || "An error occurred while saving. Please try again.",
                 variant: "destructive"
             });
         } finally {
