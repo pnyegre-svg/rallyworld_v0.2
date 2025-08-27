@@ -50,13 +50,13 @@ export function MainNav() {
   ];
 
   const isAdmin = user?.email === 'admin@rally.world';
-  const logoSrc = '/RW_txt2.svg';
-  const logoWidth = 85;
-  const logoHeight = 22;
+  const logoSrc = '/RW_icon_transp.svg';
+  const logoWidth = 40;
+  const logoHeight = 40;
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
+      <SidebarHeader className="p-4 justify-center flex">
         <Link href="/" className="flex items-center gap-2">
             <Image src={logoSrc} alt="Rally World Logo" width={logoWidth} height={logoHeight} className="w-auto h-auto transition-all hover:scale-105 active:scale-100"/>
         </Link>
