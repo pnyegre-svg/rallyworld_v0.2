@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2 } from 'lucide-react';
+import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube } from 'lucide-react';
 import { Event, updateEvent } from '@/lib/events';
 import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
@@ -219,6 +219,13 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
 
 
         <div className="absolute top-6 right-6 flex items-center gap-2">
+            {event.livestreamLink && (
+                 <Button asChild className="bg-red-600 hover:bg-red-700 text-white">
+                    <Link href={event.livestreamLink} target="_blank" rel="noopener noreferrer">
+                        <Youtube className="mr-2"/> Watch Live
+                    </Link>
+                </Button>
+            )}
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
