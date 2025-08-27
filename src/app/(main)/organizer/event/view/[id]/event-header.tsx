@@ -10,10 +10,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy } from 'lucide-react';
+import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare } from 'lucide-react';
 import { Event } from '@/lib/events';
 import { DateDisplay } from './date-display';
 import { useToast } from '@/hooks/use-toast';
+import { useUserStore } from '@/hooks/use-user';
+import Link from 'next/link';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -74,6 +76,7 @@ type EventHeaderProps = {
 
 export function EventHeader({ event }: EventHeaderProps) {
   const { toast } = useToast();
+  const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
 
   React.useEffect(() => {
@@ -101,6 +104,8 @@ export function EventHeader({ event }: EventHeaderProps) {
         return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
     }
   };
+
+  const isOwner = user?.organizerProfile?.id === event.organizerId;
 
   return (
     <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
@@ -158,11 +163,18 @@ export function EventHeader({ event }: EventHeaderProps) {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <UserPlus className="mr-2"/> Register
-            </Button>
+            {isOwner ? (
+                <Button asChild className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <Link href={`/organizer/event/edit/${event.id}`}>
+                        <PenSquare className="mr-2"/> Edit Event
+                    </Link>
+                </Button>
+            ) : (
+                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                    <UserPlus className="mr-2"/> Register
+                </Button>
+            )}
         </div>
     </div>
   );
 }
-
