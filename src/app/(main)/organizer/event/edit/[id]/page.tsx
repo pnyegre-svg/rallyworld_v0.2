@@ -40,7 +40,6 @@ import { useUserStore } from '@/hooks/use-user';
 import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
-import { uploadFile } from '@/lib/storage';
 
 export default function EditEventPage() {
   const { toast } = useToast();
@@ -142,46 +141,7 @@ export default function EditEventPage() {
   async function onSubmit(values: EventFormValues) {
     setIsSubmitting(true);
     try {
-        const dataToUpdate: any = { ...values };
-
-        if (values.coverImage instanceof File) {
-            const coverImageUrl = await uploadFile(values.coverImage, `public/events/${eventId}/cover_${values.coverImage.name}`);
-            dataToUpdate.coverImage = coverImageUrl;
-        }
-
-        if (values.logoImage instanceof File) {
-            const logoImageUrl = await uploadFile(values.logoImage, `public/events/${eventId}/logo_${values.logoImage.name}`);
-            dataToUpdate.logoImage = logoImageUrl;
-        }
-        
-        const uploadAndGetMetadata = async (file: File, path: string) => {
-          const url = await uploadFile(file, path);
-          return { url, name: file.name, type: file.type, size: file.size };
-        };
-
-        const processFiles = async (files: any[], pathPrefix: string) => {
-          const processedFiles = await Promise.all(
-            (files || []).map(async (fileObj) => {
-              const file = fileObj.file;
-              // If it's a new file, upload it and get metadata
-              if (file instanceof File) {
-                return uploadAndGetMetadata(file, `public/events/${eventId}/${pathPrefix}/${file.name}`);
-              }
-              // If it's an existing file object (from initial load), return it as is
-              if (typeof file === 'object' && file !== null && file.url) {
-                return file;
-              }
-              return null; // Ignore invalid entries
-            })
-          );
-          return processedFiles.filter(Boolean); // Filter out nulls
-        };
-
-        dataToUpdate.itineraryFiles = await processFiles(values.itineraryFiles, 'itinerary');
-        dataToUpdate.docsFiles = await processFiles(values.docsFiles, 'docs');
-
-
-        await updateEvent(eventId, dataToUpdate);
+        await updateEvent(eventId, values);
 
         toast({
             title: "Event Updated Successfully!",
@@ -249,6 +209,7 @@ export default function EditEventPage() {
                                 onChange={(e) => onChange(e.target.files?.[0])} 
                                 {...rest}
                                 className="flex-1"
+                                disabled={true}
                             />
                         </FormControl>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -266,7 +227,7 @@ export default function EditEventPage() {
         />
       ))}
       <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
-        <PlusCircle className="mr-2 h-4 w-4"/> Add File
+        <PlusCircle className="mr-2 h-4 w-4"/> Add File (Disabled)
       </Button>
     </div>
   );
@@ -417,9 +378,9 @@ export default function EditEventPage() {
                         name="coverImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Optional)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Disabled)</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
                             </FormControl>
                             <FormDescription>Recommended: 1200x630px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
@@ -431,9 +392,9 @@ export default function EditEventPage() {
                         name="logoImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Optional)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Disabled)</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
                             </FormControl>
                             <FormDescription>Recommended: 512x512px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />

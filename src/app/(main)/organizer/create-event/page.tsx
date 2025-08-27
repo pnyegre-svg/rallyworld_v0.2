@@ -40,7 +40,6 @@ import { useRouter } from 'next/navigation';
 import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
-import { uploadFile } from '@/lib/storage';
 import { ActionCard } from '@/components/ui/action-card';
 
 
@@ -110,52 +109,10 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
-      const eventId = `evt_${Date.now()}`;
-      
-      const dataToSave: Omit<EventFormValues, 'coverImage' | 'logoImage' | 'itineraryFiles' | 'docsFiles'> & { coverImage?: string, logoImage?: string, itineraryFiles?: any[], docsFiles?: any[]} = { 
+      const dataToSave = { 
         ...values,
         organizerId: user.organizerProfile.id,
       };
-
-      if (values.coverImage instanceof File) {
-        const coverImageUrl = await uploadFile(values.coverImage, `public/events/${eventId}/cover_${values.coverImage.name}`);
-        dataToSave.coverImage = coverImageUrl;
-      }
-      if (values.logoImage instanceof File) {
-        const logoImageUrl = await uploadFile(values.logoImage, `public/events/${eventId}/logo_${values.logoImage.name}`);
-        dataToSave.logoImage = logoImageUrl;
-      }
-      
-      const uploadAndGetMetadata = async (file: File, path: string) => {
-          const url = await uploadFile(file, path);
-          return { url, name: file.name, type: file.type, size: file.size };
-      };
-
-      if (values.itineraryFiles && values.itineraryFiles.length > 0) {
-          const uploadedFiles = await Promise.all(
-              values.itineraryFiles
-                .filter(fileObj => fileObj.file instanceof File)
-                .map(async (fileObj) => 
-                  uploadAndGetMetadata(fileObj.file as File, `public/events/${eventId}/itinerary/${fileObj.file?.name}`)
-              )
-          );
-          dataToSave.itineraryFiles = uploadedFiles;
-      } else {
-        dataToSave.itineraryFiles = [];
-      }
-
-      if (values.docsFiles && values.docsFiles.length > 0) {
-          const uploadedFiles = await Promise.all(
-            values.docsFiles
-                .filter(fileObj => fileObj.file instanceof File)
-                .map(async (fileObj) => 
-                  uploadAndGetMetadata(fileObj.file as File, `public/events/${eventId}/docs/${fileObj.file?.name}`)
-              )
-          );
-          dataToSave.docsFiles = uploadedFiles;
-      } else {
-        dataToSave.docsFiles = [];
-      }
 
       await addEvent(dataToSave as any);
       
@@ -221,6 +178,7 @@ export default function CreateEventPage() {
                                 onChange={(e) => onChange(e.target.files?.[0])} 
                                 {...rest}
                                 className="flex-1"
+                                disabled={true}
                             />
                         </FormControl>
                         <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
@@ -233,7 +191,7 @@ export default function CreateEventPage() {
         />
       ))}
       <Button type="button" variant="outline" size="sm" onClick={() => append({ file: undefined })}>
-        <PlusCircle className="mr-2 h-4 w-4"/> Add File
+        <PlusCircle className="mr-2 h-4 w-4"/> Add File (Disabled)
       </Button>
     </div>
   );
@@ -365,9 +323,9 @@ export default function CreateEventPage() {
                         name="coverImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Optional)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><ImageIcon className="h-4 w-4"/> Event Cover Image (Disabled)</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
                             </FormControl>
                             <FormDescription>Recommended: 1200x630px.</FormDescription>
                             <FormMessage />
@@ -379,9 +337,9 @@ export default function CreateEventPage() {
                         name="logoImage"
                         render={({ field: { onChange, value, ...rest }}) => (
                         <FormItem>
-                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Optional)</FormLabel>
+                            <FormLabel className="flex items-center gap-2"><Award className="h-4 w-4"/> Event Logo (Disabled)</FormLabel>
                             <FormControl>
-                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest}/>
+                                <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} disabled={true}/>
                             </FormControl>
                             <FormDescription>Recommended: 512x512px.</FormDescription>
                             <FormMessage />
