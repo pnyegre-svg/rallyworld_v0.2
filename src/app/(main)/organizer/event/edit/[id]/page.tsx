@@ -153,8 +153,9 @@ export default function EditEventPage() {
 
         // Remove undefined properties before saving to Firestore
         Object.keys(dataToUpdate).forEach(key => {
-            if (dataToUpdate[key as keyof typeof dataToUpdate] === undefined) {
-            delete dataToUpdate[key as keyof typeof dataToUpdate];
+            const K = key as keyof typeof dataToUpdate;
+            if (dataToUpdate[K] === undefined) {
+              delete dataToUpdate[K];
             }
         });
 
@@ -215,8 +216,6 @@ export default function EditEventPage() {
             name={`${namePrefix}.${index}.file`}
             render={({ field: { onChange, value, ...rest }}) => {
                 const currentFile = value;
-                const fileName = currentFile instanceof File ? currentFile.name : (typeof currentFile === 'object' && currentFile?.name) ? currentFile.name : 'No file selected';
-
                 return (
                 <FormItem>
                     <div className="flex items-center gap-2">
@@ -399,7 +398,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
-                            <FormDescription>Recommended: 1200x630px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
+                            <FormDescription>Recommended: 1200x630px. {typeof value === 'string' && value && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
@@ -413,7 +412,7 @@ export default function EditEventPage() {
                             <FormControl>
                                 <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0])} {...rest} />
                             </FormControl>
-                            <FormDescription>Recommended: 512x512px. {typeof value === 'string' && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
+                            <FormDescription>Recommended: 512x512px. {typeof value === 'string' && value && <a href={value} target="_blank" rel="noreferrer" className="text-primary underline">Current image</a>}</FormDescription>
                             <FormMessage />
                         </FormItem>
                         )}
