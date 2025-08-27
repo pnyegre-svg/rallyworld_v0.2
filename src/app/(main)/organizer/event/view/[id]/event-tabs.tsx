@@ -56,14 +56,26 @@ export function EventTabs({ event }: EventTabsProps) {
   const embedUrl = getYouTubeEmbedUrl(event.livestreamLink || '');
   const hasLivestream = !!event.livestreamLink;
 
-  const renderLinks = (links: {value: string}[]) => {
+  const renderLinks = (links: {name?: string, value: string}[]) => {
     if (!links || links.length === 0 || links.every(l => !l.value)) return <p className="text-sm text-muted-foreground">No links provided.</p>;
+
+    const getLinkName = (link: {name?: string, value: string}) => {
+        if (link.name) return link.name;
+        try {
+            const url = new URL(link.value);
+            const pathParts = url.pathname.split('/');
+            return pathParts[pathParts.length - 1] || link.value;
+        } catch {
+            return link.value;
+        }
+    }
+    
     return (
         <ul className="list-disc list-inside space-y-1">
             {links.filter(l => l.value).map((link, index) => (
                 <li key={index}>
                     <a href={link.value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">
-                        {link.value}
+                        {getLinkName(link)}
                     </a>
                 </li>
             ))}

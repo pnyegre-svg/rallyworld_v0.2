@@ -12,6 +12,7 @@ const stageSchema = z.object({
 });
 
 const linkSchema = z.object({
+  name: z.string().optional(),
   value: z.string().url({ message: "Please enter a valid URL." }).or(z.literal('')),
 });
 

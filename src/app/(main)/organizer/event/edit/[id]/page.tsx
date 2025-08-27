@@ -6,7 +6,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, Text } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -179,29 +179,46 @@ export default function EditEventPage() {
   }
 
   const renderLinkInputs = (fields: any, remove: any, append: any, namePrefix: 'itineraryLinks' | 'docsLinks') => (
-    <div className="space-y-2">
+    <div className="space-y-4">
       {fields.map((field: any, index: number) => (
-         <FormField
-            key={field.id}
-            control={form.control}
-            name={`${namePrefix}.${index}.value`}
-            render={({ field: formField }) => (
-                <FormItem>
-                    <div className="flex items-center gap-2">
-                         <div className="relative flex-1">
-                            <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input {...formField} placeholder="https://..." className="pl-9" />
+         <div key={field.id} className="space-y-2 p-3 rounded-md border bg-muted/30">
+             <FormField
+                control={form.control}
+                name={`${namePrefix}.${index}.name`}
+                render={({ field: formField }) => (
+                    <FormItem>
+                         <FormLabel className="sr-only">Link Name</FormLabel>
+                         <div className="relative">
+                            <Text className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <Input {...formField} placeholder="e.g. Official Regulations" className="pl-9" />
                         </div>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                     <FormMessage />
-                </FormItem>
-            )}
-        />
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                key={field.id}
+                control={form.control}
+                name={`${namePrefix}.${index}.value`}
+                render={({ field: formField }) => (
+                    <FormItem>
+                        <FormLabel className="sr-only">Link URL</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <LinkIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                <Input {...formField} placeholder="https://..." className="pl-9" />
+                            </div>
+                            <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={() => append({ value: "" })}>
+      <Button type="button" variant="outline" size="sm" onClick={() => append({ name: "", value: "" })}>
         <PlusCircle className="mr-2 h-4 w-4"/> Add Link
       </Button>
     </div>
