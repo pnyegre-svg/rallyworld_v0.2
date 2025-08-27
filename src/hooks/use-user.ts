@@ -9,7 +9,7 @@ type UserState = {
   isLoading: boolean;
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
-  switchRole: (role: UserRole) => void;
+  switchRole: (role: UserRole) => Promise<void>;
   updateOrganizerProfile: (profile: Organizer) => Promise<void>;
 };
 
@@ -66,7 +66,7 @@ export const useUserStore = create<UserState>()(
         
         await updateUser(currentUser.id, { roles: newRoles, currentRole: role });
       },
-      switchRole: (role: UserRole) => {
+      switchRole: async (role: UserRole) => {
         const currentUser = get().user;
         if (!currentUser) return;
         
