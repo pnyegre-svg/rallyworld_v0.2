@@ -180,7 +180,6 @@ export default function OrganizerProfilePage() {
 
         setIsSubmitting(true);
         try {
-            // Step 1: Prepare the profile data from the form
             let profileData: Organizer = {
                 id: user?.organizerProfile?.id || `org_${Date.now()}`,
                 name: values.name,
@@ -200,27 +199,22 @@ export default function OrganizerProfilePage() {
                 profilePicture: user?.organizerProfile?.profilePicture || '',
             };
 
-            // Step 2: Save the profile data to get a stable ID
-            // The updateOrganizerProfile function will now return the updated user object
-            const updatedUser = await updateOrganizerProfile(profileData);
-            const finalOrganizerId = updatedUser?.organizerProfile?.id;
+            const updatedUserWithProfile = await updateOrganizerProfile(profileData);
+            const finalOrganizerId = updatedUserWithProfile?.organizerProfile?.id;
 
             if (!finalOrganizerId) {
                 throw new Error("Failed to get organizer ID after saving profile.");
             }
+
+            profileData.id = finalOrganizerId;
             
-            // Step 3: If there's a new picture, upload it using the stable ID and firebaseUser.uid
             if (values.profilePicture instanceof File) {
                 const file = values.profilePicture;
                 const fileExtension = file.name.split('.').pop();
                 const path = `public/organizers/${firebaseUser.uid}/profile.${fileExtension}`;
                 const profilePictureUrl = await uploadFile(file, path);
                 
-                // Prepare for final update
                 profileData.profilePicture = profilePictureUrl;
-                profileData.id = finalOrganizerId; // Use the confirmed ID
-
-                // Step 4: Update the profile again with the picture URL
                 await updateOrganizerProfile(profileData);
             }
             
