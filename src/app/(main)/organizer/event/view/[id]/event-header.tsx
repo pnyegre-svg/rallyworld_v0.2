@@ -126,7 +126,7 @@ export function EventHeader({ event }: EventHeaderProps) {
                     {event.logoImage && (
                         <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
                             <AvatarImage src={getResizedImageUrl(event.logoImage, '512x512')} alt={`${event.title} logo`} />
-                            <AvatarFallback><Award /></AvatarFallback>
+                            <AvatarFallback>{event.title.charAt(0)}</AvatarFallback>
                         </Avatar>
                     )}
                     <div className="space-y-2">
