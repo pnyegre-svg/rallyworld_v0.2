@@ -28,12 +28,14 @@ export const useUserStore = create<UserState>()(
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
               if (!get().user || get().user?.email !== firebaseUser.email) {
+                  console.log("Auth state changed: User is signed in. Fetching profile...");
                   await get().signInUser(firebaseUser.email!);
               }
             } else {
+              console.log("Auth state changed: User is signed out.");
               set({ user: null });
             }
-            // Only set auth ready to true once the initial check and potential user load is complete.
+            // This now signifies that the onAuthStateChanged listener has fired at least once.
             if (!get().isAuthReady) {
                  set({ isAuthReady: true });
             }
@@ -50,16 +52,20 @@ export const useUserStore = create<UserState>()(
         let userProfile = await getUser(firebaseUser.uid);
 
         if (!userProfile) {
+            console.log(`No profile found for ${email}. Creating new user...`);
             const newUser: Omit<User, 'id'> = {
-                name: name || 'New User',
+                name: name || firebaseUser.displayName || 'New User',
                 email: email,
-                avatar: `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
-                profilePicture: '',
+                avatar: firebaseUser.photoURL || `/avatars/${Math.floor(Math.random() * 5) + 1}.png`,
+                profilePicture: firebaseUser.photoURL || '',
                 roles: ['fan'],
                 currentRole: 'fan',
             };
             await createUser(firebaseUser.uid, newUser);
             userProfile = { ...newUser, id: firebaseUser.uid };
+            console.log(`New user created for ${email}.`);
+        } else {
+             console.log(`Profile found for ${email}.`);
         }
         
         if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {

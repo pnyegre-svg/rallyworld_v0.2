@@ -3,7 +3,6 @@ import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FB_API_KEY,
@@ -17,28 +16,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize App Check
-let appCheckInitialized = false;
-if (typeof window !== 'undefined') {
-    try {
-        (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-        initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_FB_APPCHECK_SITE_KEY!),
-            isTokenAutoRefreshEnabled: true,
-        });
-        appCheckInitialized = true;
-        console.log("App Check initialized");
-    } catch (e) {
-        console.error("Error initializing App Check", e);
-    }
-}
-
-
 // Initialize and export Firebase services
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-export { app, appCheckInitialized };
+export { app };
 
 
 // Helper that waits for auth to be ready

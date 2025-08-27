@@ -4,16 +4,49 @@
 import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
+import { app, auth, db, storage } from '@/lib/firebase';
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+
+// This is a one-time initialization component.
+let firebaseInitialized = false;
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    const { isAuthReady, initializeAuth } = useUserStore();
+    const { initializeAuth } = useUserStore();
+    const [isReady, setIsReady] = React.useState(false);
 
     React.useEffect(() => {
-        const unsubscribe = initializeAuth();
-        return () => unsubscribe();
+        if (!firebaseInitialized) {
+            console.log('Initializing Firebase and App Check...');
+            // Set debug token to true in development to generate a debug token in the console
+            // This will be ignored in production.
+            if (process.env.NODE_ENV === 'development') {
+                (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+            }
+
+            // Initialize App Check
+            initializeAppCheck(app, {
+                provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_FB_APPCHECK_SITE_KEY!),
+                isTokenAutoRefreshEnabled: true,
+            });
+
+            // Initialize Auth State Listener
+            const unsubscribe = initializeAuth();
+            firebaseInitialized = true;
+            console.log('Firebase initialization complete.');
+
+            // We can now consider the app ready.
+            // A small delay might help in some edge cases, but let's try without first.
+            setIsReady(true);
+            
+            // Cleanup subscription on component unmount
+            return () => unsubscribe();
+        } else {
+            // If already initialized, just set to ready.
+            setIsReady(true);
+        }
     }, [initializeAuth]);
 
-    if (!isAuthReady) {
+    if (!isReady) {
         return <div className="flex h-screen items-center justify-center"><Loading /></div>
     }
     
