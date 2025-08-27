@@ -121,8 +121,8 @@ export function EventHeader({ event }: EventHeaderProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
         
         <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                 <div className="flex items-end gap-6">
+            <div className="flex flex-row items-end justify-between gap-6">
+                <div className="flex flex-col gap-4">
                     {event.logoImage && (
                         <div className="relative w-48 h-24 flex-shrink-0">
                             <Image 
