@@ -104,7 +104,7 @@ export default function MyEventsPage() {
                                 fill
                                 className="object-cover"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center p-4">
                                 {event.logoImage && (
                                     <Image 
                                         src={getResizedImageUrl(event.logoImage, '512x256')!}
