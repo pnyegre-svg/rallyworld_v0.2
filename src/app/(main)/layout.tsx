@@ -7,37 +7,28 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { PageHeader } from '@/components/page-header';
 import { UserNav } from '@/components/user-nav';
-import { onAuthStateChanged } from 'firebase/auth';
 import Loading from './loading';
 import { useUserStore } from '@/hooks/use-user';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
-import { auth } from '@/lib/firebase';
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, signOutUser, isAuthReady, initializeAuth } = useUserStore();
+  const { user, isAuthReady, initializeAuth } = useUserStore();
 
   React.useEffect(() => {
-    // Start the auth flow, which now waits for App Check
-    initializeAuth();
+    // onAuthStateChanged returns an unsubscribe function.
+    // We call it to set up the listener.
+    const unsubscribe = initializeAuth();
 
-    // Keep a continuous listener for auth state changes (e.g., user signs out in another tab)
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser && isAuthReady) {
-        // If the user is signed out and the initial check has completed
-        signOutUser();
-        router.push('/auth/sign-in');
-      }
-    });
-
-    // Cleanup subscription on unmount
+    // The returned function will be called on component unmount to clean up the listener.
     return () => unsubscribe();
-  }, []); // Run only once on mount
+  }, [initializeAuth]); // initializeAuth is stable, so this only runs once on mount.
+
 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
@@ -57,7 +48,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  if (!isAuthReady || !user) {
+  if (!isAuthReady) {
+    return <Loading />;
+  }
+
+  if (isAuthReady && !user) {
+    router.push('/auth/sign-in');
+    return <Loading />;
+  }
+
+  if (!user) {
     return <Loading />;
   }
   
