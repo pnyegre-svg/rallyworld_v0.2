@@ -238,7 +238,7 @@ export default function OrganizerProfilePage() {
     };
     
     const TikTokIcon = () => (
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7-1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04.15.05-.23.02-1.53-.63-3.09 1.75-4.17 1.12-1.11-2.7-1.65-4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M12.52.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.65 4.31 1.7.01.08.01.16.02.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.1-2.7 1.65-4.31 1.7-.01.08-.01.16-.02.23-.02 1.3-.01 2.6-.02 3.91-.02.08-.04.15-.05.23-.02 1.53-.63 3.09-1.75 4.17-1.12 1.11-2.7-1.65-4.31 1.7C12.52 24 12.52 24 12.52 24c-1.31.02-2.61.01-3.91.02-.08-1.53-.63-3.09-1.75-4.17-1.12-1.11-2.7-1.65-4.31-1.7-.01-.08-.01-.16-.02-.23.02-1.53.63-3.09 1.75-4.17 1.12-1.1 2.7-1.65 4.31-1.7.01-.08.01-.16.02-.23.02-1.3.01-2.6.02-3.91.02-.08.04.15.05.23.02-1.53-.63-3.09 1.75-4.17 1.12-1.11-2.7-1.65-4.31-1.7.01-.08.01-.16.02-.23.01-.08.01-.16.01-.23z"/></svg>
     )
 
     const XIcon = () => (
@@ -404,7 +404,7 @@ export default function OrganizerProfilePage() {
                                                 <FormLabel>Club CIS</FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
-                                                        <Input placeholder="Club's Sport Identity Card" {...field} disabled={fieldsDisabled} />
+                                                        <Input placeholder="Club's Sport Identity Card" {...field} disabled={allFieldsDisabled} />
                                                     </FormControl>
                                                     <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIS')}>
                                                         <Copy className="h-4 w-4" />
@@ -422,7 +422,7 @@ export default function OrganizerProfilePage() {
                                                 <FormLabel>Club CIF</FormLabel>
                                                 <div className="flex items-center gap-2">
                                                     <FormControl>
-                                                        <Input placeholder="Club's Fiscal ID Code" {...field} disabled={fieldsDisabled}/>
+                                                        <Input placeholder="Club's Fiscal ID Code" {...field} disabled={allFieldsDisabled}/>
                                                     </FormControl>
                                                     <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'CIF')}>
                                                         <Copy className="h-4 w-4" />
@@ -445,7 +445,7 @@ export default function OrganizerProfilePage() {
                                         <FormLabel>Address</FormLabel>
                                         <div className="flex items-start gap-2">
                                             <FormControl>
-                                                <Textarea placeholder="Club's full address" {...field} disabled={fieldsDisabled} />
+                                                <Textarea placeholder="Club's full address" {...field} disabled={allFieldsDisabled} />
                                             </FormControl>
                                             <Button type="button" variant="ghost" size="icon" onClick={() => copyToClipboard(field.value, 'Address')} className="mt-1">
                                                 <Copy className="h-4 w-4" />
