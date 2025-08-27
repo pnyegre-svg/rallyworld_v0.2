@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Facebook, Instagram, Youtube, Globe, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, Youtube, Globe, Mail, Phone, MapPin, Contact } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Organizer } from '@/lib/data';
@@ -108,24 +108,25 @@ export default function PublicClubProfilePage() {
 
     if (loading) {
         return (
-            <Card>
-                <CardHeader className="text-center">
-                    <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
-                    <Skeleton className="h-8 w-1/2 mx-auto" />
-                    <Skeleton className="h-4 w-1/4 mx-auto" />
-                </CardHeader>
-                <CardContent className="grid md:grid-cols-2 gap-8">
-                     <div className="space-y-6">
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader className="text-center">
+                        <Skeleton className="h-24 w-24 rounded-full mx-auto mb-4" />
+                        <Skeleton className="h-8 w-1/2 mx-auto" />
+                        <Skeleton className="h-4 w-1/4 mx-auto" />
+                    </CardHeader>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-1/3" />
+                    </CardHeader>
+                    <CardContent className="space-y-6">
                         <Skeleton className="h-6 w-full" />
                         <Skeleton className="h-6 w-full" />
                         <Skeleton className="h-6 w-full" />
-                     </div>
-                     <div className="space-y-6">
-                        <Skeleton className="h-6 w-full" />
-                        <Skeleton className="h-6 w-full" />
-                     </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         )
     }
 
@@ -133,44 +134,62 @@ export default function PublicClubProfilePage() {
         return null;
     }
     
+    const hasContactInfo = profile.address || profile.email || profile.phone || profile.website;
     const hasSocials = profile.socials && Object.values(profile.socials).some(link => !!link);
 
     return (
-        <Card>
-            <CardHeader className="text-center items-center">
-                <Avatar className="h-24 w-24 mb-4">
-                    <AvatarImage src={profile.profilePicture || undefined} alt="Club Profile Picture" />
-                    <AvatarFallback>{profile.name?.substring(0, 2) || 'C'}</AvatarFallback>
-                </Avatar>
-                <CardTitle>{profile.name}</CardTitle>
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>CIS: {profile.cis}</span>
-                    <span>CIF: {profile.cif}</span>
-                </div>
-            </CardHeader>
-            <CardContent className="max-w-2xl mx-auto w-full pt-6">
-                <div className="space-y-4">
-                     <InfoItem icon={<MapPin size={20} />} label="Address" value={profile.address} />
-                     <InfoItem icon={<Mail size={20} />} label="Email" value={profile.email} isLink={`mailto:${profile.email}`} />
-                     <InfoItem icon={<Phone size={20} />} label="Phone" value={profile.phone} isLink={`tel:${profile.phone}`} />
-                     <InfoItem icon={<Globe size={20} />} label="Website" value={profile.website} isLink />
-                     {hasSocials && (
-                        <div className="flex items-start gap-3">
-                            <div className="text-muted-foreground mt-1"><Facebook size={20} /></div>
-                            <div className="flex-1">
-                                <p className="text-xs text-muted-foreground">Socials</p>
-                                <div className="flex gap-2 pt-1 flex-wrap">
-                                    <SocialLink href={profile.socials?.facebook} icon={<Facebook />} name="Facebook" />
-                                    <SocialLink href={profile.socials?.instagram} icon={<Instagram />} name="Instagram" />
-                                    <SocialLink href={profile.socials?.youtube} icon={<Youtube />} name="YouTube" />
-                                    <SocialLink href={profile.socials?.tiktok} icon={<TikTokIcon />} name="TikTok" />
-                                    <SocialLink href={profile.socials?.x} icon={<XIcon />} name="X" />
-                                </div>
+        <div className="space-y-6">
+            <Card>
+                <CardHeader className="text-center items-center">
+                    <Avatar className="h-24 w-24 mb-4">
+                        <AvatarImage src={profile.profilePicture || undefined} alt="Club Profile Picture" />
+                        <AvatarFallback>{profile.name?.substring(0, 2) || 'C'}</AvatarFallback>
+                    </Avatar>
+                    <CardTitle>{profile.name}</CardTitle>
+                    <div className="flex gap-4 text-xs text-muted-foreground">
+                        <span>CIS: {profile.cis}</span>
+                        <span>CIF: {profile.cif}</span>
+                    </div>
+                </CardHeader>
+            </Card>
+
+            {(hasContactInfo || hasSocials) && (
+                 <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center gap-2">
+                           <Contact className="h-5 w-5" />
+                           Contact Information & Socials
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="max-w-2xl mx-auto w-full grid md:grid-cols-2 gap-x-12 gap-y-6 pt-2">
+                            <div className="space-y-4">
+                                <InfoItem icon={<MapPin size={20} />} label="Address" value={profile.address} />
+                                <InfoItem icon={<Mail size={20} />} label="Email" value={profile.email} isLink={`mailto:${profile.email}`} />
+                                <InfoItem icon={<Phone size={20} />} label="Phone" value={profile.phone} isLink={`tel:${profile.phone}`} />
+                                <InfoItem icon={<Globe size={20} />} label="Website" value={profile.website} isLink />
                             </div>
+                            {hasSocials && (
+                                <div className="space-y-4">
+                                     <div className="flex items-start gap-3">
+                                        <div className="text-muted-foreground mt-1"><Facebook size={20} /></div>
+                                        <div className="flex-1">
+                                            <p className="text-xs text-muted-foreground">Socials</p>
+                                            <div className="flex gap-2 pt-1 flex-wrap">
+                                                <SocialLink href={profile.socials?.facebook} icon={<Facebook />} name="Facebook" />
+                                                <SocialLink href={profile.socials?.instagram} icon={<Instagram />} name="Instagram" />
+                                                <SocialLink href={profile.socials?.youtube} icon={<Youtube />} name="YouTube" />
+                                                <SocialLink href={profile.socials?.tiktok} icon={<TikTokIcon />} name="TikTok" />
+                                                <SocialLink href={profile.socials?.x} icon={<XIcon />} name="X" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
-                 </div>
-            </CardContent>
-        </Card>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
     );
 }
