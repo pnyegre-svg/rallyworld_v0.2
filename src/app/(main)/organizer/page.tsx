@@ -69,7 +69,7 @@ const formSchema = z.object({
 export default function OrganizerProfilePage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, updateOrganizerProfile, isAuthReady } = useUserStore();
+    const { user, updateUserProfile, isAuthReady } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
     const [selectedClubId, setSelectedClubId] = React.useState<string | undefined>(user?.organizerProfile?.id);
     const [isManualEntry, setIsManualEntry] = React.useState(false);
@@ -210,7 +210,7 @@ export default function OrganizerProfilePage() {
                 profilePicture: profilePictureUrl,
             };
             
-            await updateOrganizerProfile(profileData);
+            await updateUserProfile({ organizerProfile: profileData });
             
             toast({
                 title: "Profile Saved",
@@ -613,3 +613,5 @@ export default function OrganizerProfilePage() {
         </Card>
     );
 }
+
+    

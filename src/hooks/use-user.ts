@@ -14,8 +14,7 @@ type UserState = {
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
-  updateUserProfile: (data: { name?: string, profilePicture?: string }) => Promise<void>;
-  updateOrganizerProfile: (profile: Organizer) => Promise<void>;
+  updateUserProfile: (data: Partial<Omit<User, 'id' | 'email'>>) => Promise<void>;
   setAuthReady: (isReady: boolean) => void;
 };
 
@@ -83,15 +82,15 @@ export const useUserStore = create<UserState>()(
         set({ user: { ...currentUser, currentRole: role } });
         await updateUser(currentUser.id, { currentRole: role });
       },
-      updateUserProfile: async (data: { name?: string, profilePicture?: string }) => {
+      updateUserProfile: async (data) => {
         const currentUser = get().user;
         if (!currentUser) return;
 
-        const updatedData: Partial<User> = {};
-        if (data.name) updatedData.name = data.name;
+        const updatedData: Partial<User> = { ...data };
+
+        // If profilePicture is being updated, also update the avatar for consistency
         if (data.profilePicture) {
-          updatedData.profilePicture = data.profilePicture;
-          updatedData.avatar = data.profilePicture; // Sync avatar with profile picture
+            updatedData.avatar = data.profilePicture;
         }
         
         const updatedUser = await updateUser(currentUser.id, updatedData);
@@ -99,15 +98,6 @@ export const useUserStore = create<UserState>()(
           set({ user: updatedUser });
         }
       },
-      updateOrganizerProfile: async (profile: Organizer) => {
-        const currentUser = get().user;
-        if (!currentUser) return;
-
-        const updatedUserData = await updateUser(currentUser.id, { organizerProfile: profile });
-        if (updatedUserData) {
-          set({ user: updatedUserData });
-        }
-      }
     }),
     {
       name: 'user-storage',
@@ -115,3 +105,5 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
+
+    
