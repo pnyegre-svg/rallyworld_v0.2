@@ -39,7 +39,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Check, ChevronsUpDown, Facebook, Instagram, PenSquare, Youtube, Copy, Eye } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { Textarea } from '@/components/ui/textarea';
 import { clubs, Club, Organizer } from '@/lib/data';
 import { cn } from "@/lib/utils"
@@ -66,7 +66,7 @@ const formSchema = z.object({
 });
 
 export default function OrganizerProfilePage() {
-    const { toast } = useToast();
+    const { push: toast } = useToast();
     const router = useRouter();
     const { user, updateUserProfile, isAuthReady } = useUserStore();
     const [isEditing, setIsEditing] = React.useState(!user?.organizerProfile);
@@ -172,9 +172,8 @@ export default function OrganizerProfilePage() {
         const { user } = useUserStore.getState();
         if (!user) {
             toast({
-                title: "Authentication Error",
-                description: "You must be signed in to save your profile. Please refresh and try again.",
-                variant: "destructive",
+                text: "You must be signed in to save your profile. Please refresh and try again.",
+                kind: "error",
             });
             return;
         }
@@ -210,8 +209,8 @@ export default function OrganizerProfilePage() {
             await updateUserProfile({ organizerProfile: profileData });
             
             toast({
-                title: "Profile Saved",
-                description: "Your club profile has been successfully updated.",
+                text: "Your club profile has been successfully updated.",
+                kind: 'success'
             });
             setIsEditing(false);
 
@@ -219,9 +218,8 @@ export default function OrganizerProfilePage() {
             console.error("Error saving profile:", error);
             const errorMessage = (error as Error).message || "An error occurred while saving. Please try again.";
             toast({
-                title: "Failed to save profile",
-                description: errorMessage,
-                variant: "destructive"
+                text: errorMessage,
+                kind: "error"
             });
         } finally {
             setIsSubmitting(false);
@@ -232,8 +230,7 @@ export default function OrganizerProfilePage() {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
             toast({
-                title: 'Copied to clipboard',
-                description: `${fieldName} has been copied.`,
+                text: `${fieldName} has been copied.`,
             });
         });
     };

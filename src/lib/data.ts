@@ -78,18 +78,6 @@ export type Event = {
     status: 'draft' | 'published' | 'completed';
 }
 
-export type Entry = {
-    id: string;
-    eventId: string;
-    competitorId: string;
-    competitorName: string;
-    status: 'new' | 'approved' | 'declined';
-    paymentStatus: 'unpaid' | 'paid';
-    feeAmount: number;
-    currency: string;
-    createdAt: Date;
-}
-
 export type Announcement = {
     id: string;
     eventId: string;

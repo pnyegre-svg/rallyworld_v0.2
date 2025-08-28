@@ -26,7 +26,7 @@ import {
 import { useUserStore } from '@/hooks/use-user';
 import { User } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // MOCK: In a real app, this would be fetched from Firestore
@@ -37,7 +37,7 @@ const fetchAllUsers = async (): Promise<User[]> => {
 
 export default function AdminPage() {
   const { user } = useUserStore();
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const [users, setUsers] = React.useState<User[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -72,8 +72,7 @@ export default function AdminPage() {
     //     description: `${updatedUser?.name}'s role has been changed to ${role}.`,
     // });
      toast({
-        title: "Role Change (Mock)",
-        description: `In a real app, this would update the user in Firestore.`,
+        text: "Role Change (Mock). In a real app, this would update the user in Firestore.",
     });
   };
 

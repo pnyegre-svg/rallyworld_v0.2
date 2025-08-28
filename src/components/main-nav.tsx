@@ -39,6 +39,7 @@ export function MainNav() {
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/myevents', label: 'My Events', icon: Calendar, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
+    { href: '/entries', label: 'Manage Entries', icon: Users, roles: ['organizer'] },
     { href: '/feed', label: 'Feed', icon: Users, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/marketplace', label: 'Marketplace', icon: Store, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/shop', label: 'MyShop', icon: ShoppingBag, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
@@ -69,7 +70,11 @@ export function MainNav() {
               if (item.href === '/admin' && !isAdmin) {
                 return null;
               }
-              return user.roles.includes(user.currentRole) && (
+              // A user has access to a menu item if their CURRENT role is in the item's roles list
+              if (!item.roles.includes(user.currentRole)) {
+                return null;
+              }
+              return (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

@@ -34,7 +34,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
@@ -45,7 +45,7 @@ import { db } from '@/lib/firebase.client';
 
 
 export default function CreateEventPage() {
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const router = useRouter();
   const { user } = useUserStore();
   const [datePopoverOpen, setDatePopoverOpen] = React.useState(false);
@@ -100,9 +100,8 @@ export default function CreateEventPage() {
   async function onSubmit(values: EventFormValues) {
     if (!user.organizerProfile?.id) {
         toast({
-            title: "Error",
-            description: "You must have an organizer profile to create an event.",
-            variant: "destructive",
+            text: "You must have an organizer profile to create an event.",
+            kind: "error",
         });
         return;
     }
@@ -131,16 +130,15 @@ export default function CreateEventPage() {
       await addEvent(db, dataToSave as EventFormValues);
       
       toast({
-        title: "Event Created Successfully!",
-        description: `The event "${values.title}" has been created.`,
+        text: `The event "${values.title}" has been created.`,
+        kind: 'success'
       });
       router.push('/dashboard');
     } catch (error) {
         console.error("Error creating event:", error);
         toast({
-            title: "Failed to create event",
-            description: "An error occurred while creating the event. Please try again.",
-            variant: "destructive"
+            text: "Failed to create event. Please try again.",
+            kind: "error"
         })
     } finally {
         setIsSubmitting(false);

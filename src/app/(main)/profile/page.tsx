@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PenSquare } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useUserStore } from '@/hooks/use-user';
 import { useRouter } from 'next/navigation';
 import { uploadFile } from '@/lib/storage';
@@ -37,7 +37,7 @@ const formSchema = z.object({
 });
 
 export default function ProfilePage() {
-    const { toast } = useToast();
+    const { push: toast } = useToast();
     const router = useRouter();
     const { user, updateUserProfile } = useUserStore();
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -64,9 +64,8 @@ export default function ProfilePage() {
         const { user } = useUserStore.getState();
         if (!user) {
             toast({
-                title: "Authentication Error",
-                description: "You must be signed in to save your profile.",
-                variant: "destructive",
+                text: "You must be signed in to save your profile.",
+                kind: "error",
             });
             return;
         }
@@ -86,17 +85,16 @@ export default function ProfilePage() {
             });
             
             toast({
-                title: "Profile Saved",
-                description: "Your profile has been successfully updated.",
+                text: "Your profile has been successfully updated.",
+                kind: 'success'
             });
 
         } catch (error) {
             console.error("Error saving profile:", error);
             const errorMessage = (error as Error).message || "An error occurred while saving. Please try again.";
             toast({
-                title: "Failed to save profile",
-                description: errorMessage,
-                variant: "destructive"
+                text: errorMessage,
+                kind: "error"
             });
         } finally {
             setIsSubmitting(false);

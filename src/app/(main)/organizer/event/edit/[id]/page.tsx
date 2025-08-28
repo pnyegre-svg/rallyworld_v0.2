@@ -33,7 +33,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useRouter, useParams } from 'next/navigation';
 import { useUserStore } from '@/hooks/use-user';
 import { getEvent, updateEvent, eventFormSchema, type EventFormValues } from '@/lib/events';
@@ -43,7 +43,7 @@ import { uploadFile } from '@/lib/storage';
 import { db } from '@/lib/firebase.client';
 
 export default function EditEventPage() {
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const router = useRouter();
   const params = useParams();
   const { user } = useUserStore();
@@ -80,9 +80,8 @@ export default function EditEventPage() {
                 // Ensure the current user is the owner of the event
                 if (eventToEdit.organizerId !== user.organizerProfile?.id) {
                      toast({
-                        title: "Permission Denied",
-                        description: "You are not authorized to edit this event.",
-                        variant: "destructive",
+                        text: "You are not authorized to edit this event.",
+                        kind: "error",
                     });
                     router.push('/dashboard');
                     return;
@@ -94,17 +93,15 @@ export default function EditEventPage() {
               });
             } else {
                toast({
-                    title: "Event Not Found",
-                    description: "Could not find the event you are trying to edit.",
-                    variant: "destructive",
+                    text: "Could not find the event you are trying to edit.",
+                    kind: "error",
                 });
                router.push('/dashboard');
             }
         } catch (error) {
              toast({
-                title: "Error loading event",
-                description: "There was a problem fetching the event data.",
-                variant: "destructive",
+                text: "There was a problem fetching the event data.",
+                kind: "error",
             });
             router.push('/dashboard');
         } finally {
@@ -162,16 +159,15 @@ export default function EditEventPage() {
         await updateEvent(db, eventId, dataToUpdate);
 
         toast({
-            title: "Event Updated Successfully!",
-            description: `The event "${values.title}" has been updated.`,
+            text: `The event "${values.title}" has been updated.`,
+            kind: 'success'
         });
         router.push('/dashboard');
     } catch (error) {
         console.error("Error updating event:", error);
         toast({
-            title: "Failed to update event",
-            description: "An error occurred while saving the event. Please try again.",
-            variant: "destructive"
+            text: "An error occurred while saving the event. Please try again.",
+            kind: "error"
         })
     } finally {
         setIsSubmitting(false);

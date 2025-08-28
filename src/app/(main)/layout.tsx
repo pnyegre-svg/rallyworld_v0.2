@@ -31,6 +31,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const getTitle = (path: string) => {
     if (path.startsWith('/dashboard')) return 'Dashboard';
     if (path.startsWith('/myevents')) return 'My Events';
+    if (path.startsWith('/entries')) return 'Manage Entries';
     if (path.startsWith('/competitors')) return 'Competitors';
     if (path.startsWith('/leaderboard')) return 'Leaderboard';
     if (path.startsWith('/admin')) return 'Admin';

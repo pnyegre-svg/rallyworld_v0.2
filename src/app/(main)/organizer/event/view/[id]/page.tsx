@@ -8,7 +8,7 @@ import { EventTabs } from './event-tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getEvent, type Event } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
 import { getUser } from '@/lib/users';
 import type { User } from '@/lib/data';
@@ -23,7 +23,7 @@ export default function ViewEventPage() {
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('results');
   const { user } = useUserStore();
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const router = useRouter();
 
 
@@ -44,9 +44,8 @@ export default function ViewEventPage() {
 
         } else {
             toast({
-                title: "Event Not Found",
-                description: "The event you are looking for does not exist.",
-                variant: "destructive",
+                text: "The event you are looking for does not exist.",
+                kind: "error",
             });
             router.push('/dashboard');
         }

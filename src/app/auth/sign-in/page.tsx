@@ -17,12 +17,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase.client';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useUserStore } from '@/hooks/use-user';
 
 export default function SignInPage() {
     const router = useRouter();
-    const { toast } = useToast();
+    const { push: toast } = useToast();
     const { signInUser } = useUserStore();
     const [email, setEmail] = React.useState('');
     const [password, setPassword] = React.useState('');
@@ -37,9 +37,8 @@ export default function SignInPage() {
             router.push('/dashboard');
         } catch (error: any) {
             toast({
-                title: 'Sign in failed',
-                description: error.message,
-                variant: 'destructive'
+                text: error.message,
+                kind: 'error'
             });
              setIsLoading(false);
         }

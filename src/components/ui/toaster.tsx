@@ -1,35 +1,33 @@
-"use client"
+'use client';
+import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import { useToast } from "@/hooks/use-toast"
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from "@/components/ui/toast"
 
-export function Toaster() {
-  const { toasts } = useToast()
+type Toast = { id: string; text: string; kind?: 'success'|'error'|'info' };
+const Ctx = createContext<{ push:(t:Omit<Toast,'id'>)=>void }>({ push: ()=>{} });
 
-  return (
-    <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose />
-          </Toast>
-        )
-      })}
-      <ToastViewport />
-    </ToastProvider>
-  )
+
+export function useToast(){ return useContext(Ctx); }
+
+
+export default function Toaster({ children }: { children: React.ReactNode }){
+const [items, setItems] = useState<Toast[]>([]);
+const push = useCallback((t: Omit<Toast,'id'>) => {
+const id = Math.random().toString(36).slice(2);
+setItems((xs)=>[...xs,{ id, ...t }]);
+setTimeout(()=> setItems(xs=> xs.filter(i=> i.id!==id)), 3000);
+},[]);
+const ctx = useMemo(()=>({ push }),[push]);
+return (
+<Ctx.Provider value={ctx}>
+{children}
+<div className="fixed bottom-4 right-4 z-50 space-y-2">
+{items.map((t)=> (
+<div key={t.id} className={`rounded-xl border p-3 shadow-lg ${
+t.kind==='error' ? 'border-destructive/50 bg-destructive text-destructive-foreground' :
+t.kind==='success' ? 'border-green-500/50 bg-green-500/10 text-green-500' :
+'border-border bg-background text-foreground'}`}>{t.text}</div>
+))}
+</div>
+</Ctx.Provider>
+);
 }

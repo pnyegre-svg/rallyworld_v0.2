@@ -14,7 +14,7 @@ import {
 import { MapPin, Share2, UserPlus, Link as LinkIcon, Copy, PenSquare, Award, Camera, Loader2, Youtube, Video, MoreVertical, Edit } from 'lucide-react';
 import { Event, updateEvent } from '@/lib/events';
 import { DateDisplay } from './date-display';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
 import { getResizedImageUrl } from '@/lib/utils';
@@ -82,7 +82,7 @@ type EventHeaderProps = {
 };
 
 export function EventHeader({ event, organizerName, setEvent, setActiveTab }: EventHeaderProps) {
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
   const [isUploading, setIsUploading] = React.useState(false);
@@ -97,8 +97,7 @@ export function EventHeader({ event, organizerName, setEvent, setActiveTab }: Ev
   const copyToClipboard = () => {
     navigator.clipboard.writeText(eventUrl);
     toast({
-      title: 'Link Copied!',
-      description: 'The event link has been copied to your clipboard.',
+      text: 'The event link has been copied to your clipboard.',
     });
   };
 
@@ -131,14 +130,13 @@ export function EventHeader({ event, organizerName, setEvent, setActiveTab }: Ev
         setEvent(prevEvent => prevEvent ? { ...prevEvent, coverImage: newCoverImageUrl } : null);
 
         toast({
-            title: 'Cover Image Updated',
-            description: 'Your event cover image has been changed successfully.',
+            text: 'Your event cover image has been changed successfully.',
+            kind: 'success'
         });
     } catch (error) {
         toast({
-            title: 'Upload Failed',
-            description: 'There was a problem changing your cover image. Please try again.',
-            variant: 'destructive',
+            text: 'There was a problem changing your cover image. Please try again.',
+            kind: 'error',
         });
         console.error(error);
     } finally {
@@ -158,14 +156,13 @@ export function EventHeader({ event, organizerName, setEvent, setActiveTab }: Ev
         setEvent(prevEvent => prevEvent ? { ...prevEvent, logoImage: newLogoImageUrl } : null);
 
         toast({
-            title: 'Logo Image Updated',
-            description: 'Your event logo has been changed successfully.',
+            text: 'Your event logo has been changed successfully.',
+            kind: 'success'
         });
     } catch (error) {
         toast({
-            title: 'Upload Failed',
-            description: 'There was a problem changing your event logo. Please try again.',
-            variant: 'destructive',
+            text: 'There was a problem changing your event logo. Please try again.',
+            kind: 'error',
         });
         console.error(error);
     } finally {

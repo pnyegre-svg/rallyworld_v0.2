@@ -12,7 +12,7 @@ export function QuickActions() {
                 <Link href="/organizer/create-event"><PlusSquare className="mr-2 h-4 w-4"/> Create Event</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-                <Link href="#"><Users className="mr-2 h-4 w-4"/> Manage Entries</Link>
+                <Link href="/entries"><Users className="mr-2 h-4 w-4"/> Manage Entries</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
                 <Link href="#"><FileUp className="mr-2 h-4 w-4"/> Upload Docs</Link>

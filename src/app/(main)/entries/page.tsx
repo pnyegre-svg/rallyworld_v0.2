@@ -1,0 +1,276 @@
+
+'use client';
+
+import * as React from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserStore } from '@/hooks/use-user';
+import { useToast } from '@/components/ui/toaster';
+import { getEvents, type Event } from '@/lib/events';
+import { watchEntries, type Entry } from '@/lib/entries';
+import { approveEntryFn, markEntryPaidFn } from '@/lib/functions.client';
+import { format } from 'date-fns';
+import { Download, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
+import { db } from '@/lib/firebase.client';
+
+type OptimisticUpdate = {
+  entryId: string;
+  type: 'status' | 'paymentStatus';
+  value: 'approved' | 'paid';
+};
+
+export default function EntriesPage() {
+  const { user } = useUserStore();
+  const { push: toast } = useToast();
+  const [events, setEvents] = React.useState<Event[]>([]);
+  const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
+  const [entries, setEntries] = React.useState<Entry[]>([]);
+  const [optimisticUpdates, setOptimisticUpdates] = React.useState<OptimisticUpdate[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [filters, setFilters] = React.useState({ showPending: false, showUnpaid: false });
+
+  // Fetch organizer's events
+  React.useEffect(() => {
+    if (user?.organizerProfile?.id) {
+      setLoading(true);
+      getEvents(db, user.organizerProfile.id).then(fetchedEvents => {
+        setEvents(fetchedEvents);
+        if (fetchedEvents.length > 0) {
+          setSelectedEventId(fetchedEvents[0].id);
+        }
+        setLoading(false);
+      });
+    }
+  }, [user?.organizerProfile?.id]);
+
+  // Watch for entries for the selected event
+  React.useEffect(() => {
+    if (!selectedEventId) {
+        setEntries([]);
+        return;
+    };
+
+    setLoading(true);
+    const unsubscribe = watchEntries(db, selectedEventId, (newEntries) => {
+        setEntries(newEntries);
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [selectedEventId]);
+
+  const applyOptimisticUpdate = (update: OptimisticUpdate) => {
+    setOptimisticUpdates(prev => [...prev, update]);
+  };
+
+  const removeOptimisticUpdate = (entryId: string, type: 'status' | 'paymentStatus') => {
+    setOptimisticUpdates(prev => prev.filter(u => !(u.entryId === entryId && u.type === type)));
+  };
+
+  const handleApprove = async (entryId: string) => {
+    if (!selectedEventId) return;
+    const update: OptimisticUpdate = { entryId, type: 'status', value: 'approved' };
+    applyOptimisticUpdate(update);
+
+    try {
+      await approveEntryFn(selectedEventId, entryId);
+      toast({ text: 'Entry approved successfully.', kind: 'success' });
+    } catch (error) {
+      console.error(error);
+      toast({ text: 'Failed to approve entry.', kind: 'error' });
+      removeOptimisticUpdate(entryId, 'status'); // Revert on failure
+    }
+  };
+
+  const handleMarkPaid = async (entryId: string) => {
+    if (!selectedEventId) return;
+    const update: OptimisticUpdate = { entryId, type: 'paymentStatus', value: 'paid' };
+    applyOptimisticUpdate(update);
+
+    try {
+      await markEntryPaidFn(selectedEventId, entryId);
+      toast({ text: 'Entry marked as paid.', kind: 'success' });
+    } catch (error) {
+      console.error(error);
+      toast({ text: 'Failed to mark as paid.', kind: 'error' });
+      removeOptimisticUpdate(entryId, 'paymentStatus'); // Revert on failure
+    }
+  };
+
+  const getDisplayEntries = () => {
+    let displayed = entries.map(entry => {
+        const statusUpdate = optimisticUpdates.find(u => u.entryId === entry.id && u.type === 'status');
+        const paymentUpdate = optimisticUpdates.find(u => u.entryId === entry.id && u.type === 'paymentStatus');
+        return {
+            ...entry,
+            status: statusUpdate ? statusUpdate.value : entry.status,
+            paymentStatus: paymentUpdate ? paymentUpdate.value : entry.paymentStatus,
+        };
+    });
+
+    if (filters.showPending) {
+        displayed = displayed.filter(e => e.status === 'new');
+    }
+    if (filters.showUnpaid) {
+        displayed = displayed.filter(e => e.paymentStatus === 'unpaid');
+    }
+
+    return displayed;
+  };
+
+  const exportToCSV = () => {
+    const dataToExport = getDisplayEntries();
+    if (dataToExport.length === 0) {
+        toast({text: 'No data to export.', kind: 'info'});
+        return;
+    }
+
+    const headers = ['Competitor Name', 'Status', 'Payment Status', 'Fee', 'Date Submitted'];
+    const rows = dataToExport.map(e => [
+        `"${e.competitorName}"`,
+        e.status,
+        e.paymentStatus,
+        `${e.feeAmount} ${e.currency}`,
+        format(e.createdAt.toDate(), 'yyyy-MM-dd HH:mm')
+    ].join(','));
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "entries.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  const displayedEntries = getDisplayEntries();
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+            <div>
+                <CardTitle>Manage Entries</CardTitle>
+                <CardDescription>Review and manage competitor registrations for your events.</CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
+                <Select value={selectedEventId || ''} onValueChange={setSelectedEventId} disabled={events.length === 0}>
+                    <SelectTrigger className="w-[280px]">
+                        <SelectValue placeholder="Select an event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {events.map(event => (
+                        <SelectItem key={event.id} value={event.id}>
+                        {event.title}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                 <Button onClick={exportToCSV} variant="outline" size="sm" className="shrink-0">
+                    <Download className="mr-2 h-4 w-4" />
+                    Export CSV
+                </Button>
+            </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+         <div className="flex items-center gap-4 mb-4">
+            <div className="flex items-center space-x-2">
+                <Checkbox id="show-pending" checked={filters.showPending} onCheckedChange={(checked) => setFilters(f => ({ ...f, showPending: !!checked }))} />
+                <label htmlFor="show-pending" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Show Pending Only
+                </label>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Checkbox id="show-unpaid" checked={filters.showUnpaid} onCheckedChange={(checked) => setFilters(f => ({ ...f, showUnpaid: !!checked }))} />
+                <label htmlFor="show-unpaid" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Show Unpaid Only
+                </label>
+            </div>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Competitor</TableHead>
+              <TableHead>Date Submitted</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Payment</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="h-8 w-40 ml-auto" /></TableCell>
+                    </TableRow>
+                ))
+            ) : displayedEntries.length > 0 ? displayedEntries.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell className="font-medium">{entry.competitorName}</TableCell>
+                <TableCell className="text-muted-foreground">{format(entry.createdAt.toDate(), 'PPp')}</TableCell>
+                <TableCell>
+                  <Badge variant={entry.status === 'approved' ? 'default' : entry.status === 'new' ? 'secondary' : 'destructive'} className="capitalize">
+                     {entry.status === 'new' && <AlertTriangle className="h-3 w-3 mr-1" />}
+                     {entry.status === 'approved' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                     {entry.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={entry.paymentStatus === 'paid' ? 'default' : 'destructive'} className="capitalize">
+                    {entry.paymentStatus === 'unpaid' && <Clock className="h-3 w-3 mr-1" />}
+                    {entry.paymentStatus === 'paid' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                    {entry.paymentStatus}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => handleApprove(entry.id)} disabled={entry.status === 'approved'}>
+                    Approve
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleMarkPaid(entry.id)} disabled={entry.paymentStatus === 'paid'}>
+                    Mark as Paid
+                  </Button>
+                </TableCell>
+              </TableRow>
+            )) : (
+                <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                       {selectedEventId ? 'No entries found for this event.' : 'Please select an event to view entries.'}
+                    </TableCell>
+                </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}

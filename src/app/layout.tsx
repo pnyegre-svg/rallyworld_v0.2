@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Providers } from './providers';
+import Toaster from '@/components/ui/toaster';
 
 
 export const metadata: Metadata = {
@@ -33,9 +33,8 @@ export default function RootLayout({
             disableTransitionOnChange
         >
           <Providers>
-            {children}
+            <Toaster>{children}</Toaster>
           </Providers>
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>
