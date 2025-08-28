@@ -17,56 +17,21 @@ import {
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye, Users, FileUp, Megaphone, CheckCircle, Clock, AlertTriangle, FileText, Download, MoreVertical } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, Eye } from 'lucide-react';
 import Link from 'next/link';
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getDashboardSummary, DashboardSummary } from '@/lib/dashboard';
+import { OrganizerDashboard } from '@/components/dashboard/OrganizerDashboard';
 
 export default function DashboardPage() {
   const { user } = useUserStore();
-  const { toast } = useToast();
-  const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    if (user?.currentRole !== 'organizer' || !user.id) {
-        setLoading(false);
-        return;
-    }
-
-    setLoading(true);
-    const unsubscribe = getDashboardSummary(user.id, (data) => {
-        setSummary(data);
-        if (loading) setLoading(false);
-    }, (error) => {
-        console.error(error);
-        toast({
-            title: "Error loading dashboard",
-            description: "Could not fetch your dashboard summary. Please try again later.",
-            variant: "destructive",
-        });
-        setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user?.id, user?.currentRole, toast]);
-
 
   const getInitials = (name: string) => {
     const names = name.split(' ');
@@ -83,203 +48,7 @@ export default function DashboardPage() {
   const isOrganizer = user.currentRole === 'organizer';
 
   if (isOrganizer) {
-    if (loading) {
-        return (
-             <div className="space-y-6">
-                <Skeleton className="h-24 w-full" />
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Skeleton className="h-64 w-full lg:col-span-2" />
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full lg:col-span-3" />
-                     <Skeleton className="h-64 w-full lg:col-span-3" />
-                </div>
-            </div>
-        )
-    }
-    return (
-        <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Button asChild className="h-20 text-lg bg-accent hover:bg-accent/90" size="lg">
-                    <Link href="/organizer/create-event"><PlusSquare className="mr-4 h-6 w-6"/> Create Event</Link>
-                </Button>
-                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                    <Link href="#"><Users className="mr-4 h-6 w-6"/> Manage Entries</Link>
-                </Button>
-                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                    <Link href="#"><FileUp className="mr-4 h-6 w-6"/> Upload Docs</Link>
-                </Button>
-                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                    <Link href="#"><Megaphone className="mr-4 h-6 w-6"/> Post Announcement</Link>
-                </Button>
-            </div>
-
-            {/* Main Cockpit Grid */}
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/* Today's Stages */}
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5"/>Today's Stages</CardTitle>
-                         <CardDescription>What's happening right now.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Time</TableHead>
-                                    <TableHead>Stage</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {summary?.todayStages && summary.todayStages.length > 0 ? summary.todayStages.map(stage => (
-                                    <TableRow key={stage.stageId}>
-                                        <TableCell className="font-mono">{stage.startAt ? new Date(stage.startAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</TableCell>
-                                        <TableCell className="font-medium">{stage.stageName}</TableCell>
-                                        <TableCell><Badge variant="outline" className="capitalize">{stage.status}</Badge></TableCell>
-                                        <TableCell className="text-right">
-                                             <Button variant="ghost" size="sm">View</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                                            No stages scheduled for today.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-
-                {/* Entries & Payments */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>Entries & Payments</CardTitle>
-                        <CardDescription>Status of competitor registrations.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-around text-center">
-                            <div>
-                                <p className="text-3xl font-bold">{summary?.counters?.pendingEntries ?? 0}</p>
-                                <p className="text-sm text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-orange-400"/>Pending</p>
-                            </div>
-                             <div>
-                                <p className="text-3xl font-bold">{summary?.counters?.unpaidEntries ?? 0}</p>
-                                <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-4 w-4 text-red-500"/>Unpaid</p>
-                            </div>
-                            <div>
-                                <p className="text-3xl font-bold">48</p>
-                                <p className="text-sm text-muted-foreground flex items-center gap-1"><CheckCircle className="h-4 w-4 text-green-500"/>Confirmed</p>
-                            </div>
-                        </div>
-                         <div className="flex flex-col gap-2">
-                             <Button variant="outline">Bulk Approve</Button>
-                             <Button variant="outline">Message Pending</Button>
-                             <Button variant="ghost" size="sm" className="text-muted-foreground"><Download className="mr-2 h-4 w-4"/>Export CSV</Button>
-                         </div>
-                    </CardContent>
-                </Card>
-                
-                 {/* Upcoming Stages */}
-                <Card className="lg:col-span-3">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5"/>Upcoming Stages (Next 7 Days)</CardTitle>
-                        <CardDescription>Prepare for what's next on the calendar.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                       <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Stage</TableHead>
-                                    <TableHead>Location</TableHead>
-                                    <TableHead>Distance</TableHead>
-                                    <TableHead>Status</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell className="font-mono">Jul 28</TableCell>
-                                    <TableCell className="font-medium">SS3 - Myherin</TableCell>
-                                    <TableCell>Wales</TableCell>
-                                    <TableCell>29.13 km</TableCell>
-                                    <TableCell><Badge>Ready</Badge></TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-mono">Jul 29</TableCell>
-                                    <TableCell className="font-medium">SS4 - Fafe</TableCell>
-                                    <TableCell>Portugal</TableCell>
-                                    <TableCell>11.18 km</TableCell>
-                                    <TableCell><Badge variant="outline">Docs Missing</Badge></TableCell>
-                                </TableRow>
-                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                       No more upcoming stages in the next week.
-                                    </TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-
-
-                 {/* Announcements */}
-                 <Card className="lg:col-span-3">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                       <div>
-                         <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5"/>Announcements</CardTitle>
-                         <CardDescription>Latest bulletins and information for all participants.</CardDescription>
-                       </div>
-                       <div className="flex items-center gap-2">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline">Target: All</Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem>All</DropdownMenuItem>
-                                    <DropdownMenuItem>Competitors</DropdownMenuItem>
-                                    <DropdownMenuItem>Officials</DropdownMenuItem>
-                                     <DropdownMenuItem>Public</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                           <Button>New Announcement</Button>
-                       </div>
-
-                    </CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Event</TableHead>
-                                    <TableHead>Published</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {summary?.latestAnnouncements && summary.latestAnnouncements.length > 0 ? summary.latestAnnouncements.map(ann => (
-                                    <TableRow key={ann.annId}>
-                                        <TableCell className="font-medium">{ann.title}</TableCell>
-                                        <TableCell>{ann.eventTitle}</TableCell>
-                                        <TableCell className="text-muted-foreground">{ann.publishedAt ? new Date(ann.publishedAt.seconds * 1000).toLocaleString() : 'N/A'}</TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
-                                            No recent announcements.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
-
-             </div>
-        </div>
-    );
+    return <OrganizerDashboard />;
   }
 
   // Fallback for non-organizer roles
@@ -309,7 +78,6 @@ export default function DashboardPage() {
                                 <div className="w-3 h-3 rounded-full bg-accent animate-pulse" />
                                 Live Event
                             </CardTitle>
-                            <Badge variant="destructive">LIVE</Badge>
                         </div>
                         <CardDescription className="pt-2 text-2xl font-headline text-foreground">{liveStage.name}</CardDescription>
                     </CardHeader>

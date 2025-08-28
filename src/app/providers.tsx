@@ -4,8 +4,7 @@
 import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
-import { app } from '@/lib/firebase';
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeFirebaseAppCheck } from '@/lib/app-check';
 
 // This is a one-time initialization component.
 let firebaseInitialized = false;
@@ -16,18 +15,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     React.useEffect(() => {
         if (!firebaseInitialized) {
-            console.log('Initializing Firebase and App Check...');
-            // In development, use the debug token from the .env.local file
-            // This will be ignored in production.
-            if (process.env.NODE_ENV === 'development') {
-                (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NEXT_PUBLIC_FB_APPCHECK_DEBUG_TOKEN;
-            }
-
+            console.log('Initializing Firebase Auth and App Check...');
+            
             // Initialize App Check
-            initializeAppCheck(app, {
-                provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_FB_APPCHECK_SITE_KEY!),
-                isTokenAutoRefreshEnabled: true,
-            });
+            initializeFirebaseAppCheck();
 
             // Initialize Auth State Listener
             const unsubscribe = initializeAuth();
