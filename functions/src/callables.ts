@@ -47,7 +47,7 @@ return { ok: true };
 // --- Announcements ---
 export const createAnnouncement = functions.https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, title, body = '', audience = 'competitors', pinned = false, publishAt } = data as any;
+    const { eventId, title, body, audience = 'competitors', pinned = false, publishAt } = data as any;
     if (!eventId || !title) throw new functions.https.HttpsError('invalid-argument', 'eventId and title required');
     await assertEventOwner(eventId, uid);
 
@@ -55,7 +55,7 @@ export const createAnnouncement = functions.https.onCall(async (data, context) =
     let status: 'draft'|'scheduled'|'published' = 'draft';
     const doc: any = { 
         title, 
-        body, 
+        body: body || '', 
         audience, 
         pinned, 
         createdBy: uid, 
@@ -76,7 +76,7 @@ export const createAnnouncement = functions.https.onCall(async (data, context) =
     }
     const ref = await db.collection('events').doc(eventId).collection('announcements').add(doc);
     // store first revision for audit
-    await ref.collection('revisions').add({ title, body, audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
+    await ref.collection('revisions').add({ title, body: body || '', audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
     await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'createAnnouncement', by: uid, eventId, annId: ref.id });
     return { ok:true, annId: ref.id, status };
 });
@@ -89,12 +89,27 @@ if (!eventId || !annId) throw new functions.https.HttpsError('invalid-argument',
 await assertEventOwner(eventId, uid);
 const ref = db.doc(`events/${eventId}/announcements/${annId}`);
 const patch:any = { updatedAt: FieldValue.serverTimestamp() };
-if (title !== undefined) patch.title = title;
-if (body !== undefined) patch.body = body;
-if (audience !== undefined) patch.audience = audience;
-if (pinned !== undefined) patch.pinned = pinned;
+const revision:any = { updatedAt: FieldValue.serverTimestamp(), updatedBy: uid };
+
+if (title !== undefined) {
+    patch.title = title;
+    revision.title = title;
+}
+if (body !== undefined) {
+    patch.body = body;
+    revision.body = body;
+}
+if (audience !== undefined) {
+    patch.audience = audience;
+    revision.audience = audience;
+}
+if (pinned !== undefined) {
+    patch.pinned = pinned;
+    revision.pinned = pinned;
+}
+
 await ref.update(patch);
-await ref.collection('revisions').add({ title, body, audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
+await ref.collection('revisions').add(revision);
 await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'updateAnnouncement', by: uid, eventId, annId });
 return { ok:true };
 });
