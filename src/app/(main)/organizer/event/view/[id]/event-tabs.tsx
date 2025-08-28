@@ -11,20 +11,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Download, Globe, Users, FileText, BarChart2, Video } from 'lucide-react';
+import { Download, Globe, Users, FileText, BarChart2, Video, Megaphone, PlusCircle, Pin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { competitors } from '@/lib/data';
 import { Event } from '@/lib/events';
+import { type Announcement } from '@/lib/announcements.client';
 import { cn } from '@/lib/utils';
-
+import Link from 'next/link';
 
 type EventTabsProps = {
     event: Event;
+    announcements: Announcement[];
     activeTab: string;
     setActiveTab: (tab: string) => void;
 }
 
-export function EventTabs({ event, activeTab, setActiveTab }: EventTabsProps) {
+export function EventTabs({ event, announcements, activeTab, setActiveTab }: EventTabsProps) {
 
   const getYouTubeEmbedUrl = (url: string): string | null => {
     if (!url) return null;
@@ -57,6 +58,7 @@ export function EventTabs({ event, activeTab, setActiveTab }: EventTabsProps) {
 
   const embedUrl = getYouTubeEmbedUrl(event.livestreamLink || '');
   const hasLivestream = !!event.livestreamLink;
+  const tabCount = 5 + (hasLivestream ? 1 : 0);
 
   const renderLinks = (links: {name?: string, value: string}[]) => {
     if (!links || links.length === 0 || links.every(l => !l.value)) return <p className="text-sm text-muted-foreground">No links provided.</p>;
@@ -101,16 +103,27 @@ export function EventTabs({ event, activeTab, setActiveTab }: EventTabsProps) {
         </ul>
     );
   };
+  
+    const sortedAnnouncements = [...announcements].sort((a,b)=>{
+        const pin = Number(!!b.pinned) - Number(!!a.pinned);
+        if (pin) return pin;
+        const ad = a.publishedAt?.toDate ? a.publishedAt.toDate() : a.publishedAt ? new Date(a.publishedAt) : null;
+        const bd = b.publishedAt?.toDate ? b.publishedAt.toDate() : b.publishedAt ? new Date(b.publishedAt) : null;
+        return (bd?.getTime()||0) - (ad?.getTime()||0);
+    });
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
             "grid w-full md:w-auto md:inline-flex",
-            hasLivestream ? "grid-cols-5" : "grid-cols-4"
+            `grid-cols-${tabCount}`
         )}>
             {hasLivestream && <TabsTrigger value="livestream"><span className="text-red-500 mr-2 animate-pulse">•</span>Live Stream</TabsTrigger>}
             <TabsTrigger value="results">Live Results</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="announcements">
+                Announcements <Badge variant="secondary" className="ml-2">{announcements.length}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="competitors">
                 Competitors <Badge variant="secondary" className="ml-2">0</Badge>
             </TabsTrigger>
@@ -187,6 +200,43 @@ export function EventTabs({ event, activeTab, setActiveTab }: EventTabsProps) {
                 </CardContent>
             </Card>
         </TabsContent>
+
+        <TabsContent value="announcements">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2"><Megaphone /> Announcements</CardTitle>
+                    <Button asChild className="bg-accent hover:bg-accent/90">
+                        <Link href={`/announcements/new?eventId=${event.id}`}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> New Announcement
+                        </Link>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                   {sortedAnnouncements.length > 0 ? (
+                        <div className="space-y-4">
+                            {sortedAnnouncements.map((ann) => (
+                                <div key={ann.id} className="p-4 rounded-lg border bg-muted/50">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-bold">{ann.title}</h4>
+                                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                            {ann.pinned && <Badge variant="default" className="bg-yellow-500/20 text-yellow-300 border-yellow-500/50"><Pin className="h-3 w-3 mr-1"/>Pinned</Badge>}
+                                            <Badge variant={ann.status === 'published' ? 'default' : 'secondary'} className="capitalize">{ann.status}</Badge>
+                                            <Button variant="ghost" size="sm" asChild>
+                                                <Link href={`/announcements/edit/${event.id}/${ann.id}`}>Edit</Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    {ann.body && <p className="mt-2 text-sm text-muted-foreground">{ann.body.substring(0, 150)}{ann.body.length > 150 ? '...' : ''}</p>}
+                                </div>
+                            ))}
+                        </div>
+                   ) : (
+                    <p className="text-muted-foreground">No announcements have been posted for this event yet.</p>
+                   )}
+                </CardContent>
+            </Card>
+        </TabsContent>
+
 
         <TabsContent value="competitors">
             <Card>

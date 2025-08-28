@@ -13,12 +13,14 @@ import { useRouter } from 'next/navigation';
 import { getUser } from '@/lib/users';
 import type { User } from '@/lib/data';
 import { db } from '@/lib/firebase.client';
+import { listAnnouncements, type Announcement } from '@/lib/announcements.client';
 
 
 export default function ViewEventPage() {
   const params = useParams();
   const eventId = params.id as string;
   const [event, setEvent] = React.useState<Event | null>(null);
+  const [announcements, setAnnouncements] = React.useState<Announcement[]>([]);
   const [organizer, setOrganizer] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState('results');
@@ -41,6 +43,10 @@ export default function ViewEventPage() {
             // Fetch organizer details
             const organizerData = await getUser(db, eventData.organizerId);
             setOrganizer(organizerData);
+
+            // Fetch announcements
+            const announcementsData = await listAnnouncements(eventId);
+            setAnnouncements(announcementsData);
 
         } else {
             toast({
@@ -76,7 +82,7 @@ export default function ViewEventPage() {
   return (
     <div className="w-full mx-auto space-y-8">
         <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} setEvent={setEvent} setActiveTab={setActiveTab} />
-        <EventTabs event={event} activeTab={activeTab} setActiveTab={setActiveTab} />
+        <EventTabs event={event} announcements={announcements} activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }
