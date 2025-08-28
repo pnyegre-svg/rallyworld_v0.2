@@ -164,9 +164,9 @@ export const updateEvent = async (db: Firestore, eventId: string, eventData: Par
 
 export type EventLite = { id:string; title:string; dates: { from: Date, to: Date }, status:string };
 export async function listOrganizerEvents(db: Firestore, uid: string): Promise<EventLite[]> {
-    const q = query(collection(db,'events'), where('organizerId','==',uid), orderBy('dates.from','desc'));
+    const q = query(collection(db,'events'), where('organizerId','==',uid));
     const snap = await getDocs(q);
-    return snap.docs.map(d=> {
+    const events = snap.docs.map(d=> {
         const data = d.data();
         return { 
             id:d.id, 
@@ -178,4 +178,7 @@ export async function listOrganizerEvents(db: Firestore, uid: string): Promise<E
             status: data.status
         }
     });
+
+    // Sort in memory to avoid composite index
+    return events.sort((a,b) => b.dates.from.getTime() - a.dates.from.getTime());
 }
