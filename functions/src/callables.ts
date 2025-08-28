@@ -49,9 +49,11 @@ export const createAnnouncement = functions.https.onCall(async (data, context) =
 
     const now = new Date();
     let status: 'draft'|'scheduled'|'published' = 'draft';
+    const announcementBody = body || '';
+
     const doc: any = { 
         title, 
-        body: body || '', 
+        body: announcementBody,
         audience, 
         pinned, 
         createdBy: uid, 
@@ -72,7 +74,7 @@ export const createAnnouncement = functions.https.onCall(async (data, context) =
     }
     const ref = await db.collection('events').doc(eventId).collection('announcements').add(doc);
     // store first revision for audit
-    await ref.collection('revisions').add({ title, body: body || '', audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
+    await ref.collection('revisions').add({ title, body: announcementBody, audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
     await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'createAnnouncement', by: uid, eventId, annId: ref.id });
     return { ok:true, annId: ref.id, status };
 });
