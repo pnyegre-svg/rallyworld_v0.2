@@ -6,6 +6,7 @@ import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
 import { db } from '@/lib/firebase.client';
 import { enableIndexedDbPersistence } from 'firebase/firestore';
+import { initAppCheck } from '@/lib/app-check';
 
 // This is a one-time initialization component.
 let persistenceInitialized = false;
@@ -17,6 +18,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         console.log('Initializing Firebase Auth...');
         
+        // Initialize App Check
+        initAppCheck();
+
         // Initialize Auth State Listener
         const unsubscribe = initializeAuth();
         console.log('Firebase initialization complete.');
