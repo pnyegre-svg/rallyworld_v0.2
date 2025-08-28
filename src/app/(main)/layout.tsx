@@ -12,7 +12,8 @@ import { useUserStore } from '@/hooks/use-user';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
-import { Bell } from 'lucide-react';
+import { Bell, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -60,6 +61,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                  <SidebarTrigger className="md:hidden" />
               </div>
              <div className="ml-auto flex items-center gap-4">
+                <div className="relative ml-auto flex-1 md:grow-0">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search events, competitors..."
+                        className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+                    />
+                </div>
                <Button variant="ghost" size="icon" className="rounded-full hidden md:flex">
                 <Bell className="h-5 w-5" />
                 <span className="sr-only">Notifications</span>

@@ -23,10 +23,17 @@ import {
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye, Users, FileUp, Megaphone, CheckCircle, Clock, AlertTriangle, FileText, Download } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye, Users, FileUp, Megaphone, CheckCircle, Clock, AlertTriangle, FileText, Download, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -73,6 +80,7 @@ export default function DashboardPage() {
                     <Skeleton className="h-64 w-full lg:col-span-2" />
                     <Skeleton className="h-64 w-full" />
                     <Skeleton className="h-64 w-full lg:col-span-3" />
+                     <Skeleton className="h-64 w-full lg:col-span-3" />
                 </div>
             </div>
         )
@@ -101,6 +109,7 @@ export default function DashboardPage() {
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5"/>Today's Stages</CardTitle>
+                         <CardDescription>What's happening right now.</CardDescription>
                     </CardHeader>
                     <CardContent>
                        <Table>
@@ -117,8 +126,7 @@ export default function DashboardPage() {
                                     <TableCell className="font-mono">09:00</TableCell>
                                     <TableCell className="font-medium">SS1 - Col de Turini</TableCell>
                                     <TableCell><Badge variant="outline" className="text-green-500 border-green-500">Ready</Badge></TableCell>
-                                    <TableCell className="text-right space-x-1">
-                                        <Button variant="outline" size="sm">View</Button>
+                                    <TableCell className="text-right">
                                         <Button variant="destructive" size="sm">Start</Button>
                                     </TableCell>
                                 </TableRow>
@@ -126,8 +134,7 @@ export default function DashboardPage() {
                                     <TableCell className="font-mono">14:30</TableCell>
                                     <TableCell className="font-medium">SS2 - Ouninpohja</TableCell>
                                     <TableCell><Badge variant="outline">Not Started</Badge></TableCell>
-                                    <TableCell className="text-right space-x-1">
-                                        <Button variant="outline" size="sm">View</Button>
+                                    <TableCell className="text-right">
                                         <Button variant="secondary" size="sm" disabled>Start</Button>
                                     </TableCell>
                                 </TableRow>
@@ -145,6 +152,7 @@ export default function DashboardPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>Entries & Payments</CardTitle>
+                        <CardDescription>Status of competitor registrations.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex justify-around text-center">
@@ -162,12 +170,50 @@ export default function DashboardPage() {
                             </div>
                         </div>
                          <div className="flex flex-col gap-2">
-                             <Button variant="outline">Approve Entries</Button>
-                             <Button variant="outline">Manage Payments</Button>
+                             <Button variant="outline">Bulk Approve</Button>
+                             <Button variant="outline">Message Pending</Button>
                              <Button variant="ghost" size="sm" className="text-muted-foreground"><Download className="mr-2 h-4 w-4"/>Export CSV</Button>
                          </div>
                     </CardContent>
                 </Card>
+                
+                 {/* Upcoming Stages */}
+                <Card className="lg:col-span-3">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5"/>Upcoming Stages (Next 7 Days)</CardTitle>
+                        <CardDescription>Prepare for what's next on the calendar.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Stage</TableHead>
+                                    <TableHead>Location</TableHead>
+                                    <TableHead>Distance</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell className="font-mono">Jul 28</TableCell>
+                                    <TableCell className="font-medium">SS3 - Myherin</TableCell>
+                                    <TableCell>Wales</TableCell>
+                                    <TableCell>29.13 km</TableCell>
+                                    <TableCell><Badge>Ready</Badge></TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-mono">Jul 29</TableCell>
+                                    <TableCell className="font-medium">SS4 - Fafe</TableCell>
+                                    <TableCell>Portugal</TableCell>
+                                    <TableCell>11.18 km</TableCell>
+                                    <TableCell><Badge variant="outline">Docs Missing</Badge></TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+
 
                  {/* Announcements */}
                  <Card className="lg:col-span-3">
@@ -176,13 +222,28 @@ export default function DashboardPage() {
                          <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5"/>Announcements</CardTitle>
                          <CardDescription>Latest bulletins and information for all participants.</CardDescription>
                        </div>
-                        <Button>New Announcement</Button>
+                       <div className="flex items-center gap-2">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">Target: All</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem>All</DropdownMenuItem>
+                                    <DropdownMenuItem>Competitors</DropdownMenuItem>
+                                    <DropdownMenuItem>Officials</DropdownMenuItem>
+                                     <DropdownMenuItem>Public</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                           <Button>New Announcement</Button>
+                       </div>
+
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Title</TableHead>
+                                    <TableHead>Audience</TableHead>
                                     <TableHead>Published</TableHead>
                                     <TableHead>Version</TableHead>
                                 </TableRow>
@@ -190,11 +251,13 @@ export default function DashboardPage() {
                             <TableBody>
                                 <TableRow>
                                     <TableCell className="font-medium">Bulletin #3 - Schedule Change SS2</TableCell>
+                                     <TableCell><Badge variant="destructive">Competitors</Badge></TableCell>
                                     <TableCell className="text-muted-foreground">2024-07-20 08:30</TableCell>
                                     <TableCell className="font-mono">3</TableCell>
                                 </TableRow>
                                 <TableRow>
                                     <TableCell className="font-medium">Safety Briefing Location</TableCell>
+                                    <TableCell><Badge>Officials</Badge></TableCell>
                                     <TableCell className="text-muted-foreground">2024-07-19 17:00</TableCell>
                                     <TableCell className="font-mono">1</TableCell>
                                 </TableRow>
