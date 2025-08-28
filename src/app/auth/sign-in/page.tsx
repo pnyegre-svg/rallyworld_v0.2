@@ -33,8 +33,7 @@ export default function SignInPage() {
         setIsLoading(true);
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // signInUser will now fetch/create the user from Firestore
-            await signInUser(email);
+            // The onAuthStateChanged listener in useUserStore will handle the rest
             router.push('/dashboard');
         } catch (error: any) {
             toast({

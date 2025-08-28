@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase.client';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useUserStore } from '@/hooks/use-user';
 
@@ -33,9 +33,9 @@ export default function SignUpPage() {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            // This will now create the user in Firestore via the hook
-            await signInUser(email, name);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            await updateProfile(userCredential.user, { displayName: name });
+            // The onAuthStateChanged listener in useUserStore will handle the rest
             router.push('/auth/choose-role');
         } catch(error: any) {
             toast({

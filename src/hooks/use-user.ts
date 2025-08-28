@@ -29,11 +29,11 @@ export const useUserStore = create<UserState>()(
             if (firebaseUser) {
               if (!get().user || get().user?.email !== firebaseUser.email) {
                   console.log("Auth state changed: User is signed in. Fetching profile...");
-                  await get().signInUser(firebaseUser.email!);
+                  await get().signInUser(firebaseUser.email!, firebaseUser.displayName || undefined);
               }
             } else {
               console.log("Auth state changed: User is signed out.");
-              set({ user: null });
+              set({ user: null, isAuthReady: true });
             }
             // This now signifies that the onAuthStateChanged listener has fired at least once.
             if (!get().isAuthReady) {
@@ -74,7 +74,7 @@ export const useUserStore = create<UserState>()(
             await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
 
-        set({ user: userProfile });
+        set({ user: userProfile, isAuthReady: true });
       },
       setRole: async (role: UserRole) => {
         const currentUser = get().user;
