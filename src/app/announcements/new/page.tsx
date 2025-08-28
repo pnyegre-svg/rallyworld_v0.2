@@ -1,5 +1,3 @@
-// This file is intentionally left empty to resolve a build conflict.
+// This file is intentionally left blank to resolve a build conflict.
 // The correct page is located at /src/app/(main)/announcements/new/page.tsx
-export default function NewAnnouncementDuplicate() {
-  return null;
-}
+// By not exporting a default component, we prevent Next.js from treating this as a page.
