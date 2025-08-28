@@ -1,3 +1,4 @@
+
 import './admin';
 import * as functions from 'firebase-functions';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -46,14 +47,14 @@ return { ok: true };
 // --- Announcements ---
 export const createAnnouncement = functions.https.onCall(async (data, context) => {
 const uid = assertAuthed(context);
-const { eventId, title, body, audience = 'competitors', pinned = false, publishAt } = data as any;
+const { eventId, title, body = '', audience = 'competitors', pinned = false, publishAt } = data as any;
 if (!eventId || !title) throw new functions.https.HttpsError('invalid-argument', 'eventId and title required');
 await assertEventOwner(eventId, uid);
 
 
 const now = new Date();
 let status: 'draft'|'scheduled'|'published' = 'draft';
-const doc:any = { title, body: body ?? '', audience, pinned, createdBy: uid, createdAt: FieldValue.serverTimestamp(), status };
+const doc:any = { title, body, audience, pinned, createdBy: uid, createdAt: FieldValue.serverTimestamp(), status };
 if (publishAt) {
 const when = new Date(publishAt);
 if (!isNaN(when.getTime())) {
