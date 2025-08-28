@@ -9,21 +9,35 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "dates.from",
+          "fieldPath": "startDate",
           "order": "ASCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "events",
+      "collectionGroup": "stages",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "organizerId",
+          "fieldPath": "startAt",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "dates.to",
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "paymentStatus",
           "order": "ASCENDING"
         }
       ]
