@@ -1,5 +1,5 @@
 
-import { collection, query, where, getDocs, onSnapshot, Firestore, Timestamp, Unsubscribe } from 'firebase/firestore';
+import { collection, query, where, getDocs, onSnapshot, Firestore, Timestamp, Unsubscribe, orderBy, doc, updateDoc } from 'firebase/firestore';
 
 export type Entry = {
     id: string;
@@ -42,7 +42,7 @@ export const watchEntries = (
     callback: (entries: Entry[]) => void
 ): Unsubscribe => {
     const entriesCollection = collection(db, `events/${eventId}/entries`).withConverter(entryConverter as any);
-    const q = query(entriesCollection);
+    const q = query(entriesCollection, orderBy('createdAt', 'desc'));
     
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const entries = querySnapshot.docs.map(doc => doc.data() as Entry);
@@ -54,3 +54,16 @@ export const watchEntries = (
 
     return unsubscribe;
 };
+
+export async function fetchEntriesForEvent(db: Firestore, eventId: string): Promise<Entry[]> {
+    const q = query(collection(db, 'events', eventId, 'entries'), orderBy('createdAt','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=> ({ id:d.id, ...(d.data() as any) })) as Entry[];
+}
+
+export async function approveEntryLocal(db: Firestore, eventId:string, entryId:string){
+    await updateDoc(doc(db,'events',eventId,'entries',entryId), { status:'approved' });
+}
+export async function markEntryPaidLocal(db: Firestore, eventId:string, entryId:string){
+    await updateDoc(doc(db,'events',eventId,'entries',entryId), { paymentStatus:'paid' });
+}

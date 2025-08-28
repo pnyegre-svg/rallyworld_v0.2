@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DashboardSummary } from '@/lib/dashboard';
 import { watchSummary } from '@/lib/summary.client';
@@ -16,7 +16,7 @@ import { Announcements } from './Announcements';
 
 export function OrganizerDashboard() {
   const { user } = useUserStore();
-  const { toast } = useToast();
+  const { push: toast } = useToast();
   const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 

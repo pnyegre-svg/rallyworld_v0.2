@@ -30,8 +30,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserStore } from '@/hooks/use-user';
 import { useToast } from '@/components/ui/toaster';
-import { getEvents, type Event } from '@/lib/events';
-import { watchEntries, type Entry } from '@/lib/entries';
+import { listOrganizerEvents, type EventLite } from '@/lib/events';
+import { fetchEntriesForEvent, type Entry } from '@/lib/entries';
 import { approveEntryFn, markEntryPaidFn } from '@/lib/functions.client';
 import { format } from 'date-fns';
 import { Download, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
@@ -46,18 +46,19 @@ type OptimisticUpdate = {
 export default function EntriesPage() {
   const { user } = useUserStore();
   const { push: toast } = useToast();
-  const [events, setEvents] = React.useState<Event[]>([]);
+  const [events, setEvents] = React.useState<EventLite[]>([]);
   const [selectedEventId, setSelectedEventId] = React.useState<string | null>(null);
   const [entries, setEntries] = React.useState<Entry[]>([]);
   const [optimisticUpdates, setOptimisticUpdates] = React.useState<OptimisticUpdate[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [loadingEntries, setLoadingEntries] = React.useState(false);
   const [filters, setFilters] = React.useState({ showPending: false, showUnpaid: false });
 
   // Fetch organizer's events
   React.useEffect(() => {
     if (user?.organizerProfile?.id) {
       setLoading(true);
-      getEvents(db, user.organizerProfile.id).then(fetchedEvents => {
+      listOrganizerEvents(db, user.organizerProfile.id).then(fetchedEvents => {
         setEvents(fetchedEvents);
         if (fetchedEvents.length > 0) {
           setSelectedEventId(fetchedEvents[0].id);
@@ -74,13 +75,12 @@ export default function EntriesPage() {
         return;
     };
 
-    setLoading(true);
-    const unsubscribe = watchEntries(db, selectedEventId, (newEntries) => {
+    setLoadingEntries(true);
+    fetchEntriesForEvent(db, selectedEventId).then((newEntries) => {
         setEntries(newEntries);
-        setLoading(false);
+        setLoadingEntries(false);
     });
 
-    return () => unsubscribe();
   }, [selectedEventId]);
 
   const applyOptimisticUpdate = (update: OptimisticUpdate) => {
@@ -170,6 +170,25 @@ export default function EntriesPage() {
 
   const displayedEntries = getDisplayEntries();
 
+  if (loading) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Entries</CardTitle>
+                <CardDescription>Review and manage competitor registrations for your events.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-10 w-full" />
+                <div className="mt-4 space-y-2">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -181,7 +200,7 @@ export default function EntriesPage() {
             <div className="flex items-center gap-4">
                 <Select value={selectedEventId || ''} onValueChange={setSelectedEventId} disabled={events.length === 0}>
                     <SelectTrigger className="w-[280px]">
-                        <SelectValue placeholder="Select an event" />
+                        <SelectValue placeholder={events.length > 0 ? "Select an event" : "No events found"} />
                     </SelectTrigger>
                     <SelectContent>
                     {events.map(event => (
@@ -224,7 +243,7 @@ export default function EntriesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loadingEntries ? (
                 Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                         <TableCell><Skeleton className="h-5 w-32" /></TableCell>

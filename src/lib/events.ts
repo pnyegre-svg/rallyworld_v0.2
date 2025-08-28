@@ -150,3 +150,21 @@ export const updateEvent = async (db: Firestore, eventId: string, eventData: Par
         throw new Error("Could not update event.");
     }
 };
+
+export type EventLite = { id:string; title:string; dates: { from: Date, to: Date }, status:string };
+export async function listOrganizerEvents(db: Firestore, uid: string): Promise<EventLite[]> {
+    const q = query(collection(db,'events'), where('organizerId','==',uid), orderBy('dates.from','desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d=> {
+        const data = d.data();
+        return { 
+            id:d.id, 
+            title: data.title,
+            dates: {
+                from: data.dates.from.toDate(),
+                to: data.dates.to.toDate(),
+            },
+            status: data.status
+        }
+    });
+}
