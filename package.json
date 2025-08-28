@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "emulators": "firebase emulators:start --import=.emulator-data --export-on-exit"
   },
   "dependencies": {
     "@firebase/app-check": "^0.8.1",
