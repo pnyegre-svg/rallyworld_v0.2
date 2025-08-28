@@ -44,6 +44,20 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "organizerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dates.to",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "stages",
       "queryScope": "COLLECTION",
       "fields": [
