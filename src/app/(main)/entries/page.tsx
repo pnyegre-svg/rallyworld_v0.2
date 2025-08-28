@@ -36,6 +36,7 @@ import { approveEntryFn, markEntryPaidFn } from '@/lib/functions.client';
 import { format } from 'date-fns';
 import { Download, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import { db } from '@/lib/firebase.client';
+import { downloadCsv } from '@/lib/csv';
 
 type OptimisticUpdate = {
   entryId: string;
@@ -148,24 +149,17 @@ export default function EntriesPage() {
         toast({text: 'No data to export.', kind: 'info'});
         return;
     }
-
+    
     const headers = ['Competitor Name', 'Status', 'Payment Status', 'Fee', 'Date Submitted'];
-    const rows = dataToExport.map(e => [
-        `"${e.competitorName}"`,
-        e.status,
-        e.paymentStatus,
-        `${e.feeAmount} ${e.currency}`,
-        format(e.createdAt.toDate(), 'yyyy-MM-dd HH:mm')
-    ].join(','));
+    const rows = dataToExport.map(entry => ({
+        'Competitor Name': entry.competitorName,
+        'Status': entry.status,
+        'Payment Status': entry.paymentStatus,
+        'Fee': `${entry.feeAmount} ${entry.currency}`,
+        'Date Submitted': format(entry.createdAt.toDate(), 'yyyy-MM-dd HH:mm'),
+    }));
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "entries.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadCsv('entries.csv', rows, headers);
   }
 
   const displayedEntries = getDisplayEntries();
