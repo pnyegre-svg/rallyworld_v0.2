@@ -12,6 +12,7 @@ import {
     Table,
     TableBody,
     TableCell,
+    TableHead,
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
@@ -29,33 +30,27 @@ export function UpcomingStages() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <div className="grid grid-cols-5">
-                                <TableCell>Date</TableCell>
-                                <TableCell>Stage</TableCell>
-                                <TableCell>Location</TableCell>
-                                <TableCell>Distance</TableCell>
-                                <TableCell>Status</TableCell>
-                            </div>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Stage</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Distance</TableHead>
+                            <TableHead>Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         <TableRow>
-                            <div className="grid grid-cols-5">
-                                <TableCell className="font-mono">Jul 28</TableCell>
-                                <TableCell className="font-medium">SS3 - Myherin</TableCell>
-                                <TableCell>Wales</TableCell>
-                                <TableCell>29.13 km</TableCell>
-                                <TableCell><Badge>Ready</Badge></TableCell>
-                            </div>
+                            <TableCell className="font-mono">Jul 28</TableCell>
+                            <TableCell className="font-medium">SS3 - Myherin</TableCell>
+                            <TableCell>Wales</TableCell>
+                            <TableCell>29.13 km</TableCell>
+                            <TableCell><Badge>Ready</Badge></TableCell>
                         </TableRow>
                         <TableRow>
-                             <div className="grid grid-cols-5">
-                                <TableCell className="font-mono">Jul 29</TableCell>
-                                <TableCell className="font-medium">SS4 - Fafe</TableCell>
-                                <TableCell>Portugal</TableCell>
-                                <TableCell>11.18 km</TableCell>
-                                <TableCell><Badge variant="outline">Docs Missing</Badge></TableCell>
-                            </div>
+                            <TableCell className="font-mono">Jul 29</TableCell>
+                            <TableCell className="font-medium">SS4 - Fafe</TableCell>
+                            <TableCell>Portugal</TableCell>
+                            <TableCell>11.18 km</TableCell>
+                            <TableCell><Badge variant="outline">Docs Missing</Badge></TableCell>
                         </TableRow>
                             <TableRow>
                             <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">

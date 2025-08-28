@@ -12,6 +12,7 @@ import {
     Table,
     TableBody,
     TableCell,
+    TableHead,
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
@@ -35,25 +36,21 @@ export function TodayStages({ summary }: TodayStagesProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <div className="grid grid-cols-4">
-                                <TableCell>Time</TableCell>
-                                <TableCell>Stage</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell className="text-right">Actions</TableCell>
-                            </div>
+                            <TableHead>Time</TableHead>
+                            <TableHead>Stage</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {summary?.todayStages && summary.todayStages.length > 0 ? summary.todayStages.map(stage => (
                             <TableRow key={stage.stageId}>
-                                <div className="grid grid-cols-4">
-                                    <TableCell className="font-mono">{stage.startAt ? new Date(stage.startAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</TableCell>
-                                    <TableCell className="font-medium">{stage.stageName}</TableCell>
-                                    <TableCell><Badge variant="outline" className="capitalize">{stage.status}</Badge></TableCell>
-                                    <TableCell className="text-right">
-                                            <Button variant="ghost" size="sm">View</Button>
-                                    </TableCell>
-                                </div>
+                                <TableCell className="font-mono">{stage.startAt ? new Date(stage.startAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</TableCell>
+                                <TableCell className="font-medium">{stage.stageName}</TableCell>
+                                <TableCell><Badge variant="outline" className="capitalize">{stage.status}</Badge></TableCell>
+                                <TableCell className="text-right">
+                                        <Button variant="ghost" size="sm">View</Button>
+                                </TableCell>
                             </TableRow>
                         )) : (
                             <TableRow>

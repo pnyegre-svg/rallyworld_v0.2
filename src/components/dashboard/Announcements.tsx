@@ -12,6 +12,7 @@ import {
     Table,
     TableBody,
     TableCell,
+    TableHead,
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
@@ -57,21 +58,17 @@ export function Announcements({ summary }: AnnouncementsProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <div className="grid grid-cols-3">
-                                <TableCell>Title</TableCell>
-                                <TableCell>Event</TableCell>
-                                <TableCell>Published</TableCell>
-                            </div>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Event</TableHead>
+                            <TableHead>Published</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {summary?.latestAnnouncements && summary.latestAnnouncements.length > 0 ? summary.latestAnnouncements.map(ann => (
                             <TableRow key={ann.annId}>
-                                 <div className="grid grid-cols-3">
-                                    <TableCell className="font-medium">{ann.title}</TableCell>
-                                    <TableCell>{ann.eventTitle}</TableCell>
-                                    <TableCell className="text-muted-foreground">{ann.publishedAt ? new Date(ann.publishedAt.seconds * 1000).toLocaleString() : 'N/A'}</TableCell>
-                                 </div>
+                                <TableCell className="font-medium">{ann.title}</TableCell>
+                                <TableCell>{ann.eventTitle}</TableCell>
+                                <TableCell className="text-muted-foreground">{ann.publishedAt ? new Date(ann.publishedAt.seconds * 1000).toLocaleString() : 'N/A'}</TableCell>
                             </TableRow>
                         )) : (
                             <TableRow>
