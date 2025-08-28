@@ -1,11 +1,8 @@
 'use client';
 import { collection, doc, getDoc, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase.client';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '@/lib/firebase.client';
-
-
-const fns = getFunctions(app);
+import { httpsCallable } from 'firebase/functions';
+import { fns } from './functions.region';
 
 
 export type Announcement = { id:string; title:string; body:string; audience:'competitors'|'officials'|'public'; status:'draft'|'scheduled'|'published'; pinned:boolean; publishedAt?:any; publishAt?:any };
