@@ -101,12 +101,21 @@ export const getEvents = async (db: Firestore, organizerId?: string): Promise<Ev
     try {
       let q;
       if (organizerId) {
-        q = query(eventsCollection, where("organizerId", "==", organizerId), orderBy("dates.from", "asc"));
+        // Hotfix: Query only by organizerId to avoid composite index
+        q = query(eventsCollection, where("organizerId", "==", organizerId));
       } else {
         q = query(eventsCollection, orderBy("dates.from", "asc"));
       }
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map(doc => doc.data() as Event);
+      const events = querySnapshot.docs.map(doc => doc.data() as Event);
+
+      // Hotfix: Sort in code if we queried by organizerId
+      if (organizerId) {
+        events.sort((a, b) => a.dates.from.getTime() - b.dates.from.getTime());
+      }
+      
+      return events;
+
     } catch (error: any) {
       console.error("Error getting events: ", error);
       if (error.code === 'failed-precondition') {
