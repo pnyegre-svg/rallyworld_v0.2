@@ -30,6 +30,20 @@
       ]
     },
     {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "organizerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dates.to",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "stages",
       "queryScope": "COLLECTION",
       "fields": [
@@ -53,20 +67,6 @@
         },
         {
           "fieldPath": "paymentStatus",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "events",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "organizerId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "dates.to",
           "order": "ASCENDING"
         }
       ]
