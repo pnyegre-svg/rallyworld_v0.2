@@ -14,7 +14,7 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FB_APP_ID!,
 };
 
-const app = getApps().length
+export const app = getApps().length
   ? getApp()
   : initializeApp(firebaseConfig);
 
