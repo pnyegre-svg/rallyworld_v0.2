@@ -43,7 +43,7 @@ export default function AnnouncementsList(){
       }
       setIsLoadingEvents(false);
     })(); 
-  },[user?.uid]);
+  },[user?.uid, eventId]);
 
   // Persist current selection
   useEffect(()=>{ 
