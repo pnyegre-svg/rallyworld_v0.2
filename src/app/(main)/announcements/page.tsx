@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import { useUserDoc } from '@/lib/useUserDoc';
-import { listOrganizerEvents } from '@/lib/events.client';
+import { listOrganizerEvents } from '@/lib/events';
 import { Announcement, listAnnouncements } from '@/lib/announcements.client';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toaster';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PlusCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { db } from '@/lib/firebase.client';
 
 const LS_KEY = 'announcements:lastEvent';
 
@@ -33,7 +34,7 @@ export default function AnnouncementsList(){
     if(!user?.uid) return; 
     setIsLoadingEvents(true);
     (async()=>{
-      const evs = await listOrganizerEvents(user.uid); 
+      const evs = await listOrganizerEvents(db, user.uid); 
       setEvents(evs as any);
       if (!eventId) {
         const stored = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) : null;
