@@ -3,7 +3,11 @@
 
 import { getFirestore, doc, onSnapshot, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
 import { app } from './firebase';
+import { httpsCallable, getFunctions } from 'firebase/functions';
+
 const db = getFirestore(app);
+const fns = getFunctions(app);
+
 // call once on app start for offline cache
 try {
     enableIndexedDbPersistence(db)
@@ -17,4 +21,13 @@ try {
 
 export function watchSummary(uid:string, cb:(d:any)=>void){
     return onSnapshot(doc(db,'dashboard_summary',uid), snap => cb(snap.data()));
+}
+
+
+export async function approveEntry(eventId:string, entryId:string){
+    await httpsCallable(fns,'approveEntry')({eventId, entryId});
+}
+
+export async function markEntryPaid(eventId:string, entryId:string){
+    await httpsCallable(fns,'markEntryPaid')({eventId, entryId});
 }
