@@ -39,18 +39,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    if (user.currentRole === 'organizer' && user.organizerProfile?.id) {
-        const fetchEvents = async () => {
-            setLoading(true);
-            const organizerEvents = await getEvents(user.organizerProfile.id);
-            setEvents(organizerEvents);
-            setLoading(false);
-        };
-        fetchEvents();
+    // In a real app, this would fetch the pre-computed dashboard_summary/{organizerId} doc.
+    // For now, we'll just simulate a loading state.
+    if (user.currentRole === 'organizer') {
+        const timer = setTimeout(() => setLoading(false), 500); // Simulate network delay
+        return () => clearTimeout(timer);
     } else {
         setLoading(false);
     }
-  }, [user.currentRole, user.organizerProfile?.id]);
+  }, [user.currentRole]);
 
 
   const getInitials = (name: string) => {
@@ -73,9 +70,9 @@ export default function DashboardPage() {
              <div className="space-y-6">
                 <Skeleton className="h-24 w-full" />
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-64 w-full lg:col-span-2" />
                     <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full lg:col-span-3" />
                 </div>
             </div>
         )
@@ -332,3 +329,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
