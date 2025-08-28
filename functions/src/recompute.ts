@@ -24,9 +24,17 @@ const { start, end } = await getTodayRangeForUser(uid);
 
 
 const evSnap = await db.collection('events')
-.where('organizerId', '==', uid)
-.where('dates.to', '>=', start)
-.get();
+  .where('organizerId', '==', uid)
+  .get();
+
+const events = evSnap.docs.filter((d) => {
+  const dates = d.get('dates') || {};
+  const toVal = dates.to ?? d.get('endDate'); // support either schema
+  const toDate =
+    toVal?.toDate ? toVal.toDate() :
+    toVal ? new Date(toVal) : null;
+  return !!toDate && toDate >= start;
+});
 
 
 const todayStages: Array<any> = [];
@@ -34,7 +42,7 @@ let pendingEntries = 0; let unpaidEntries = 0;
 const latestAnnouncements: Array<any> = [];
 
 
-for (const ev of evSnap.docs) {
+for (const ev of events) {
 const e = ev.data();
 const stages = await ev.ref.collection('stages')
 .where('startAt', '>=', start)
