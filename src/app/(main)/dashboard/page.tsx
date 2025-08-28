@@ -65,7 +65,7 @@ export default function DashboardPage() {
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole, toast, loading]);
+  }, [user?.id, user?.currentRole, toast]);
 
 
   const getInitials = (name: string) => {
