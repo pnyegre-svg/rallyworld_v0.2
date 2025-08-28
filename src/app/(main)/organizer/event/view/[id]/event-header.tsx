@@ -19,6 +19,7 @@ import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
 import { getResizedImageUrl } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
+import { db } from '@/lib/firebase.client';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -123,7 +124,7 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     setIsUploading(true);
     try {
         const newCoverImageUrl = await uploadFile(file, 'organizer');
-        await updateEvent(event.id, { coverImage: newCoverImageUrl });
+        await updateEvent(db, event.id, { coverImage: newCoverImageUrl });
         
         // Update the parent component's state
         setEvent(prevEvent => prevEvent ? { ...prevEvent, coverImage: newCoverImageUrl } : null);
@@ -151,7 +152,7 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     setIsUploadingLogo(true);
     try {
         const newLogoImageUrl = await uploadFile(file, 'organizer');
-        await updateEvent(event.id, { logoImage: newLogoImageUrl });
+        await updateEvent(db, event.id, { logoImage: newLogoImageUrl });
         
         setEvent(prevEvent => prevEvent ? { ...prevEvent, logoImage: newLogoImageUrl } : null);
 
@@ -315,9 +316,3 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
     </div>
   );
 }
-
-    
-
-    
-
-    

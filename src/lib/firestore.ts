@@ -14,9 +14,9 @@ export function watchSummary(uid:string, cb:(d:any)=>void){
 
 
 export async function approveEntry(eventId:string, entryId:string){
-    await httpsCallable(fns,'approveEntry')({eventId, entryId});
+    await httpsCallable(fns,'approveEntryFn')({eventId, entryId});
 }
 
 export async function markEntryPaid(eventId:string, entryId:string){
-    await httpsCallable(fns,'markEntryPaid')({eventId, entryId});
+    await httpsCallable(fns,'markEntryPaidFn')({eventId, entryId});
 }

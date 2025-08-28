@@ -28,12 +28,13 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
       }
-    ],
-  },
-  experimental: {
-    allowedDevOrigins: [
-      'https://9003-firebase-studio-1756165267754.cluster-l6vkdperq5ebaqo3qy4ksvoqom.cloudworkstations.dev',
     ],
   },
 };

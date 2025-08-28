@@ -20,6 +20,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { getResizedImageUrl } from '@/lib/utils';
+import { db } from '@/lib/firebase.client';
 
 export default function StagesPage() {
   const { user } = useUserStore();
@@ -31,7 +32,7 @@ export default function StagesPage() {
     if (isOrganizer && user.organizerProfile?.id) {
       const fetchEvents = async () => {
         setLoading(true);
-        const organizerEvents = await getEvents(user.organizerProfile.id);
+        const organizerEvents = await getEvents(db, user.organizerProfile.id);
         setEvents(organizerEvents);
         setLoading(false);
       };

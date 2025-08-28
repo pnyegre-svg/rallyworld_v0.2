@@ -1,9 +1,6 @@
 
-'use client';
-
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where, orderBy, Firestore } from 'firebase/firestore';
 import { z } from 'zod';
-import { db } from './firebase.client';
 
 const stageSchema = z.object({
   name: z.string().min(1, { message: 'Stage name is required.' }),
@@ -88,7 +85,7 @@ const eventConverter = {
 };
 
 
-export const addEvent = async (eventData: EventFormValues) => {
+export const addEvent = async (db: Firestore, eventData: EventFormValues) => {
   const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
   try {
     const docRef = await addDoc(eventsCollection, eventData);
@@ -99,7 +96,7 @@ export const addEvent = async (eventData: EventFormValues) => {
   }
 };
 
-export const getEvents = async (organizerId?: string): Promise<Event[]> => {
+export const getEvents = async (db: Firestore, organizerId?: string): Promise<Event[]> => {
     const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
     try {
       let q;
@@ -120,7 +117,7 @@ export const getEvents = async (organizerId?: string): Promise<Event[]> => {
     }
 };
 
-export const getEvent = async (eventId: string): Promise<Event | null> => {
+export const getEvent = async (db: Firestore, eventId: string): Promise<Event | null> => {
     try {
         const docRef = doc(db, 'events', eventId).withConverter(eventConverter as any);
         const docSnap = await getDoc(docRef);
@@ -134,7 +131,7 @@ export const getEvent = async (eventId: string): Promise<Event | null> => {
     }
 };
 
-export const updateEvent = async (eventId: string, eventData: Partial<EventFormValues>) => {
+export const updateEvent = async (db: Firestore, eventId: string, eventData: Partial<EventFormValues>) => {
     try {
         const docRef = doc(db, 'events', eventId);
         

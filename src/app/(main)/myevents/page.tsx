@@ -32,7 +32,7 @@ export default function MyEventsPage() {
         setLoading(true);
         // This is where you would fetch all events from your database
         // For now, it will be empty as we don't have a full user list yet.
-        const allEvents = await getEvents();
+        const allEvents = await getEvents(db);
         setEvents(allEvents);
 
         // Fetch unique organizer details

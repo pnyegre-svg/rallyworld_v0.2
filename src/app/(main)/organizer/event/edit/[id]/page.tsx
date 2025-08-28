@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -41,6 +40,7 @@ import { getEvent, updateEvent, eventFormSchema, EventFormValues } from '@/lib/e
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { uploadFile } from '@/lib/storage';
+import { db } from '@/lib/firebase.client';
 
 export default function EditEventPage() {
   const { toast } = useToast();
@@ -75,7 +75,7 @@ export default function EditEventPage() {
       const fetchEventData = async () => {
         setLoading(true);
         try {
-            const eventToEdit = await getEvent(eventId);
+            const eventToEdit = await getEvent(db, eventId);
             if (eventToEdit) {
                 // Ensure the current user is the owner of the event
                 if (eventToEdit.organizerId !== user.organizerProfile?.id) {
@@ -159,7 +159,7 @@ export default function EditEventPage() {
             }
         });
 
-        await updateEvent(eventId, dataToUpdate);
+        await updateEvent(db, eventId, dataToUpdate);
 
         toast({
             title: "Event Updated Successfully!",

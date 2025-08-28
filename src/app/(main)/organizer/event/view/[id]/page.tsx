@@ -30,7 +30,7 @@ export default function ViewEventPage() {
     if (eventId) {
       const fetchEventData = async () => {
         setLoading(true);
-        const eventData = await getEvent(eventId);
+        const eventData = await getEvent(db, eventId);
          if (eventData) {
             setEvent(eventData);
 

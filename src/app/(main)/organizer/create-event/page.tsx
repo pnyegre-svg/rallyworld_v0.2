@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -42,6 +41,7 @@ import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
 import { ActionCard } from '@/components/ui/action-card';
 import { uploadFile } from '@/lib/storage';
+import { db } from '@/lib/firebase.client';
 
 
 export default function CreateEventPage() {
@@ -128,7 +128,7 @@ export default function CreateEventPage() {
         }
       });
 
-      await addEvent(dataToSave as EventFormValues);
+      await addEvent(db, dataToSave as EventFormValues);
       
       toast({
         title: "Event Created Successfully!",
