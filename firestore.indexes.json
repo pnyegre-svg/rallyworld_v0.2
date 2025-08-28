@@ -9,7 +9,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "startDate",
+          "fieldPath": "dates.from",
           "order": "ASCENDING"
         }
       ]
