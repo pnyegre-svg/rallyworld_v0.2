@@ -5,9 +5,12 @@ import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
 import { initAppCheck } from '@/lib/app-check';
+import { db } from '@/lib/firestore.client';
+import { enableIndexedDbPersistence } from 'firebase/firestore';
 
 // This is a one-time initialization component.
 let firebaseInitialized = false;
+let persistenceInitialized = false;
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const { initializeAuth } = useUserStore();
@@ -24,6 +27,21 @@ export function Providers({ children }: { children: React.ReactNode }) {
             const unsubscribe = initializeAuth();
             firebaseInitialized = true;
             console.log('Firebase initialization complete.');
+            
+            // Enable Firestore persistence
+            if (!persistenceInitialized) {
+              enableIndexedDbPersistence(db()).then(() => {
+                  persistenceInitialized = true;
+                  console.log('Firestore persistence enabled.');
+              }).catch((error) => {
+                  if (error.code == 'failed-precondition') {
+                      console.warn('Firestore persistence failed to initialize. Multiple tabs open?');
+                  } else {
+                      console.error('Error initializing Firestore persistence:', error);
+                  }
+              });
+            }
+
 
             // We can now consider the app ready.
             setIsReady(true);
