@@ -45,6 +45,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/marketplace')) return 'Marketplace';
     if (path.startsWith('/shop')) return 'MyShop';
     if (path.startsWith('/news')) return 'News';
+    if (path.startsWith('/announcements/new')) return 'New Announcement';
+    if (path.startsWith('/announcements/edit')) return 'Edit Announcement';
+    if (path.startsWith('/announcements')) return 'Announcements';
     return 'Rally World';
   };
   

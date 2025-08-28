@@ -18,7 +18,7 @@ export function QuickActions() {
                 <Link href="#"><FileUp className="mr-2 h-4 w-4"/> Upload Docs</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-                <Link href="#"><Megaphone className="mr-2 h-4 w-4"/> Post Announcement</Link>
+                <Link href="/announcements"><Megaphone className="mr-2 h-4 w-4"/> Post Announcement</Link>
             </Button>
         </div>
     );
