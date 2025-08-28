@@ -29,11 +29,11 @@ export function OrganizerDashboard() {
     setLoading(true);
     const unsubscribe = watchSummary(user.id, (data) => {
         setSummary(data as DashboardSummary);
-        if (loading) setLoading(false);
+        setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole, loading]);
+  }, [user?.id, user?.currentRole]);
 
 
   if (loading) {
