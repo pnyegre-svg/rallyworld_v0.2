@@ -1,5 +1,5 @@
 import './admin';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as functions from 'firebase-functions';
 import { recomputeSummaryFor } from './recompute';
 
@@ -40,3 +40,17 @@ for (const u of users.docs) {
 await recomputeSummaryFor(u.id);
 }
 }
+
+// Process scheduled announcements every 5 minutes
+export const processScheduledAnnouncements = functions.pubsub
+.schedule('every 5 minutes')
+.onRun(async () => {
+const now = new Date();
+const q = await db.collectionGroup('announcements')
+.where('status','==','scheduled')
+.where('publishAt','<=', now)
+.get();
+for (const d of q.docs) {
+await d.ref.update({ status:'published', publishedAt: FieldValue.serverTimestamp(), publishAt: FieldValue.delete() });
+}
+});
