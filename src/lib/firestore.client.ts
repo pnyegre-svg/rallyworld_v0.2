@@ -1,7 +1,12 @@
 'use client';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, Firestore } from 'firebase/firestore';
 import { getFirebaseApp } from './firebase';
 
+let dbInstance: Firestore | null = null;
+
 export function db() {
-  return getFirestore(getFirebaseApp());
+  if (!dbInstance) {
+    dbInstance = getFirestore(getFirebaseApp());
+  }
+  return dbInstance;
 }

@@ -1,7 +1,12 @@
 'use client';
-import { getStorage } from 'firebase/storage';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getFirebaseApp } from './firebase';
 
+let storageInstance: FirebaseStorage | null = null;
+
 export function storage() {
-  return getStorage(getFirebaseApp());
+  if (!storageInstance) {
+    storageInstance = getStorage(getFirebaseApp());
+  }
+  return storageInstance;
 }
