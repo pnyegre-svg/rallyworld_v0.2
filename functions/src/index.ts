@@ -1,7 +1,9 @@
 import * as functions from 'firebase-functions';
 import { onEntryWrite, onStageWrite, onAnnouncementWrite, refreshAllForToday } from './recompute';
 import { approveEntry, markEntryPaid } from './callable';
+import * as admin from 'firebase-admin';
 
+admin.initializeApp();
 
 export const entryChanged = functions.firestore
 .document('events/{eventId}/entries/{entryId}')
