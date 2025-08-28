@@ -24,13 +24,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from '@/components/ui/button';
 import { Megaphone } from 'lucide-react';
-import type { DashboardSummary } from '@/lib/dashboard';
+import type { DashboardAnnouncement } from '@/lib/dashboard';
 
 type AnnouncementsProps = {
-    summary: DashboardSummary | null;
+    items: DashboardAnnouncement[] | undefined;
 }
 
-export function Announcements({ summary }: AnnouncementsProps) {
+export function Announcements({ items }: AnnouncementsProps) {
     return (
         <Card className="lg:col-span-3">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -64,7 +64,7 @@ export function Announcements({ summary }: AnnouncementsProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {summary?.latestAnnouncements && summary.latestAnnouncements.length > 0 ? summary.latestAnnouncements.map(ann => (
+                        {items && items.length > 0 ? items.map(ann => (
                             <TableRow key={ann.annId}>
                                 <TableCell className="font-medium">{ann.title}</TableCell>
                                 <TableCell>{ann.eventTitle}</TableCell>

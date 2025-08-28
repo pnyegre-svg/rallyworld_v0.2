@@ -33,7 +33,7 @@ export function OrganizerDashboard() {
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole, loading]);
+  }, [user?.id, user?.currentRole]);
 
 
   if (loading) {
@@ -44,7 +44,7 @@ export function OrganizerDashboard() {
                   <Skeleton className="h-64 w-full lg:col-span-2" />
                   <Skeleton className="h-64 w-full" />
                   <Skeleton className="h-64 w-full lg:col-span-3" />
-                    <Skeleton className="h-64 w-full lg:col-span-3" />
+                  <Skeleton className="h-64 w-full lg:col-span-3" />
               </div>
           </div>
       )
@@ -55,10 +55,10 @@ export function OrganizerDashboard() {
           <QuickActions />
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <TodayStages summary={summary} />
-              <EntriesAndPayments summary={summary} />
+              <TodayStages stages={summary?.todayStages} />
+              <EntriesAndPayments counters={summary?.counters} />
               <UpcomingStages />
-              <Announcements summary={summary} />
+              <Announcements items={summary?.latestAnnouncements} />
           </div>
       </div>
   );

@@ -13,10 +13,10 @@ import { Users, AlertTriangle, Clock, CheckCircle, Download } from 'lucide-react
 import type { DashboardSummary } from '@/lib/dashboard';
 
 type EntriesAndPaymentsProps = {
-    summary: DashboardSummary | null;
+    counters: DashboardSummary['counters'] | undefined;
 }
 
-export function EntriesAndPayments({ summary }: EntriesAndPaymentsProps) {
+export function EntriesAndPayments({ counters }: EntriesAndPaymentsProps) {
     return (
         <Card>
             <CardHeader>
@@ -26,11 +26,11 @@ export function EntriesAndPayments({ summary }: EntriesAndPaymentsProps) {
             <CardContent className="space-y-4">
                 <div className="flex justify-around text-center">
                     <div>
-                        <p className="text-3xl font-bold">{summary?.counters?.pendingEntries ?? 0}</p>
+                        <p className="text-3xl font-bold">{counters?.pendingEntries ?? 0}</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-orange-400"/>Pending</p>
                     </div>
                         <div>
-                        <p className="text-3xl font-bold">{summary?.counters?.unpaidEntries ?? 0}</p>
+                        <p className="text-3xl font-bold">{counters?.unpaidEntries ?? 0}</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-4 w-4 text-red-500"/>Unpaid</p>
                     </div>
                     <div>

@@ -19,13 +19,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from 'lucide-react';
-import type { DashboardSummary } from '@/lib/dashboard';
+import type { DashboardStage } from '@/lib/dashboard';
 
 type TodayStagesProps = {
-    summary: DashboardSummary | null;
+    stages: DashboardStage[] | undefined;
 }
 
-export function TodayStages({ summary }: TodayStagesProps) {
+export function TodayStages({ stages }: TodayStagesProps) {
     return (
         <Card className="lg:col-span-2">
             <CardHeader>
@@ -43,7 +43,7 @@ export function TodayStages({ summary }: TodayStagesProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {summary?.todayStages && summary.todayStages.length > 0 ? summary.todayStages.map(stage => (
+                        {stages && stages.length > 0 ? stages.map(stage => (
                             <TableRow key={stage.stageId}>
                                 <TableCell className="font-mono">{stage.startAt ? new Date(stage.startAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</TableCell>
                                 <TableCell className="font-medium">{stage.stageName}</TableCell>
