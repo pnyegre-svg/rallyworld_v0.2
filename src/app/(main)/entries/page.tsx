@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -54,6 +53,8 @@ export default function EntriesPage() {
   const [loading, setLoading] = React.useState(true);
   const [loadingEntries, setLoadingEntries] = React.useState(false);
   const [filters, setFilters] = React.useState({ showPending: false, showUnpaid: false });
+  const [busy, setBusy] = React.useState<string>('');
+
 
   // Fetch organizer's events
   React.useEffect(() => {
@@ -62,7 +63,11 @@ export default function EntriesPage() {
       listOrganizerEvents(db, user.organizerProfile.id).then(fetchedEvents => {
         setEvents(fetchedEvents);
         if (fetchedEvents.length > 0) {
-          setSelectedEventId(fetchedEvents[0].id);
+            const firstEventId = fetchedEvents[0].id;
+            setSelectedEventId(firstEventId);
+            fetchEntriesForEvent(db, firstEventId).then((newEntries) => {
+                setEntries(newEntries);
+            });
         }
         setLoading(false);
       });
@@ -84,54 +89,45 @@ export default function EntriesPage() {
 
   }, [selectedEventId]);
 
-  const applyOptimisticUpdate = (update: OptimisticUpdate) => {
-    setOptimisticUpdates(prev => [...prev, update]);
-  };
 
-  const removeOptimisticUpdate = (entryId: string, type: 'status' | 'paymentStatus') => {
-    setOptimisticUpdates(prev => prev.filter(u => !(u.entryId === entryId && u.type === type)));
-  };
-
-  const handleApprove = async (entryId: string) => {
+  const handleApprove = async (entry: Entry) => {
     if (!selectedEventId) return;
-    const update: OptimisticUpdate = { entryId, type: 'status', value: 'approved' };
-    applyOptimisticUpdate(update);
+    setBusy(entry.id);
+    const originalStatus = entry.status;
+    setEntries(items => items.map(it => it.id === entry.id ? { ...it, status: 'approved' } : it));
 
     try {
-      await approveEntryFn(selectedEventId, entryId);
+      await approveEntryFn(selectedEventId, entry.id);
       toast({ text: 'Entry approved successfully.', kind: 'success' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ text: 'Failed to approve entry.', kind: 'error' });
-      removeOptimisticUpdate(entryId, 'status'); // Revert on failure
+      setEntries(items => items.map(it => it.id === entry.id ? { ...it, status: originalStatus } : it));
+      toast({ text: error.message || 'Failed to approve entry.', kind: 'error' });
+    } finally {
+        setBusy('');
     }
   };
 
-  const handleMarkPaid = async (entryId: string) => {
+  const handleMarkPaid = async (entry: Entry) => {
     if (!selectedEventId) return;
-    const update: OptimisticUpdate = { entryId, type: 'paymentStatus', value: 'paid' };
-    applyOptimisticUpdate(update);
+    setBusy(entry.id);
+    const originalPaymentStatus = entry.paymentStatus;
+    setEntries(items => items.map(it => it.id === entry.id ? { ...it, paymentStatus: 'paid' } : it));
 
     try {
-      await markEntryPaidFn(selectedEventId, entryId);
+      await markEntryPaidFn(selectedEventId, entry.id);
       toast({ text: 'Entry marked as paid.', kind: 'success' });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ text: 'Failed to mark as paid.', kind: 'error' });
-      removeOptimisticUpdate(entryId, 'paymentStatus'); // Revert on failure
+      setEntries(items => items.map(it => it.id === entry.id ? { ...it, paymentStatus: originalPaymentStatus } : it));
+      toast({ text: error.message || 'Failed to mark as paid.', kind: 'error' });
+    } finally {
+        setBusy('');
     }
   };
 
   const getDisplayEntries = () => {
-    let displayed = entries.map(entry => {
-        const statusUpdate = optimisticUpdates.find(u => u.entryId === entry.id && u.type === 'status');
-        const paymentUpdate = optimisticUpdates.find(u => u.entryId === entry.id && u.type === 'paymentStatus');
-        return {
-            ...entry,
-            status: statusUpdate ? statusUpdate.value : entry.status,
-            paymentStatus: paymentUpdate ? paymentUpdate.value : entry.paymentStatus,
-        };
-    });
+    let displayed = [...entries];
 
     if (filters.showPending) {
         displayed = displayed.filter(e => e.status === 'new');
@@ -156,7 +152,7 @@ export default function EntriesPage() {
         'Status': entry.status,
         'Payment Status': entry.paymentStatus,
         'Fee': `${entry.feeAmount} ${entry.currency}`,
-        'Date Submitted': format(entry.createdAt.toDate(), 'yyyy-MM-dd HH:mm'),
+        'Date Submitted': entry.createdAt ? format(entry.createdAt.toDate(), 'yyyy-MM-dd HH:mm') : 'N/A',
     }));
 
     downloadCsv('entries.csv', rows, headers);
@@ -250,7 +246,7 @@ export default function EntriesPage() {
             ) : displayedEntries.length > 0 ? displayedEntries.map((entry) => (
               <TableRow key={entry.id}>
                 <TableCell className="font-medium">{entry.competitorName}</TableCell>
-                <TableCell className="text-muted-foreground">{format(entry.createdAt.toDate(), 'PPp')}</TableCell>
+                <TableCell className="text-muted-foreground">{entry.createdAt ? format(entry.createdAt.toDate(), 'PPp') : 'N/A'}</TableCell>
                 <TableCell>
                   <Badge variant={entry.status === 'approved' ? 'default' : entry.status === 'new' ? 'secondary' : 'destructive'} className="capitalize">
                      {entry.status === 'new' && <AlertTriangle className="h-3 w-3 mr-1" />}
@@ -266,11 +262,11 @@ export default function EntriesPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => handleApprove(entry.id)} disabled={entry.status === 'approved'}>
-                    Approve
+                  <Button variant="outline" size="sm" onClick={() => handleApprove(entry)} disabled={entry.status === 'approved' || busy === entry.id}>
+                    {busy === entry.id && entry.status !== 'approved' ? 'Approving...': 'Approve'}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleMarkPaid(entry.id)} disabled={entry.paymentStatus === 'paid'}>
-                    Mark as Paid
+                  <Button variant="outline" size="sm" onClick={() => handleMarkPaid(entry)} disabled={entry.paymentStatus === 'paid' || busy === entry.id}>
+                     {busy === entry.id && entry.paymentStatus !== 'paid' ? 'Paying...': 'Mark as Paid'}
                   </Button>
                 </TableCell>
               </TableRow>
