@@ -1,66 +1,41 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if a user is an admin
-    function isAdmin() {
-      // In this ruleset, we consider an organizer with a specific email to be an admin.
-      // A more robust system might use custom claims or a dedicated admin collection.
-      return request.auth.token.email == 'admin@rally.world';
+    function isSignedIn() { return request.auth != null; }
+    function isEventOwner(eventId) {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
 
-    // A user is the owner of their own document
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    match /users/{uid} {
+      // Admins can read any user profile, users can read/update their own
+      allow read: if request.auth.token.role == 'admin' || (isSignedIn() && request.auth.uid == uid);
+      allow update: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn();
     }
 
-    match /users/{userId} {
-      // Anyone can read an organizer's profile details.
-      // A user can read their own full profile.
-      allow read: if resource.data.roles.hasAny(['organizer']) || isOwner(userId) || isAdmin();
-      
-      // Only the authenticated user can create or update their own document.
-      allow write: if isOwner(userId);
+    match /dashboard_summary/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow write: if false; // Cloud Functions only
     }
 
     match /events/{eventId} {
-      // Anyone can read event data
-      allow read: if true;
+      allow read: if true; // Publicly readable
+      allow create: if isSignedIn() && request.resource.data.organizerId == request.auth.uid;
+      allow update, delete: if isEventOwner(eventId);
 
-      // Only an authenticated user who is listed as the organizerId can create or update an event.
-      allow write: if request.auth.uid == request.resource.data.organizerId;
-      
-      match /entries/{entryId} {
-        // Anyone can read entry data
-        allow read: if true;
-        // Authenticated users can create entries. Organizer can update.
-        allow write: if request.auth.uid != null || request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
-      }
-      
       match /stages/{stageId} {
-        // Anyone can read stage data
         allow read: if true;
-        // Organizer can write
-        allow write: if request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
+        allow write: if isEventOwner(eventId);
       }
-      
-       match /announcements/{announcementId} {
-        // Anyone can read announcements
+      match /entries/{entryId} {
+        allow read: if isSignedIn();
+        allow write: if isEventOwner(eventId);
+      }
+      match /announcements/{annId} {
         allow read: if true;
-        // Organizer can write
-        allow write: if request.auth.uid == get(/databases/$(database)/documents/events/$(eventId)).data.organizerId;
+        allow write: if isEventOwner(eventId);
       }
-    }
-    
-    // Summary dashboards are private to the organizer
-    match /dashboard_summary/{userId} {
-        allow read, write: if isOwner(userId);
-    }
-    
-     match /audit_logs/{logId} {
-      // Only backend functions can write audit logs. No one can read them directly.
-      allow read, write: if false;
     }
   }
 }
