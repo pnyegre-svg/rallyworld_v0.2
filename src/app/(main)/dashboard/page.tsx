@@ -3,12 +3,6 @@
 
 import * as React from 'react';
 import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import {
   Card,
   CardContent,
   CardHeader,
@@ -23,38 +17,49 @@ import {
     TableHeader,
     TableRow,
   } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
 import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye, Users, FileUp, Megaphone, CheckCircle, Clock, AlertTriangle, FileText, Download, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { getEvents, Event } from '@/lib/events';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getDashboardSummary, DashboardSummary } from '@/lib/dashboard';
 
 export default function DashboardPage() {
   const { user } = useUserStore();
-  const [events, setEvents] = React.useState<Event[]>([]);
+  const { toast } = useToast();
+  const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    // In a real app, this would fetch the pre-computed dashboard_summary/{organizerId} doc.
-    // For now, we'll just simulate a loading state.
-    if (user.currentRole === 'organizer') {
-        const timer = setTimeout(() => setLoading(false), 500); // Simulate network delay
-        return () => clearTimeout(timer);
-    } else {
+    if (user?.currentRole !== 'organizer' || !user.id) {
         setLoading(false);
+        return;
     }
-  }, [user.currentRole]);
+
+    setLoading(true);
+    const unsubscribe = getDashboardSummary(user.id, (data) => {
+        setSummary(data);
+        if (loading) setLoading(false);
+    }, (error) => {
+        console.error(error);
+        toast({
+            title: "Error loading dashboard",
+            description: "Could not fetch your dashboard summary. Please try again later.",
+            variant: "destructive",
+        });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user?.id, user?.currentRole, toast, loading]);
 
 
   const getInitials = (name: string) => {
@@ -122,27 +127,22 @@ export default function DashboardPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow>
-                                    <TableCell className="font-mono">09:00</TableCell>
-                                    <TableCell className="font-medium">SS1 - Col de Turini</TableCell>
-                                    <TableCell><Badge variant="outline" className="text-green-500 border-green-500">Ready</Badge></TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="destructive" size="sm">Start</Button>
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-mono">14:30</TableCell>
-                                    <TableCell className="font-medium">SS2 - Ouninpohja</TableCell>
-                                    <TableCell><Badge variant="outline">Not Started</Badge></TableCell>
-                                    <TableCell className="text-right">
-                                        <Button variant="secondary" size="sm" disabled>Start</Button>
-                                    </TableCell>
-                                </TableRow>
-                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                                        No more stages scheduled for today.
-                                    </TableCell>
-                                </TableRow>
+                                {summary?.todayStages && summary.todayStages.length > 0 ? summary.todayStages.map(stage => (
+                                    <TableRow key={stage.stageId}>
+                                        <TableCell className="font-mono">{stage.startAt ? new Date(stage.startAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</TableCell>
+                                        <TableCell className="font-medium">{stage.stageName}</TableCell>
+                                        <TableCell><Badge variant="outline" className="capitalize">{stage.status}</Badge></TableCell>
+                                        <TableCell className="text-right">
+                                             <Button variant="ghost" size="sm">View</Button>
+                                        </TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                            No stages scheduled for today.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -157,11 +157,11 @@ export default function DashboardPage() {
                     <CardContent className="space-y-4">
                         <div className="flex justify-around text-center">
                             <div>
-                                <p className="text-3xl font-bold">12</p>
+                                <p className="text-3xl font-bold">{summary?.counters?.pendingEntries ?? 0}</p>
                                 <p className="text-sm text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-orange-400"/>Pending</p>
                             </div>
                              <div>
-                                <p className="text-3xl font-bold">4</p>
+                                <p className="text-3xl font-bold">{summary?.counters?.unpaidEntries ?? 0}</p>
                                 <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-4 w-4 text-red-500"/>Unpaid</p>
                             </div>
                             <div>
@@ -209,6 +209,11 @@ export default function DashboardPage() {
                                     <TableCell>11.18 km</TableCell>
                                     <TableCell><Badge variant="outline">Docs Missing</Badge></TableCell>
                                 </TableRow>
+                                 <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                       No more upcoming stages in the next week.
+                                    </TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -243,24 +248,24 @@ export default function DashboardPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Title</TableHead>
-                                    <TableHead>Audience</TableHead>
+                                    <TableHead>Event</TableHead>
                                     <TableHead>Published</TableHead>
-                                    <TableHead>Version</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                <TableRow>
-                                    <TableCell className="font-medium">Bulletin #3 - Schedule Change SS2</TableCell>
-                                     <TableCell><Badge variant="destructive">Competitors</Badge></TableCell>
-                                    <TableCell className="text-muted-foreground">2024-07-20 08:30</TableCell>
-                                    <TableCell className="font-mono">3</TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    <TableCell className="font-medium">Safety Briefing Location</TableCell>
-                                    <TableCell><Badge>Officials</Badge></TableCell>
-                                    <TableCell className="text-muted-foreground">2024-07-19 17:00</TableCell>
-                                    <TableCell className="font-mono">1</TableCell>
-                                </TableRow>
+                                {summary?.latestAnnouncements && summary.latestAnnouncements.length > 0 ? summary.latestAnnouncements.map(ann => (
+                                    <TableRow key={ann.annId}>
+                                        <TableCell className="font-medium">{ann.title}</TableCell>
+                                        <TableCell>{ann.eventTitle}</TableCell>
+                                        <TableCell className="text-muted-foreground">{ann.publishedAt ? new Date(ann.publishedAt.seconds * 1000).toLocaleString() : 'N/A'}</TableCell>
+                                    </TableRow>
+                                )) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center h-24 text-muted-foreground">
+                                            No recent announcements.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
@@ -271,6 +276,7 @@ export default function DashboardPage() {
     );
   }
 
+  // Fallback for non-organizer roles
   return (
     <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
