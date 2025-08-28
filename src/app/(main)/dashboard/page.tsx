@@ -26,7 +26,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useUserStore } from '@/hooks/use-user';
 import { stages, leaderboard, newsPosts } from '@/lib/data';
-import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Newspaper, Trophy, Flag, PlusSquare, PenSquare, Eye, Users, FileUp, Megaphone, CheckCircle, Clock, AlertTriangle, FileText, Download } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -67,6 +67,150 @@ export default function DashboardPage() {
   const recentNews = newsPosts.slice(0, 2);
   const isOrganizer = user.currentRole === 'organizer';
 
+  if (isOrganizer) {
+    if (loading) {
+        return (
+             <div className="space-y-6">
+                <Skeleton className="h-24 w-full" />
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </div>
+        )
+    }
+    return (
+        <div className="space-y-6">
+            {/* Quick Actions */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Button asChild className="h-20 text-lg bg-accent hover:bg-accent/90" size="lg">
+                    <Link href="/organizer/create-event"><PlusSquare className="mr-4 h-6 w-6"/> Create Event</Link>
+                </Button>
+                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
+                    <Link href="#"><Users className="mr-4 h-6 w-6"/> Manage Entries</Link>
+                </Button>
+                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
+                    <Link href="#"><FileUp className="mr-4 h-6 w-6"/> Upload Docs</Link>
+                </Button>
+                 <Button asChild className="h-20 text-lg" size="lg" variant="outline">
+                    <Link href="#"><Megaphone className="mr-4 h-6 w-6"/> Post Announcement</Link>
+                </Button>
+            </div>
+
+            {/* Main Cockpit Grid */}
+             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {/* Today's Stages */}
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5"/>Today's Stages</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                       <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Time</TableHead>
+                                    <TableHead>Stage</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell className="font-mono">09:00</TableCell>
+                                    <TableCell className="font-medium">SS1 - Col de Turini</TableCell>
+                                    <TableCell><Badge variant="outline" className="text-green-500 border-green-500">Ready</Badge></TableCell>
+                                    <TableCell className="text-right space-x-1">
+                                        <Button variant="outline" size="sm">View</Button>
+                                        <Button variant="destructive" size="sm">Start</Button>
+                                    </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-mono">14:30</TableCell>
+                                    <TableCell className="font-medium">SS2 - Ouninpohja</TableCell>
+                                    <TableCell><Badge variant="outline">Not Started</Badge></TableCell>
+                                    <TableCell className="text-right space-x-1">
+                                        <Button variant="outline" size="sm">View</Button>
+                                        <Button variant="secondary" size="sm" disabled>Start</Button>
+                                    </TableCell>
+                                </TableRow>
+                                 <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                        No more stages scheduled for today.
+                                    </TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+
+                {/* Entries & Payments */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>Entries & Payments</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex justify-around text-center">
+                            <div>
+                                <p className="text-3xl font-bold">12</p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-1"><AlertTriangle className="h-4 w-4 text-orange-400"/>Pending</p>
+                            </div>
+                             <div>
+                                <p className="text-3xl font-bold">4</p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-4 w-4 text-red-500"/>Unpaid</p>
+                            </div>
+                            <div>
+                                <p className="text-3xl font-bold">48</p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-1"><CheckCircle className="h-4 w-4 text-green-500"/>Confirmed</p>
+                            </div>
+                        </div>
+                         <div className="flex flex-col gap-2">
+                             <Button variant="outline">Approve Entries</Button>
+                             <Button variant="outline">Manage Payments</Button>
+                             <Button variant="ghost" size="sm" className="text-muted-foreground"><Download className="mr-2 h-4 w-4"/>Export CSV</Button>
+                         </div>
+                    </CardContent>
+                </Card>
+
+                 {/* Announcements */}
+                 <Card className="lg:col-span-3">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                       <div>
+                         <CardTitle className="flex items-center gap-2"><Megaphone className="h-5 w-5"/>Announcements</CardTitle>
+                         <CardDescription>Latest bulletins and information for all participants.</CardDescription>
+                       </div>
+                        <Button>New Announcement</Button>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Title</TableHead>
+                                    <TableHead>Published</TableHead>
+                                    <TableHead>Version</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow>
+                                    <TableCell className="font-medium">Bulletin #3 - Schedule Change SS2</TableCell>
+                                    <TableCell className="text-muted-foreground">2024-07-20 08:30</TableCell>
+                                    <TableCell className="font-mono">3</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell className="font-medium">Safety Briefing Location</TableCell>
+                                    <TableCell className="text-muted-foreground">2024-07-19 17:00</TableCell>
+                                    <TableCell className="font-mono">1</TableCell>
+                                </TableRow>
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+
+             </div>
+        </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -84,16 +228,6 @@ export default function DashboardPage() {
                     </div>
                 </CardHeader>
             </Card>
-
-            {isOrganizer && (
-                 <Card className="lg:col-span-1 p-0 relative overflow-hidden transition-all text-white bg-[length:200%_auto] bg-[linear-gradient(90deg,hsl(var(--accent))_0%,hsl(var(--orange))_50%,hsl(var(--accent))_100%)] hover:bg-[position:200%_0] animate-gradient-slide">
-                    <Link href="/organizer/create-event" className="h-full w-full flex flex-col items-center justify-center p-6">
-                        <PlusSquare className="h-12 w-12 mb-2" />
-                        <h2 className="text-xl font-headline">Create Event</h2>
-                    </Link>
-                </Card>
-            )}
-
 
             {!isOrganizer && liveStage && (
                  <Card className="lg:col-span-2 bg-accent/20 border-accent/50">
@@ -149,63 +283,6 @@ export default function DashboardPage() {
             )}
         </div>
         
-        {isOrganizer && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-bold flex items-center gap-2"><Calendar /> My Events</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="space-y-2">
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                    ) : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Event Title</TableHead>
-                                    <TableHead>Dates</TableHead>
-                                    <TableHead className="text-center">Stages</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {events.length > 0 ? events.map(event => (
-                                    <TableRow key={event.id}>
-                                        <TableCell className="font-medium">{event.title}</TableCell>
-                                        <TableCell className="text-muted-foreground">
-                                            {format(event.dates.from, 'LLL dd, y')} - {format(event.dates.to, 'LLL dd, y')}
-                                        </TableCell>
-                                        <TableCell className="text-center font-mono">{event.stages.length}</TableCell>
-                                        <TableCell className="text-right space-x-2">
-                                            <Button asChild variant="outline" size="sm">
-                                                <Link href={`/organizer/event/view/${event.id}`}>
-                                                    <Eye className="mr-2 h-4 w-4" /> View
-                                                </Link>
-                                            </Button>
-                                            <Button asChild variant="outline" size="sm">
-                                                <Link href={`/organizer/event/edit/${event.id}`}>
-                                                    <PenSquare className="mr-2 h-4 w-4" /> Edit
-                                                </Link>
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                                            You haven't created any events yet.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    )}
-                </CardContent>
-            </Card>
-        )}
-
         {!isOrganizer && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Card className="lg:col-span-2">
