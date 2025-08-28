@@ -27,17 +27,20 @@ export const useUserStore = create<UserState>()(
       initializeAuth: () => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
+              // Only fetch profile if it's a new user logging in
               if (!get().user || get().user?.email !== firebaseUser.email) {
                   console.log("Auth state changed: User is signed in. Fetching profile...");
                   await get().signInUser(firebaseUser.email!, firebaseUser.displayName || undefined);
+              } else {
+                  // User is already in state, just ensure auth is ready
+                  if (!get().isAuthReady) {
+                    set({ isAuthReady: true });
+                  }
               }
             } else {
               console.log("Auth state changed: User is signed out.");
+              // When signed out, we are "ready" and there is no user.
               set({ user: null, isAuthReady: true });
-            }
-            // This now signifies that the onAuthStateChanged listener has fired at least once.
-            if (!get().isAuthReady) {
-                 set({ isAuthReady: true });
             }
         });
         return unsubscribe;
@@ -73,7 +76,7 @@ export const useUserStore = create<UserState>()(
             userProfile.currentRole = 'organizer';
             await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
-
+        // This is the single source of truth for setting the user and readiness
         set({ user: userProfile, isAuthReady: true });
       },
       setRole: async (role: UserRole) => {
