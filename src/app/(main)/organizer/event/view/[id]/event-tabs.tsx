@@ -20,9 +20,11 @@ import { cn } from '@/lib/utils';
 
 type EventTabsProps = {
     event: Event;
+    activeTab: string;
+    setActiveTab: (tab: string) => void;
 }
 
-export function EventTabs({ event }: EventTabsProps) {
+export function EventTabs({ event, activeTab, setActiveTab }: EventTabsProps) {
 
   const getYouTubeEmbedUrl = (url: string): string | null => {
     if (!url) return null;
@@ -101,7 +103,7 @@ export function EventTabs({ event }: EventTabsProps) {
   };
 
   return (
-    <Tabs defaultValue="results" className="w-full">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className={cn(
             "grid w-full md:w-auto md:inline-flex",
             hasLivestream ? "grid-cols-5" : "grid-cols-4"

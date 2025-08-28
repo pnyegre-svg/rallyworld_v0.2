@@ -78,9 +78,10 @@ type EventHeaderProps = {
   event: Event;
   organizerName?: string;
   setEvent: React.Dispatch<React.SetStateAction<Event | null>>;
+  setActiveTab: (tab: string) => void;
 };
 
-export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps) {
+export function EventHeader({ event, organizerName, setEvent, setActiveTab }: EventHeaderProps) {
   const { toast } = useToast();
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
@@ -254,10 +255,8 @@ export function EventHeader({ event, organizerName, setEvent }: EventHeaderProps
 
         <div className="absolute top-6 right-6 flex items-center gap-2">
              {event.livestreamLink && (
-                 <Button asChild variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
-                    <a href={event.livestreamLink} target="_blank" rel="noopener noreferrer">
-                        <Youtube className="mr-2" /> Watch Live
-                    </a>
+                 <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50" onClick={() => setActiveTab('livestream')}>
+                    <Youtube className="mr-2" /> Watch Live
                 </Button>
             )}
              <DropdownMenu>

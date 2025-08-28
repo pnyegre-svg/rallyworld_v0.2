@@ -21,6 +21,7 @@ export default function ViewEventPage() {
   const [event, setEvent] = React.useState<Event | null>(null);
   const [organizer, setOrganizer] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState('results');
   const { user } = useUserStore();
   const { toast } = useToast();
   const router = useRouter();
@@ -33,6 +34,9 @@ export default function ViewEventPage() {
         const eventData = await getEvent(db, eventId);
          if (eventData) {
             setEvent(eventData);
+            if (eventData.livestreamLink) {
+                setActiveTab('livestream');
+            }
 
             // Fetch organizer details
             const organizerData = await getUser(db, eventData.organizerId);
@@ -72,8 +76,8 @@ export default function ViewEventPage() {
 
   return (
     <div className="w-full mx-auto space-y-8">
-        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} setEvent={setEvent} />
-        <EventTabs event={event} />
+        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} setEvent={setEvent} setActiveTab={setActiveTab} />
+        <EventTabs event={event} activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }
