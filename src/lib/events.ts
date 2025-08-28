@@ -108,12 +108,14 @@ export const getEvents = async (db: Firestore, organizerId?: string): Promise<Ev
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => doc.data() as Event);
     } catch (error: any) {
+      console.error("Error getting events: ", error);
       if (error.code === 'failed-precondition') {
         console.warn("Firestore index not found. Please create it in the Firebase console. The query will return an empty list until the index is built.");
-        return [];
+        // We throw the error here so the calling code knows about it.
+        throw new Error("A required Firestore index is missing. Please check the Firebase console.");
       }
-      console.error("Error getting events: ", error);
-      return [];
+      // Re-throw other errors
+      throw error;
     }
 };
 
