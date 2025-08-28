@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import Loading from '@/app/(main)/loading';
-import { initializeFirebaseAppCheck } from '@/lib/app-check';
+import { initAppCheck } from '@/lib/app-check';
 
 // This is a one-time initialization component.
 let firebaseInitialized = false;
@@ -18,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             console.log('Initializing Firebase Auth and App Check...');
             
             // Initialize App Check
-            initializeFirebaseAppCheck();
+            initAppCheck();
 
             // Initialize Auth State Listener
             const unsubscribe = initializeAuth();
