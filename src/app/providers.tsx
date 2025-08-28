@@ -17,10 +17,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         if (!firebaseInitialized) {
             console.log('Initializing Firebase and App Check...');
-            // Set debug token to true in development to generate a debug token in the console
+            // In development, use the debug token from the .env.local file
             // This will be ignored in production.
             if (process.env.NODE_ENV === 'development') {
-                (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+                (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NEXT_PUBLIC_FB_APPCHECK_DEBUG_TOKEN;
             }
 
             // Initialize App Check
