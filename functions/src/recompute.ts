@@ -25,10 +25,17 @@ const { start, end } = await getTodayRangeForUser(uid);
 
 const evSnap = await db.collection('events')
   .where('organizerId', '==', uid)
-  .where('dates.from', '>=', start)
   .get();
 
-const events = evSnap.docs;
+// Filter in code so no composite index is required
+const events = evSnap.docs.filter((d) => {
+  const dates = d.get('dates') || {};
+  const toVal = dates.to ?? d.get('endDate'); // support either schema
+  const toDate =
+    toVal?.toDate ? toVal.toDate() :
+    toVal ? new Date(toVal) : null;
+  return !!toDate && toDate >= start;
+});
 
 
 const todayStages: Array<any> = [];
