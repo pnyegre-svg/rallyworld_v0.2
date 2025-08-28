@@ -74,5 +74,9 @@
     "tsx": "^4.16.2",
     "typescript": "^5",
     "vitest": "^2.0.2"
+  },
+  "overrides": {
+    "@firebase/app": "^0.10.6",
+    "@firebase/component": "^0.7.0"
   }
 }
