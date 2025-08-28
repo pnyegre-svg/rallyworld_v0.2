@@ -1,7 +1,57 @@
-import * as functions from 'firebase-functions';
-import { db, FieldValue } from './admin';
-import { recomputeSummaryFor } from './recompute';
-import { assertAuthed, assertEventOwner } from './authz';
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.pinAnnouncement = exports.publishAnnouncement = exports.updateAnnouncement = exports.createAnnouncement = exports.markEntryPaid = exports.approveEntry = void 0;
+const functions = __importStar(require("firebase-functions"));
+const admin_1 = require("./admin");
+const recompute_1 = require("./recompute");
+// if you have your own authz helpers, keep using them;
+// for now, minimal assert:
+function assertAuthed(ctx) {
+    if (!ctx.auth?.uid)
+        throw new functions.https.HttpsError('unauthenticated', 'Sign in first');
+    return ctx.auth.uid;
+}
+async function assertEventOwner(eventId, uid) {
+    const snap = await admin_1.db.doc(`events/${eventId}`).get();
+    if (!snap.exists)
+        throw new functions.https.HttpsError('not-found', 'Event not found');
+    if (snap.get('organizerId') !== uid)
+        throw new functions.https.HttpsError('permission-denied', 'Not your event');
+}
+const region = 'europe-central2'; // pick your region; matches your Storage ext region
 const clean = (o) => Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null));
 const asString = (v, def = '') => (typeof v === 'string' ? v : def);
 const asBool = (v) => v === true;
@@ -9,7 +59,6 @@ const parseWhen = (v) => {
     if (!v)
         return null;
     try {
-        // support string from <input type="datetime-local"> or Date
         const d = v instanceof Date ? v : new Date(String(v));
         return isNaN(d.getTime()) ? null : d;
     }
@@ -17,140 +66,105 @@ const parseWhen = (v) => {
         return null;
     }
 };
-export const approveEntry = functions.https.onCall(async (data, context) => {
+// --- Entries (samples kept minimal) ---
+exports.approveEntry = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, entryId } = data;
-    if (!eventId || !entryId)
-        throw new functions.https.HttpsError('invalid-argument', 'eventId and entryId required');
-    await assertEventOwner(eventId, uid);
-    await db.doc(`events/${eventId}/entries/${entryId}`).update({ status: 'approved' });
-    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action: 'approveEntry', by: uid, eventId, entryId });
-    await recomputeSummaryFor(uid);
+    const { eventId, entryId } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await admin_1.db.doc(`events/${eventId}/entries/${entryId}`).update({ status: 'approved' });
+    await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });
-export const markEntryPaid = functions.https.onCall(async (data, context) => {
+exports.markEntryPaid = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, entryId } = data;
-    if (!eventId || !entryId)
-        throw new functions.https.HttpsError('invalid-argument', 'eventId and entryId required');
-    await assertEventOwner(eventId, uid);
-    await db.doc(`events/${eventId}/entries/${entryId}`).update({ paymentStatus: 'paid' });
-    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action: 'markEntryPaid', by: uid, eventId, entryId });
-    await recomputeSummaryFor(uid);
+    const { eventId, entryId } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await admin_1.db.doc(`events/${eventId}/entries/${entryId}`).update({ paymentStatus: 'paid' });
+    await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });
 // --- Announcements ---
-export const createAnnouncement = functions.https.onCall(async (data, context) => {
+exports.createAnnouncement = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
     try {
         const eventId = asString(data?.eventId).trim();
         const title = asString(data?.title).trim();
-        const body = asString(data?.body, ''); // 👈 never undefined
+        const body = asString(data?.body, '');
         const audience = ['competitors', 'officials', 'public'].includes(data?.audience)
             ? data.audience
             : 'competitors';
         const pinned = asBool(data?.pinned);
         const when = parseWhen(data?.publishAt);
-        if (!eventId || !title) {
+        if (!eventId || !title)
             throw new functions.https.HttpsError('invalid-argument', 'eventId and title required');
-        }
         await assertEventOwner(eventId, uid);
         let status = 'draft';
-        const now = Date.now();
         const base = {
-            title,
-            body, // 👈 always a string
-            audience,
-            pinned,
-            createdBy: uid,
-            createdAt: FieldValue.serverTimestamp(),
+            title, body, audience, pinned,
+            createdBy: uid, createdAt: admin_1.FieldValue.serverTimestamp(),
         };
         if (when) {
             base.publishAt = when;
-            status = when.getTime() <= now ? 'published' : 'scheduled';
+            status = when.getTime() <= Date.now() ? 'published' : 'scheduled';
             base.status = status;
             if (status === 'published')
-                base.publishedAt = FieldValue.serverTimestamp();
+                base.publishedAt = admin_1.FieldValue.serverTimestamp();
         }
         if (!base.status)
             base.status = status;
-        const ref = await db.collection('events').doc(eventId)
+        const ref = await admin_1.db.collection('events').doc(eventId)
             .collection('announcements').add(clean(base));
         await ref.collection('revisions').add(clean({
-            title, body, audience, pinned,
-            updatedAt: FieldValue.serverTimestamp(),
-            updatedBy: uid,
+            title, body, audience, pinned, updatedAt: admin_1.FieldValue.serverTimestamp(), updatedBy: uid
         }));
-        await db.collection('audit_logs').add(clean({
-            at: FieldValue.serverTimestamp(),
-            action: 'createAnnouncement',
-            by: uid, eventId, annId: ref.id,
+        await admin_1.db.collection('audit_logs').add(clean({
+            at: admin_1.FieldValue.serverTimestamp(), action: 'createAnnouncement', by: uid, eventId, annId: ref.id
         }));
+        await (0, recompute_1.recomputeSummaryFor)(uid);
         return { ok: true, annId: ref.id, status: base.status };
     }
     catch (err) {
-        functions.logger.error('createAnnouncement failed', {
-            uid, data,
-            code: err?.code, message: err?.message, stack: err?.stack,
-        });
+        functions.logger.error('createAnnouncement failed', { uid, data, code: err?.code, message: err?.message, stack: err?.stack });
         if (err instanceof functions.https.HttpsError)
             throw err;
         throw new functions.https.HttpsError('internal', err?.message || 'Create failed');
     }
 });
-export const updateAnnouncement = functions.https.onCall(async (data, context) => {
+exports.updateAnnouncement = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, annId, title, body, audience, pinned } = data;
-    if (!eventId || !annId)
-        throw new functions.https.HttpsError('invalid-argument', 'eventId and annId required');
-    await assertEventOwner(eventId, uid);
-    const ref = db.doc(`events/${eventId}/announcements/${annId}`);
-    const patch = { updatedAt: FieldValue.serverTimestamp() };
-    const revision = { updatedAt: FieldValue.serverTimestamp(), updatedBy: uid };
-    if (title !== undefined) {
-        patch.title = title;
-        revision.title = title;
-    }
-    if (body !== undefined) {
-        patch.body = body;
-        revision.body = body;
-    }
-    if (audience !== undefined) {
-        patch.audience = audience;
-        revision.audience = audience;
-    }
-    if (pinned !== undefined) {
-        patch.pinned = pinned;
-        revision.pinned = pinned;
-    }
-    await ref.update(patch);
-    await ref.collection('revisions').add(revision);
-    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action: 'updateAnnouncement', by: uid, eventId, annId });
+    const { eventId, annId, title, body, audience, pinned } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    const patch = clean({
+        title: asString(title, undefined),
+        body: asString(body, undefined),
+        audience,
+        pinned: pinned === true ? true : (pinned === false ? false : undefined),
+        updatedAt: admin_1.FieldValue.serverTimestamp()
+    });
+    await admin_1.db.doc(`events/${eventId}/announcements/${annId}`).update(patch);
+    await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });
-export const publishAnnouncement = functions.https.onCall(async (data, context) => {
+exports.publishAnnouncement = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, annId } = data;
-    if (!eventId || !annId)
-        throw new functions.https.HttpsError('invalid-argument', 'eventId and annId required');
-    await assertEventOwner(eventId, uid);
-    const ref = db.doc(`events/${eventId}/announcements/${annId}`);
-    await ref.update({ status: 'published', publishedAt: FieldValue.serverTimestamp(), publishAt: FieldValue.delete() });
-    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action: 'publishAnnouncement', by: uid, eventId, annId });
+    const { eventId, annId } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await admin_1.db.doc(`events/${eventId}/announcements/${annId}`).update({
+        status: 'published',
+        publishedAt: admin_1.FieldValue.serverTimestamp(),
+        publishAt: admin_1.FieldValue.delete()
+    });
+    await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });
-export const pinAnnouncement = functions.https.onCall(async (data, context) => {
+exports.pinAnnouncement = functions.region(region).https.onCall(async (data, context) => {
     const uid = assertAuthed(context);
-    const { eventId, annId, pinned } = data;
-    if (!eventId || !annId)
-        throw new functions.https.HttpsError('invalid-argument', 'eventId and annId required');
-    await assertEventOwner(eventId, uid);
-    await db.doc(`events/${eventId}/announcements/${annId}`).update({ pinned: !!pinned, updatedAt: FieldValue.serverTimestamp() });
-    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action: 'pinAnnouncement', by: uid, eventId, annId, pinned: !!pinned });
-    return { ok: true };
-});
-export const recomputeDashboard = functions.https.onCall(async (_data, ctx) => {
-    const uid = assertAuthed(ctx);
-    await recomputeSummaryFor(uid);
+    const { eventId, annId, pinned } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await admin_1.db.doc(`events/${eventId}/announcements/${annId}`).update({
+        pinned: pinned === true,
+        updatedAt: admin_1.FieldValue.serverTimestamp()
+    });
+    await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });

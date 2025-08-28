@@ -1,41 +1,51 @@
-import * as functions from 'firebase-functions';
-import { db, FieldValue } from './admin';
-import { recomputeSummaryFor } from './recompute';
-async function organizerForEvent(eventId) {
-    const ev = await db.doc(`events/${eventId}`).get();
-    return ev.exists ? ev.get('organizerId') : null;
-}
-export const onEntryWrite = async (_, ctx) => {
-    const uid = await organizerForEvent(ctx.params.eventId);
-    if (uid)
-        await recomputeSummaryFor(uid);
-};
-export const onStageWrite = onEntryWrite; // same recompute by event
-export const onAnnouncementWrite = onEntryWrite; // same recompute by event
-export const onEventWrite = async (change, ctx) => {
-    const beforeOwner = change.before.exists ? change.before.get('organizerId') : null;
-    const afterOwner = change.after.exists ? change.after.get('organizerId') : null;
-    const owners = new Set([beforeOwner, afterOwner].filter(Boolean));
-    for (const uid of owners)
-        await recomputeSummaryFor(uid);
-};
-export async function refreshAllForToday() {
-    // Simple & safe: recompute for all organizers in `users` with role='organizer'
-    const users = await db.collection('users').where('role', '==', 'organizer').get();
-    for (const u of users.docs) {
-        await recomputeSummaryFor(u.id);
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
     }
-}
-// Process scheduled announcements every 5 minutes
-export const processScheduledAnnouncements = functions.pubsub
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.processScheduledAnnouncements = void 0;
+const functions = __importStar(require("firebase-functions"));
+const admin_1 = require("./admin");
+const region = 'europe-central2';
+exports.processScheduledAnnouncements = functions.region(region).pubsub
     .schedule('every 5 minutes')
     .onRun(async () => {
     const now = new Date();
-    const q = await db.collectionGroup('announcements')
+    const q = await admin_1.db.collectionGroup('announcements')
         .where('status', '==', 'scheduled')
         .where('publishAt', '<=', now)
         .get();
     for (const d of q.docs) {
-        await d.ref.update({ status: 'published', publishedAt: FieldValue.serverTimestamp(), publishAt: FieldValue.delete() });
+        await d.ref.update({ status: 'published', publishedAt: admin_1.FieldValue.serverTimestamp(), publishAt: admin_1.FieldValue.delete() });
     }
 });

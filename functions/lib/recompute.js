@@ -1,37 +1,34 @@
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc.js';
-import tz from 'dayjs/plugin/timezone.js';
-import { db, FieldValue } from './admin';
-dayjs.extend(utc);
-dayjs.extend(tz);
-export async function getTodayRangeForUser(uid) {
-    const u = await db.doc(`users/${uid}`).get();
-    const timezone = (u.exists && u.get('timezone')) || 'UTC';
-    const start = dayjs().tz(timezone).startOf('day').toDate();
-    const end = dayjs().tz(timezone).endOf('day').toDate();
-    return { timezone, start, end };
-}
-export async function recomputeSummaryFor(uid) {
-    const { start, end } = await getTodayRangeForUser(uid);
-    // 🔧 HOTFIX: fetch organizer's events, then filter by date in memory
-    const evSnap = await db.collection('events')
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.recomputeSummaryFor = recomputeSummaryFor;
+const dayjs_1 = __importDefault(require("dayjs"));
+const utc_1 = __importDefault(require("dayjs/plugin/utc")); // ← no .js suffix
+const timezone_1 = __importDefault(require("dayjs/plugin/timezone")); // ← no .js suffix
+dayjs_1.default.extend(utc_1.default);
+dayjs_1.default.extend(timezone_1.default);
+const admin_1 = require("./admin");
+async function recomputeSummaryFor(uid) {
+    const today = (0, dayjs_1.default)().tz('UTC'); // replace with your per-user tz function if you have it
+    const start = today.startOf('day').toDate();
+    const end = today.endOf('day').toDate();
+    // 🔧 HOTFIX: no composite index required
+    const evSnap = await admin_1.db.collection('events')
         .where('organizerId', '==', uid)
         .get();
-    // support either schema: dates.{from,to} or startDate/endDate
     const events = evSnap.docs.filter((d) => {
         const dates = d.get('dates') || {};
         const toVal = dates.to ?? d.get('endDate');
-        const toDate = toVal?.toDate ? toVal.toDate() :
-            toVal ? new Date(toVal) : null;
-        return !!toDate && toDate >= start; // overlap today
+        const toDate = toVal?.toDate ? toVal.toDate() : toVal ? new Date(toVal) : null;
+        return !!toDate && toDate >= start;
     });
     const todayStages = [];
-    let pendingEntries = 0;
-    let unpaidEntries = 0;
+    let pendingEntries = 0, unpaidEntries = 0;
     const latestAnnouncements = [];
     for (const ev of events) {
         const e = ev.data();
-        // stages today
         const stages = await ev.ref.collection('stages')
             .where('startAt', '>=', start)
             .where('startAt', '<', end)
@@ -46,22 +43,19 @@ export async function recomputeSummaryFor(uid) {
             distanceKm: s.get('distanceKm'),
             status: s.get('status') ?? 'scheduled'
         }));
-        // counters
         pendingEntries += (await ev.ref.collection('entries').where('status', '==', 'new').get()).size;
         unpaidEntries += (await ev.ref.collection('entries').where('paymentStatus', '==', 'unpaid').get()).size;
-        // latest announcement
-        const ann = await ev.ref.collection('announcements')
-            .orderBy('publishedAt', 'desc').limit(1).get();
+        const ann = await ev.ref.collection('announcements').orderBy('publishedAt', 'desc').limit(1).get();
         ann.forEach(a => latestAnnouncements.push({
             eventId: ev.id, annId: a.id, title: a.get('title'), publishedAt: a.get('publishedAt')
         }));
     }
     todayStages.sort((a, b) => (a.startAt?.toMillis?.() ?? new Date(a.startAt).getTime()) -
         (b.startAt?.toMillis?.() ?? new Date(b.startAt).getTime()));
-    await db.doc(`dashboard_summary/${uid}`).set({
+    await admin_1.db.doc(`dashboard_summary/${uid}`).set({
         todayStages,
         counters: { pendingEntries, unpaidEntries },
         latestAnnouncements: latestAnnouncements.slice(0, 3),
-        updatedAt: FieldValue.serverTimestamp()
+        updatedAt: admin_1.FieldValue.serverTimestamp()
     }, { merge: true });
 }
