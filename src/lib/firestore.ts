@@ -1,7 +1,7 @@
 
 'use client';
 
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, type Firestore } from 'firebase/firestore';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 import { auth, db } from './firebase.client';
 

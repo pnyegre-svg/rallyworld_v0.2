@@ -10,14 +10,14 @@ import {
 } from '@/components/ui/card';
 import { useUserStore } from '@/hooks/use-user';
 import { Eye, MapPin, PenSquare, PlusCircle } from 'lucide-react';
-import { getEvents, Event } from '@/lib/events';
+import { getEvents, type Event } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getResizedImageUrl } from '@/lib/utils';
 import { getUser } from '@/lib/users';
-import { User } from '@/lib/data';
+import type { User } from '@/lib/data';
 import { db } from '@/lib/firebase.client';
 
 export default function MyEventsPage() {

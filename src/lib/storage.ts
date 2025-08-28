@@ -3,7 +3,7 @@
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { auth, storage } from './firebase.client';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { type User, onAuthStateChanged } from 'firebase/auth';
 
 // Helper that waits for auth to be ready
 export async function requireUser(): Promise<User> {

@@ -6,12 +6,12 @@ import { useParams } from 'next/navigation';
 import { EventHeader } from './event-header';
 import { EventTabs } from './event-tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getEvent, Event } from '@/lib/events';
+import { getEvent, type Event } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getUser } from '@/lib/users';
-import { User } from '@/lib/data';
+import type { User } from '@/lib/data';
 import { db } from '@/lib/firebase.client';
 
 

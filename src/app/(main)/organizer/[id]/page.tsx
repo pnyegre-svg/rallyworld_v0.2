@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Facebook, Instagram, Youtube, Globe, Mail, Phone, MapPin, Contact, PenSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
-import { User, Organizer } from '@/lib/data';
+import type { User, Organizer } from '@/lib/data';
 import { useParams, useRouter } from 'next/navigation';
 import { getUser } from '@/lib/users';
 import { Skeleton } from '@/components/ui/skeleton';

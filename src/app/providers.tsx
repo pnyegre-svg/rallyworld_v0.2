@@ -29,6 +29,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           }).catch((error) => {
               if (error.code == 'failed-precondition') {
                   console.warn('Firestore persistence failed to initialize. Multiple tabs open?');
+              } else if (error.code === 'unimplemented') {
+                  console.log('Firestore persistence is not available in this environment.');
               } else {
                   console.error('Error initializing Firestore persistence:', error);
               }
