@@ -1,15 +1,15 @@
 
 'use client';
 
-import { doc, onSnapshot, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { httpsCallable, getFunctions } from 'firebase/functions';
-import { db } from './firestore.client';
-import { app } from './firebase';
+import { auth, db } from './firebase.client';
 
-const fns = getFunctions(app);
+
+const fns = getFunctions(auth.app);
 
 export function watchSummary(uid:string, cb:(d:any)=>void){
-    return onSnapshot(doc(db(),'dashboard_summary',uid), snap => cb(snap.data()));
+    return onSnapshot(doc(db,'dashboard_summary',uid), snap => cb(snap.data()));
 }
 
 

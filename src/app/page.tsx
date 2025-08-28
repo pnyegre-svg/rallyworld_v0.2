@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase.client';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { UserNav } from '@/components/user-nav';
 import { useRouter } from 'next/navigation';

@@ -1,8 +1,7 @@
 
 'use client';
-import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc, Firestore } from 'firebase/firestore';
 import type { User, Organizer, UserRole } from './data';
-import { db } from './firestore.client';
 
 // Firestore converter for the User object
 const userConverter = {
@@ -37,8 +36,8 @@ const userConverter = {
 
 
 // Get a single user by ID (which is the Firebase Auth UID)
-export const getUser = async (userId: string): Promise<User | null> => {
-  const usersCollection = collection(db(), 'users').withConverter(userConverter);
+export const getUser = async (db: Firestore, userId: string): Promise<User | null> => {
+  const usersCollection = collection(db, 'users').withConverter(userConverter);
   try {
     const docRef = doc(usersCollection, userId);
     const docSnap = await getDoc(docRef);
@@ -54,9 +53,9 @@ export const getUser = async (userId: string): Promise<User | null> => {
 
 
 // Create a new user
-export const createUser = async (userId: string, userData: Omit<User, 'id'>): Promise<string> => {
+export const createUser = async (db: Firestore, userId: string, userData: Omit<User, 'id'>): Promise<string> => {
     try {
-        const userDocRef = doc(db(), 'users', userId);
+        const userDocRef = doc(db, 'users', userId);
         await setDoc(userDocRef, userData);
         return userId;
     } catch (error) {
@@ -66,9 +65,9 @@ export const createUser = async (userId: string, userData: Omit<User, 'id'>): Pr
 };
 
 // Update an existing user and return the updated user object
-export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
+export const updateUser = async (db: Firestore, userId: string, userData: Partial<User>): Promise<User | null> => {
     try {
-        const userRef = doc(db(), 'users', userId);
+        const userRef = doc(db, 'users', userId);
         
         await updateDoc(userRef, userConverter.toFirestore(userData));
         

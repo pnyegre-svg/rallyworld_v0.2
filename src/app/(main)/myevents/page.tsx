@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { getResizedImageUrl } from '@/lib/utils';
 import { getUser } from '@/lib/users';
 import { User } from '@/lib/data';
+import { db } from '@/lib/firebase.client';
 
 export default function MyEventsPage() {
   const { user } = useUserStore();
@@ -38,7 +39,7 @@ export default function MyEventsPage() {
         const organizerIds = [...new Set(allEvents.map(e => e.organizerId))];
         const organizerData: Record<string, User> = {};
         for (const id of organizerIds) {
-            const orgUser = await getUser(id);
+            const orgUser = await getUser(db, id);
             if (orgUser) {
                 organizerData[id] = orgUser;
             }

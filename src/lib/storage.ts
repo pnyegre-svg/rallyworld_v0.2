@@ -2,8 +2,22 @@
 'use client';
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { requireUser } from './firebase'; // Import the initialized storage instance and requireUser
-import { storage as getStorageInstance } from './storage.client';
+import { auth, storage } from './firebase.client';
+import { User, onAuthStateChanged } from 'firebase/auth';
+
+// Helper that waits for auth to be ready
+export async function requireUser(): Promise<User> {
+  const existing = auth.currentUser;
+  if (existing) return existing;
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      unsub();
+      if (u) resolve(u);
+      else reject(new Error('Not signed in'));
+    });
+  });
+}
+
 
 /**
  * Uploads a file to a specified path in Firebase Storage.
@@ -19,7 +33,7 @@ export const uploadFile = async (file: File, type: 'organizer' | 'user'): Promis
   const folder = type === 'organizer' ? `public/organizers/${user.uid}/club-profile-picture` : `public/users/${user.uid}/profile-picture`;
   const path = `${folder}/${Date.now()}-${file.name}`;
   
-  const storageRef = ref(getStorageInstance(), path);
+  const storageRef = ref(storage, path);
 
   try {
     const snapshot = await uploadBytes(storageRef, file);

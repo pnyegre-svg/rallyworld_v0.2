@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { getUser } from '@/lib/users';
 import { User } from '@/lib/data';
+import { db } from '@/lib/firebase.client';
 
 
 export default function ViewEventPage() {
@@ -34,7 +35,7 @@ export default function ViewEventPage() {
             setEvent(eventData);
 
             // Fetch organizer details
-            const organizerData = await getUser(eventData.organizerId);
+            const organizerData = await getUser(db, eventData.organizerId);
             setOrganizer(organizerData);
 
         } else {

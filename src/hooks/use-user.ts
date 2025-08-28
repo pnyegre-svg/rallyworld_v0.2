@@ -5,7 +5,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase.client';
 import { onAuthStateChanged } from 'firebase/auth';
 
 type UserState = {
@@ -49,7 +49,7 @@ export const useUserStore = create<UserState>()(
         const firebaseUser = auth.currentUser;
         if (!firebaseUser) throw new Error("User not authenticated in Firebase");
 
-        let userProfile = await getUser(firebaseUser.uid);
+        let userProfile = await getUser(db, firebaseUser.uid);
 
         if (!userProfile) {
             console.log(`No profile found for ${email}. Creating new user...`);
@@ -61,7 +61,7 @@ export const useUserStore = create<UserState>()(
                 roles: ['fan'],
                 currentRole: 'fan',
             };
-            await createUser(firebaseUser.uid, newUser);
+            await createUser(db, firebaseUser.uid, newUser);
             userProfile = { ...newUser, id: firebaseUser.uid };
             console.log(`New user created for ${email}.`);
         } else {
@@ -71,7 +71,7 @@ export const useUserStore = create<UserState>()(
         if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {
             userProfile.roles.push('organizer');
             userProfile.currentRole = 'organizer';
-            await updateUser(userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
+            await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
 
         set({ user: userProfile });
@@ -87,14 +87,14 @@ export const useUserStore = create<UserState>()(
         
         set({ user: updatedUser });
         
-        await updateUser(currentUser.id, { roles: newRoles, currentRole: role });
+        await updateUser(db, currentUser.id, { roles: newRoles, currentRole: role });
       },
       switchRole: async (role: UserRole) => {
         const currentUser = get().user;
         if (!currentUser) return;
         
         set({ user: { ...currentUser, currentRole: role } });
-        await updateUser(currentUser.id, { currentRole: role });
+        await updateUser(db, currentUser.id, { currentRole: role });
       },
       updateUserProfile: async (data) => {
         const currentUser = get().user;
@@ -106,7 +106,7 @@ export const useUserStore = create<UserState>()(
             updatedData.avatar = data.profilePicture;
         }
         
-        const updatedUser = await updateUser(currentUser.id, updatedData);
+        const updatedUser = await updateUser(db, currentUser.id, updatedData);
         if (updatedUser) {
           set({ user: updatedUser });
         }

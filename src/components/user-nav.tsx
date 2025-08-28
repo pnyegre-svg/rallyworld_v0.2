@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useUserStore } from '@/hooks/use-user';
 import Link from 'next/link';
-import { auth } from '@/lib/firebase';
+import { auth } from '@/lib/firebase.client';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Check, UserSquare, User as UserIcon, Building } from 'lucide-react';
