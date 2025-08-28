@@ -1,13 +1,11 @@
 
-import './admin';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import tz from 'dayjs/plugin/timezone.js';
-import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore';
+import { db, FieldValue } from './admin';
 
 
 dayjs.extend(utc); dayjs.extend(tz);
-const db = getFirestore();
 
 
 export async function getTodayRangeForUser(uid: string) {

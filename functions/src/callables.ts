@@ -1,11 +1,7 @@
 
-import './admin';
 import * as functions from 'firebase-functions';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
-
-
-const db = getFirestore();
 
 
 function assertAuthed(context: functions.https.CallableContext) {

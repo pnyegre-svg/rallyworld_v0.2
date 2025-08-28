@@ -1,8 +1,6 @@
 
 import * as functions from 'firebase-functions';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-
-const db = getFirestore();
+import { db, FieldValue } from './admin';
 
 /**
  * Checks if the user is authenticated and has the 'organizer' or 'admin' role.

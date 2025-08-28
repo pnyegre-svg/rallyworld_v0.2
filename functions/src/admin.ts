@@ -1,3 +1,7 @@
-import { initializeApp, applicationDefault } from 'firebase-admin/app';
-// One-time global Admin initialization (works in emulators & prod)
-initializeApp({ credential: applicationDefault() });
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+
+if (!getApps().length) initializeApp();
+
+export const db = getFirestore();
+export { FieldValue };

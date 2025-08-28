@@ -1,10 +1,6 @@
-import './admin';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as functions from 'firebase-functions';
+import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
-
-
-const db = getFirestore();
 
 
 async function organizerForEvent(eventId: string): Promise<string | null> {
