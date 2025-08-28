@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { EventHeader } from './event-header';
-import { EventTabs } from './event-tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getEvent, type Event } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
@@ -80,9 +79,15 @@ export default function ViewEventPage() {
   }
 
   return (
-    <div className="w-full mx-auto space-y-8">
-        <EventHeader event={event} organizerName={organizer?.organizerProfile?.name} setEvent={setEvent} setActiveTab={setActiveTab} />
-        <EventTabs event={event} announcements={announcements} activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="w-full mx-auto">
+        <EventHeader 
+            event={event} 
+            organizerName={organizer?.organizerProfile?.name} 
+            setEvent={setEvent} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            announcements={announcements} 
+        />
     </div>
   );
 }

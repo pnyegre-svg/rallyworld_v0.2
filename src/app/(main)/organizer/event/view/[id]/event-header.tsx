@@ -20,6 +20,8 @@ import Link from 'next/link';
 import { getResizedImageUrl } from '@/lib/utils';
 import { uploadFile } from '@/lib/storage';
 import { db } from '@/lib/firebase.client';
+import { EventTabs } from './event-tabs';
+import { Announcement } from '@/lib/announcements.client';
 
 const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -78,10 +80,12 @@ type EventHeaderProps = {
   event: Event;
   organizerName?: string;
   setEvent: React.Dispatch<React.SetStateAction<Event | null>>;
+  activeTab: string;
   setActiveTab: (tab: string) => void;
+  announcements: Announcement[];
 };
 
-export function EventHeader({ event, organizerName, setEvent, setActiveTab }: EventHeaderProps) {
+export function EventHeader({ event, organizerName, setEvent, activeTab, setActiveTab, announcements }: EventHeaderProps) {
   const { push: toast } = useToast();
   const { user } = useUserStore();
   const [eventUrl, setEventUrl] = React.useState('');
@@ -172,143 +176,146 @@ export function EventHeader({ event, organizerName, setEvent, setActiveTab }: Ev
 
 
   return (
-    <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
-        <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={handleCoverImageChange}
-            accept="image/*"
-            disabled={isUploading}
-        />
-        <input 
-            type="file" 
-            ref={logoFileInputRef} 
-            className="hidden" 
-            onChange={handleLogoImageChange}
-            accept="image/*"
-            disabled={isUploadingLogo}
-        />
-        <Image
-            src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWlseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
-            alt={event.title}
-            data-ai-hint="rally car racing"
-            fill
-            className="object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        
-        <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
-            <div className="flex flex-row items-end justify-between gap-6">
-                <div className="flex flex-col gap-4 items-start flex-1">
-                    {event.logoImage && (
-                        <div className="relative w-48 h-24 flex-shrink-0 group">
-                            <Image 
-                                src={getResizedImageUrl(event.logoImage, '512x256')!}
-                                alt={`${event.title} logo`}
-                                fill
-                                className="object-contain drop-shadow-lg"
-                            />
-                            {isOwner && (
-                                <Button 
-                                    variant="outline"
-                                    size="icon"
-                                    className="absolute top-0 right-0 h-7 w-7 rounded-full bg-black/50 border-white/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                    onClick={() => logoFileInputRef.current?.click()}
-                                    disabled={isUploadingLogo}
-                                >
-                                    {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
-                                    <span className="sr-only">Change Logo</span>
-                                </Button>
+    <div className="space-y-8">
+        <div className="relative w-full h-[450px] rounded-2xl overflow-hidden text-primary-foreground">
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleCoverImageChange}
+                accept="image/*"
+                disabled={isUploading}
+            />
+            <input 
+                type="file" 
+                ref={logoFileInputRef} 
+                className="hidden" 
+                onChange={handleLogoImageChange}
+                accept="image/*"
+                disabled={isUploadingLogo}
+            />
+            <Image
+                src={getResizedImageUrl(event.coverImage, '1200x630') || "https://images.unsplash.com/photo-1589980763519-ddfa1c640d10?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyYWlseXxlbnwwfHx8fDE3NTYyMzgzNTN8MA&ixlib=rb-4.1.0&q=80&w=1080"}
+                alt={event.title}
+                data-ai-hint="rally car racing"
+                fill
+                className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+            
+            <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
+                <div className="flex flex-row items-end justify-between gap-6">
+                    <div className="flex flex-col gap-4 items-start flex-1">
+                        {event.logoImage && (
+                            <div className="relative w-48 h-24 flex-shrink-0 group">
+                                <Image 
+                                    src={getResizedImageUrl(event.logoImage, '512x256')!}
+                                    alt={`${event.title} logo`}
+                                    fill
+                                    className="object-contain drop-shadow-lg"
+                                />
+                                {isOwner && (
+                                    <Button 
+                                        variant="outline"
+                                        size="icon"
+                                        className="absolute top-0 right-0 h-7 w-7 rounded-full bg-black/50 border-white/30 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => logoFileInputRef.current?.click()}
+                                        disabled={isUploadingLogo}
+                                    >
+                                        {isUploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Edit className="h-4 w-4" />}
+                                        <span className="sr-only">Change Logo</span>
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                        <div className="space-y-1 w-full">
+                            <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md w-full">{event.title}</h1>
+                            <div className="flex flex-col items-start gap-1">
+                            <a 
+                                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <MapPin className="h-5 w-5" />
+                                <span>{event.hqLocation}</span>
+                            </a>
+                            {organizerName && (
+                                <p className="text-sm text-muted-foreground pl-7">
+                                    hosted by <Link href={`/organizer/${event.organizerId}`} className="font-semibold text-foreground/80 hover:underline">{organizerName}</Link>
+                                </p>
                             )}
-                        </div>
-                    )}
-                    <div className="space-y-1 w-full">
-                        <h1 className="text-4xl md:text-6xl font-headline font-bold drop-shadow-md w-full">{event.title}</h1>
-                        <div className="flex flex-col items-start gap-1">
-                           <a 
-                             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.hqLocation)}`}
-                             target="_blank"
-                             rel="noopener noreferrer"
-                             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                           >
-                              <MapPin className="h-5 w-5" />
-                              <span>{event.hqLocation}</span>
-                           </a>
-                           {organizerName && (
-                              <p className="text-sm text-muted-foreground pl-7">
-                                  hosted by <Link href={`/organizer/${event.organizerId}`} className="font-semibold text-foreground/80 hover:underline">{organizerName}</Link>
-                              </p>
-                           )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="flex-shrink-0">
-                    <DateDisplay event={event} />
+                    <div className="flex-shrink-0">
+                        <DateDisplay event={event} />
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div className="absolute top-6 right-6 flex items-center gap-2">
-             {event.livestreamLink && (
-                 <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50" onClick={() => setActiveTab('livestream')}>
-                    <Youtube className="mr-2" /> Watch Live
-                </Button>
-            )}
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
-                        <Share2 className="mr-2" /> Share
+            <div className="absolute top-6 right-6 flex items-center gap-2">
+                {event.livestreamLink && (
+                    <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50" onClick={() => setActiveTab('livestream')}>
+                        <Youtube className="mr-2" /> Watch Live
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                        <a href={createShareLink('facebook')} target="_blank" rel="noopener noreferrer">
-                            <FacebookIcon className="mr-2 h-4 w-4" /> Facebook
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                        <a href={createShareLink('twitter')} target="_blank" rel="noopener noreferrer">
-                            <TwitterIcon className="mr-2 h-4 w-4" /> Twitter / X
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                         <a href={createShareLink('whatsapp')} target="_blank" rel="noopener noreferrer">
-                            <WhatsAppIcon className="mr-2 h-4 w-4" /> WhatsApp
-                        </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={copyToClipboard}>
-                        <Copy className="mr-2 h-4 w-4" /> Copy Link
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-            {isOwner ? (
-                 <DropdownMenu>
+                )}
+                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                            <Edit className="mr-2"/> Edit
+                        <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
+                            <Share2 className="mr-2" /> Share
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                            <Link href={`/organizer/event/edit/${event.id}`}>
-                                <PenSquare className="mr-2 h-4 w-4" />
-                                <span>Edit Event Details</span>
-                            </Link>
+                            <a href={createShareLink('facebook')} target="_blank" rel="noopener noreferrer">
+                                <FacebookIcon className="mr-2 h-4 w-4" /> Facebook
+                            </a>
                         </DropdownMenuItem>
-                         <DropdownMenuItem onSelect={() => fileInputRef.current?.click()} disabled={isUploading}>
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                            <span>{isUploading ? 'Uploading...' : 'Change Cover Photo'}</span>
+                        <DropdownMenuItem asChild>
+                            <a href={createShareLink('twitter')} target="_blank" rel="noopener noreferrer">
+                                <TwitterIcon className="mr-2 h-4 w-4" /> Twitter / X
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <a href={createShareLink('whatsapp')} target="_blank" rel="noopener noreferrer">
+                                <WhatsAppIcon className="mr-2 h-4 w-4" /> WhatsApp
+                            </a>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={copyToClipboard}>
+                            <Copy className="mr-2 h-4 w-4" /> Copy Link
                         </DropdownMenuItem>
                     </DropdownMenuContent>
-                 </DropdownMenu>
-            ) : (
-                <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                    <UserPlus className="mr-2"/> Register
-                </Button>
-            )}
+                </DropdownMenu>
+                {isOwner ? (
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                                <Edit className="mr-2"/> Edit
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                <Link href={`/organizer/event/edit/${event.id}`}>
+                                    <PenSquare className="mr-2 h-4 w-4" />
+                                    <span>Edit Event Details</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => fileInputRef.current?.click()} disabled={isUploading}>
+                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                                <span>{isUploading ? 'Uploading...' : 'Change Cover Photo'}</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                    <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                        <UserPlus className="mr-2"/> Register
+                    </Button>
+                )}
+            </div>
         </div>
+        <EventTabs event={event} announcements={announcements} activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }
