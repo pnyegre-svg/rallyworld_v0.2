@@ -5,7 +5,8 @@ import * as React from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getDashboardSummary, DashboardSummary } from '@/lib/dashboard';
+import { DashboardSummary } from '@/lib/dashboard';
+import { watchSummary } from '@/lib/firestore';
 
 import { QuickActions } from './QuickActions';
 import { TodayStages } from './TodayStages';
@@ -26,21 +27,13 @@ export function OrganizerDashboard() {
     }
 
     setLoading(true);
-    const unsubscribe = getDashboardSummary(user.id, (data) => {
+    const unsubscribe = watchSummary(user.id, (data) => {
         setSummary(data);
         if (loading) setLoading(false);
-    }, (error) => {
-        console.error(error);
-        toast({
-            title: "Error loading dashboard",
-            description: "Could not fetch your dashboard summary. Please try again later.",
-            variant: "destructive",
-        });
-        setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole, toast]);
+  }, [user?.id, user?.currentRole, loading]);
 
 
   if (loading) {
