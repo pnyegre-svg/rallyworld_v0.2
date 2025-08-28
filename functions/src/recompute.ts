@@ -1,3 +1,4 @@
+
 import './admin';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
@@ -24,7 +25,7 @@ const { start, end } = await getTodayRangeForUser(uid);
 
 const evSnap = await db.collection('events')
 .where('organizerId', '==', uid)
-.where('endDate', '>=', start)
+.where('dates.to', '>=', start)
 .get();
 
 
