@@ -1,9 +1,7 @@
 import * as functions from 'firebase-functions';
-import { onEntryWrite, onStageWrite, onAnnouncementWrite, refreshAllForToday } from './recompute';
-import { approveEntry, markEntryPaid } from './callable';
-import * as admin from 'firebase-admin';
+import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday } from './triggers';
+import { approveEntry, markEntryPaid } from './callables';
 
-admin.initializeApp();
 
 export const entryChanged = functions.firestore
 .document('events/{eventId}/entries/{entryId}')
@@ -20,9 +18,20 @@ export const announcementChanged = functions.firestore
 .onWrite(onAnnouncementWrite);
 
 
-export const approveEntryFn = functions.https.onCall(approveEntry);
-export const markEntryPaidFn = functions.https.onCall(markEntryPaid);
+export const eventChanged = functions.firestore
+.document('events/{eventId}')
+.onWrite(onEventWrite);
 
 
-export const scheduledSummaryRefresh = functions.pubsub
-.schedule('every 15 minutes').onRun(refreshAllForToday);
+export { approveEntry, markEntryPaid };
+
+
+export const scheduledRefresh = functions.pubsub
+.schedule('every 15 minutes')
+.onRun(refreshAllForToday);
+
+
+export const midnightRebuild = functions.pubsub
+.schedule('0 3 * * *')
+.timeZone('Etc/UTC')
+.onRun(refreshAllForToday);
