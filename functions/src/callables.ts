@@ -110,3 +110,9 @@ await db.doc(`events/${eventId}/announcements/${annId}`).update({ pinned: !!pinn
 await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'pinAnnouncement', by: uid, eventId, annId, pinned: !!pinned });
 return { ok:true };
 });
+
+export const recomputeDashboard = functions.https.onCall(async (_data, ctx) => {
+  const uid = assertAuthed(ctx);
+  await recomputeSummaryFor(uid);
+  return { ok: true };
+});
