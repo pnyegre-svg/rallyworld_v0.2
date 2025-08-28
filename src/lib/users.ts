@@ -1,5 +1,5 @@
 
-import { db } from './firebase'; // Import the initialized db instance
+import { getDbInstance } from './firebase'; // Import the initialized db instance
 import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc } from 'firebase/firestore';
 import type { User, Organizer, UserRole } from './data';
 
@@ -35,10 +35,10 @@ const userConverter = {
 };
 
 
-const usersCollection = collection(db, 'users').withConverter(userConverter);
-
 // Get a single user by ID (which is the Firebase Auth UID)
 export const getUser = async (userId: string): Promise<User | null> => {
+  const db = getDbInstance();
+  const usersCollection = collection(db, 'users').withConverter(userConverter);
   try {
     const docRef = doc(usersCollection, userId);
     const docSnap = await getDoc(docRef);
@@ -55,6 +55,7 @@ export const getUser = async (userId: string): Promise<User | null> => {
 
 // Create a new user
 export const createUser = async (userId: string, userData: Omit<User, 'id'>): Promise<string> => {
+    const db = getDbInstance();
     try {
         const userDocRef = doc(db, 'users', userId);
         await setDoc(userDocRef, userData);
@@ -67,6 +68,7 @@ export const createUser = async (userId: string, userData: Omit<User, 'id'>): Pr
 
 // Update an existing user and return the updated user object
 export const updateUser = async (userId: string, userData: Partial<User>): Promise<User | null> => {
+    const db = getDbInstance();
     try {
         const userRef = doc(db, 'users', userId);
         

@@ -1,7 +1,7 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
 
@@ -9,9 +9,18 @@ import { firebaseConfig } from './config';
 // Initialize Firebase
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+let dbInstance: Firestore | null = null;
+
+export const getDbInstance = () => {
+    if (!dbInstance) {
+        dbInstance = getFirestore(app);
+    }
+    return dbInstance;
+}
+
 // Initialize and export Firebase services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getDbInstance(); // This will be replaced in other files
 export const storage = getStorage(app);
 export { app };
 

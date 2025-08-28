@@ -2,24 +2,35 @@
 'use client';
 
 import { getFirestore, doc, onSnapshot, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
-import { app } from './firebase';
+import { app, getDbInstance } from './firebase';
 import { httpsCallable, getFunctions } from 'firebase/functions';
 
-const db = getFirestore(app);
 const fns = getFunctions(app);
 
-// call once on app start for offline cache
-try {
-    enableIndexedDbPersistence(db)
-} catch (error) {
-    if (error instanceof Error && error.name === 'failed-precondition') {
-        console.warn('Firestore persistence failed to initialize. Multiple tabs open?');
-    } else {
-        console.error('Error initializing Firestore persistence:', error);
+// A flag to ensure this runs only once
+let persistenceInitialized = false;
+
+if (typeof window !== 'undefined' && !persistenceInitialized) {
+    try {
+        enableIndexedDbPersistence(getDbInstance())
+            .then(() => {
+                persistenceInitialized = true;
+            })
+            .catch((error) => {
+                 if (error.code == 'failed-precondition') {
+                    console.warn('Firestore persistence failed to initialize. Multiple tabs open?');
+                } else {
+                    console.error('Error initializing Firestore persistence:', error);
+                }
+            });
+    } catch (error) {
+        console.error('An error occurred during persistence setup:', error);
     }
 }
 
+
 export function watchSummary(uid:string, cb:(d:any)=>void){
+    const db = getDbInstance();
     return onSnapshot(doc(db,'dashboard_summary',uid), snap => cb(snap.data()));
 }
 

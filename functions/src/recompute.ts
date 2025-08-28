@@ -1,3 +1,4 @@
+
 import * as functions from "firebase-functions";
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as dayjs from 'dayjs';
@@ -90,6 +91,7 @@ export async function recomputeSummaryFor(uid: string) {
  * Triggered when a competitor's entry is written. Recomputes summary for the event organizer.
  */
 export const onEntryWrite = async (change: functions.Change<functions.firestore.DocumentSnapshot>, context: functions.EventContext) => {
+    const db = getFirestore();
     const eventRef = db.doc(`events/${context.params.eventId}`);
     const eventSnap = await eventRef.get();
     const organizerId = eventSnap.get('organizerId');
