@@ -6,7 +6,7 @@ import { useUserStore } from '@/hooks/use-user';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DashboardSummary } from '@/lib/dashboard';
-import { watchSummary } from '@/lib/firestore';
+import { watchSummary } from '@/lib/summary.client';
 
 import { QuickActions } from './QuickActions';
 import { TodayStages } from './TodayStages';
@@ -28,18 +28,18 @@ export function OrganizerDashboard() {
 
     setLoading(true);
     const unsubscribe = watchSummary(user.id, (data) => {
-        setSummary(data);
+        setSummary(data as DashboardSummary);
         if (loading) setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole]);
+  }, [user?.id, user?.currentRole, loading]);
 
 
   if (loading) {
       return (
             <div className="space-y-6">
-              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-10 w-full" />
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   <Skeleton className="h-64 w-full lg:col-span-2" />
                   <Skeleton className="h-64 w-full" />
