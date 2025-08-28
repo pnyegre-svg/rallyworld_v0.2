@@ -1,48 +1,34 @@
-
 import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc.js';
-import tz from 'dayjs/plugin/timezone.js';
-import { db, FieldValue } from './admin';
-
-
+import utc from 'dayjs/plugin/utc';         // ← no .js suffix
+import tz from 'dayjs/plugin/timezone';     // ← no .js suffix
 dayjs.extend(utc); dayjs.extend(tz);
 
-
-export async function getTodayRangeForUser(uid: string) {
-const u = await db.doc(`users/${uid}`).get();
-const timezone: string = (u.exists && u.get('timezone')) || 'UTC';
-const start = dayjs().tz(timezone).startOf('day').toDate();
-const end = dayjs().tz(timezone).endOf('day').toDate();
-return { timezone, start, end };
-}
-
+import { db, FieldValue } from './admin';
 
 export async function recomputeSummaryFor(uid: string) {
-  const { start, end } = await getTodayRangeForUser(uid);
+  const today = dayjs().tz('UTC'); // replace with your per-user tz function if you have it
+  const start = today.startOf('day').toDate();
+  const end   = today.endOf('day').toDate();
 
-  // 🔧 HOTFIX: fetch organizer's events, then filter by date in memory
+  // 🔧 HOTFIX: no composite index required
   const evSnap = await db.collection('events')
     .where('organizerId', '==', uid)
     .get();
 
-  // support either schema: dates.{from,to} or startDate/endDate
   const events = evSnap.docs.filter((d) => {
     const dates = d.get('dates') || {};
     const toVal = dates.to ?? d.get('endDate');
-    const toDate =
-      toVal?.toDate ? toVal.toDate() :
-      toVal ? new Date(toVal) : null;
-    return !!toDate && toDate >= start; // overlap today
+    const toDate = toVal?.toDate ? toVal.toDate() : toVal ? new Date(toVal) : null;
+    return !!toDate && toDate >= start;
   });
 
-  const todayStages: Array<any> = [];
-  let pendingEntries = 0; let unpaidEntries = 0;
-  const latestAnnouncements: Array<any> = [];
+  const todayStages: any[] = [];
+  let pendingEntries = 0, unpaidEntries = 0;
+  const latestAnnouncements: any[] = [];
 
   for (const ev of events) {
     const e = ev.data();
 
-    // stages today
     const stages = await ev.ref.collection('stages')
       .where('startAt', '>=', start)
       .where('startAt', '<', end)
@@ -58,13 +44,10 @@ export async function recomputeSummaryFor(uid: string) {
       status: s.get('status') ?? 'scheduled'
     }));
 
-    // counters
-    pendingEntries += (await ev.ref.collection('entries').where('status', '==', 'new').get()).size;
-    unpaidEntries  += (await ev.ref.collection('entries').where('paymentStatus', '==', 'unpaid').get()).size;
+    pendingEntries += (await ev.ref.collection('entries').where('status','==','new').get()).size;
+    unpaidEntries  += (await ev.ref.collection('entries').where('paymentStatus','==','unpaid').get()).size;
 
-    // latest announcement
-    const ann = await ev.ref.collection('announcements')
-      .orderBy('publishedAt','desc').limit(1).get();
+    const ann = await ev.ref.collection('announcements').orderBy('publishedAt','desc').limit(1).get();
     ann.forEach(a => latestAnnouncements.push({
       eventId: ev.id, annId: a.id, title: a.get('title'), publishedAt: a.get('publishedAt')
     }));
