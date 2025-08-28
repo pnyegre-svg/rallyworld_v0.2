@@ -46,29 +46,39 @@ return { ok: true };
 
 // --- Announcements ---
 export const createAnnouncement = functions.https.onCall(async (data, context) => {
-const uid = assertAuthed(context);
-const { eventId, title, body = '', audience = 'competitors', pinned = false, publishAt } = data as any;
-if (!eventId || !title) throw new functions.https.HttpsError('invalid-argument', 'eventId and title required');
-await assertEventOwner(eventId, uid);
+    const uid = assertAuthed(context);
+    const { eventId, title, body = '', audience = 'competitors', pinned = false, publishAt } = data as any;
+    if (!eventId || !title) throw new functions.https.HttpsError('invalid-argument', 'eventId and title required');
+    await assertEventOwner(eventId, uid);
 
+    const now = new Date();
+    let status: 'draft'|'scheduled'|'published' = 'draft';
+    const doc: any = { 
+        title, 
+        body, 
+        audience, 
+        pinned, 
+        createdBy: uid, 
+        createdAt: FieldValue.serverTimestamp(), 
+        status 
+    };
 
-const now = new Date();
-let status: 'draft'|'scheduled'|'published' = 'draft';
-const doc:any = { title, body, audience, pinned, createdBy: uid, createdAt: FieldValue.serverTimestamp(), status };
-if (publishAt) {
-const when = new Date(publishAt);
-if (!isNaN(when.getTime())) {
-doc.publishAt = when;
-status = when.getTime() <= now.getTime() ? 'published' : 'scheduled';
-doc.status = status;
-if (status === 'published') doc.publishedAt = FieldValue.serverTimestamp();
-}
-}
-const ref = await db.collection('events').doc(eventId).collection('announcements').add(doc);
-// store first revision for audit
-await ref.collection('revisions').add({ title, body, audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
-await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'createAnnouncement', by: uid, eventId, annId: ref.id });
-return { ok:true, annId: ref.id, status };
+    if (publishAt) {
+        const when = new Date(publishAt);
+        if (!isNaN(when.getTime())) {
+            doc.publishAt = when;
+            status = when.getTime() <= now.getTime() ? 'published' : 'scheduled';
+            doc.status = status;
+            if (status === 'published') {
+                doc.publishedAt = FieldValue.serverTimestamp();
+            }
+        }
+    }
+    const ref = await db.collection('events').doc(eventId).collection('announcements').add(doc);
+    // store first revision for audit
+    await ref.collection('revisions').add({ title, body, audience, pinned, updatedAt: FieldValue.serverTimestamp(), updatedBy: uid });
+    await db.collection('audit_logs').add({ at: FieldValue.serverTimestamp(), action:'createAnnouncement', by: uid, eventId, annId: ref.id });
+    return { ok:true, annId: ref.id, status };
 });
 
 
