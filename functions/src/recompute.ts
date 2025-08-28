@@ -22,20 +22,12 @@ return { timezone, start, end };
 export async function recomputeSummaryFor(uid: string) {
   const { start, end } = await getTodayRangeForUser(uid);
 
-  // 🔧 HOTFIX: fetch organizer's events, then filter by date in memory
   const evSnap = await db.collection('events')
     .where('organizerId', '==', uid)
+    .where('dates.to', '>=', start)
     .get();
 
-  // support either schema: dates.{from,to} or startDate/endDate
-  const events = evSnap.docs.filter((d) => {
-    const dates = d.get('dates') || {};
-    const toVal = dates.to ?? d.get('endDate');
-    const toDate =
-      toVal?.toDate ? toVal.toDate() :
-      toVal ? new Date(toVal) : null;
-    return !!toDate && toDate >= start; // overlap today
-  });
+  const events = evSnap.docs;
 
   const todayStages: Array<any> = [];
   let pendingEntries = 0; let unpaidEntries = 0;
