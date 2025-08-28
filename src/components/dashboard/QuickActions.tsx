@@ -8,17 +8,17 @@ import Link from 'next/link';
 export function QuickActions() {
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Button asChild className="h-20 text-lg bg-accent hover:bg-accent/90" size="lg">
-                <Link href="/organizer/create-event"><PlusSquare className="mr-4 h-6 w-6"/> Create Event</Link>
+            <Button asChild className="bg-accent hover:bg-accent/90">
+                <Link href="/organizer/create-event"><PlusSquare className="mr-2 h-4 w-4"/> Create Event</Link>
             </Button>
-                <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                <Link href="#"><Users className="mr-4 h-6 w-6"/> Manage Entries</Link>
+                <Button asChild variant="outline">
+                <Link href="#"><Users className="mr-2 h-4 w-4"/> Manage Entries</Link>
             </Button>
-                <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                <Link href="#"><FileUp className="mr-4 h-6 w-6"/> Upload Docs</Link>
+                <Button asChild variant="outline">
+                <Link href="#"><FileUp className="mr-2 h-4 w-4"/> Upload Docs</Link>
             </Button>
-                <Button asChild className="h-20 text-lg" size="lg" variant="outline">
-                <Link href="#"><Megaphone className="mr-4 h-6 w-6"/> Post Announcement</Link>
+                <Button asChild variant="outline">
+                <Link href="#"><Megaphone className="mr-2 h-4 w-4"/> Post Announcement</Link>
             </Button>
         </div>
     );
