@@ -9,7 +9,8 @@ export type UserRole =
   | 'event_secretary' 
   | 'communications_officer'
   | 'competitor_relations_officer'
-  | 'fan';
+  | 'fan'
+  | 'admin';
 
 export type User = {
   id: string;
@@ -38,7 +39,7 @@ export type Organizer = {
         tiktok?: string;
         x?: string;
     }
-    profilePicture?: string; // This is now legacy, will be removed from UI but kept for data model stability
+    profilePicture?: string; 
 }
 
 export type Club = {
@@ -62,9 +63,43 @@ export type Stage = {
   id: string;
   name: string;
   location: string;
-  distance: number;
-  status: 'upcoming' | 'live' | 'completed';
+  distance: number; // In km
+  status: 'scheduled' | 'ready' | 'live' | 'closed' | 'completed' | 'upcoming';
+  startAt?: Date; // Optional for now
 };
+
+export type Event = {
+    id: string;
+    title: string;
+    startDate: Date;
+    endDate: Date;
+    country: string;
+    organizerId: string;
+    status: 'draft' | 'published' | 'completed';
+}
+
+export type Entry = {
+    id: string;
+    eventId: string;
+    competitorId: string;
+    competitorName: string;
+    status: 'new' | 'approved' | 'declined';
+    paymentStatus: 'unpaid' | 'paid';
+    feeAmount: number;
+    currency: string;
+    createdAt: Date;
+}
+
+export type Announcement = {
+    id: string;
+    eventId: string;
+    title: string;
+    body: string;
+    audience: 'competitors' | 'officials' | 'public';
+    pinned: boolean;
+    publishedAt: Date;
+    createdBy: string; // User ID
+}
 
 export type NewsPost = {
   id: string;
@@ -345,5 +380,3 @@ export const leaderboard: LeaderboardEntry[] = [
     { rank: 3, competitor: competitors[2], totalTime: "1:16:01.0", stageTimes: [{ stageId: 'stg_01', time: '08:20.3' }, { stageId: 'stg_02', time: '15:35.5' }] },
     { rank: 4, competitor: competitors[3], totalTime: "1:16:12.5", stageTimes: [{ stageId: 'stg_01', time: '08:25.0' }, { stageId: 'stg_02', time: '15:40.3' }] },
 ];
-
-    
