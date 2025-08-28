@@ -1,28 +1,31 @@
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { firebaseConfig } from './config';
 
+let _app: FirebaseApp | undefined;
 
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export function getFirebaseApp(): FirebaseApp {
+  if (_app) return _app;
 
-let dbInstance: Firestore | null = null;
+  if (getApps().length > 0) {
+    _app = getApp();
+    return _app;
+  }
+  
+  _app = initializeApp({
+    apiKey: process.env.NEXT_PUBLIC_FB_API_KEY!,
+    authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN!,
+    projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID!,
+    storageBucket: process.env.NEXT_PUBLIC_FB_STORAGE_BUCKET!,
+    appId: process.env.NEXT_PUBLIC_FB_APP_ID!,
+    messagingSenderId: process.env.NEXT_PUBLIC_FB_MESSAGING_SENDER_ID,
+  });
 
-export const getDbInstance = () => {
-    if (!dbInstance) {
-        dbInstance = getFirestore(app);
-    }
-    return dbInstance;
+  return _app;
 }
 
-// Initialize and export Firebase services
-export const auth = getAuth(app);
-export const db = getDbInstance(); // This will be replaced in other files
-export const storage = getStorage(app);
-export { app };
+export const auth = getAuth(getFirebaseApp());
+export { getFirebaseApp as app };
 
 
 // Helper that waits for auth to be ready

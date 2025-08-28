@@ -2,7 +2,8 @@
 'use client';
 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage, requireUser } from './firebase'; // Import the initialized storage instance and requireUser
+import { requireUser } from './firebase'; // Import the initialized storage instance and requireUser
+import { storage as getStorageInstance } from './storage.client';
 
 /**
  * Uploads a file to a specified path in Firebase Storage.
@@ -18,7 +19,7 @@ export const uploadFile = async (file: File, type: 'organizer' | 'user'): Promis
   const folder = type === 'organizer' ? `public/organizers/${user.uid}/club-profile-picture` : `public/users/${user.uid}/profile-picture`;
   const path = `${folder}/${Date.now()}-${file.name}`;
   
-  const storageRef = ref(storage, path);
+  const storageRef = ref(getStorageInstance(), path);
 
   try {
     const snapshot = await uploadBytes(storageRef, file);

@@ -1,9 +1,9 @@
 
 'use client';
 
-import { getDbInstance } from './firebase'; // Import the initialized db instance
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where, orderBy } from 'firebase/firestore';
 import { z } from 'zod';
+import { db } from './firestore.client';
 
 const stageSchema = z.object({
   name: z.string().min(1, { message: 'Stage name is required.' }),
@@ -89,8 +89,7 @@ const eventConverter = {
 
 
 export const addEvent = async (eventData: EventFormValues) => {
-  const db = getDbInstance();
-  const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
+  const eventsCollection = collection(db(), 'events').withConverter(eventConverter as any);
   try {
     const docRef = await addDoc(eventsCollection, eventData);
     return docRef.id;
@@ -101,8 +100,7 @@ export const addEvent = async (eventData: EventFormValues) => {
 };
 
 export const getEvents = async (organizerId?: string): Promise<Event[]> => {
-    const db = getDbInstance();
-    const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
+    const eventsCollection = collection(db(), 'events').withConverter(eventConverter as any);
     try {
       let q;
       if (organizerId) {
@@ -123,9 +121,8 @@ export const getEvents = async (organizerId?: string): Promise<Event[]> => {
 };
 
 export const getEvent = async (eventId: string): Promise<Event | null> => {
-    const db = getDbInstance();
     try {
-        const docRef = doc(db, 'events', eventId).withConverter(eventConverter as any);
+        const docRef = doc(db(), 'events', eventId).withConverter(eventConverter as any);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             return docSnap.data() as Event;
@@ -138,9 +135,8 @@ export const getEvent = async (eventId: string): Promise<Event | null> => {
 };
 
 export const updateEvent = async (eventId: string, eventData: Partial<EventFormValues>) => {
-    const db = getDbInstance();
     try {
-        const docRef = doc(db, 'events', eventId);
+        const docRef = doc(db(), 'events', eventId);
         
         // Handle Date to Timestamp conversion for partial updates
         const dataToUpdate: any = { ...eventData };

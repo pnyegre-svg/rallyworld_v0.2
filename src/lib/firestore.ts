@@ -1,9 +1,10 @@
 
 'use client';
 
-import { getFirestore, doc, onSnapshot, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
-import { app, getDbInstance } from './firebase';
+import { doc, onSnapshot, getDoc, enableIndexedDbPersistence } from 'firebase/firestore';
 import { httpsCallable, getFunctions } from 'firebase/functions';
+import { db } from './firestore.client';
+import { app } from './firebase';
 
 const fns = getFunctions(app);
 
@@ -12,7 +13,7 @@ let persistenceInitialized = false;
 
 if (typeof window !== 'undefined' && !persistenceInitialized) {
     try {
-        enableIndexedDbPersistence(getDbInstance())
+        enableIndexedDbPersistence(db())
             .then(() => {
                 persistenceInitialized = true;
             })
@@ -30,8 +31,7 @@ if (typeof window !== 'undefined' && !persistenceInitialized) {
 
 
 export function watchSummary(uid:string, cb:(d:any)=>void){
-    const db = getDbInstance();
-    return onSnapshot(doc(db,'dashboard_summary',uid), snap => cb(snap.data()));
+    return onSnapshot(doc(db(),'dashboard_summary',uid), snap => cb(snap.data()));
 }
 
 
