@@ -51,9 +51,9 @@ export interface Event extends Omit<EventFormValues, 'coverImage' | 'logoImage' 
 const eventConverter = {
   toFirestore: (event: EventFormValues) => {
     // Dates are converted to Timestamps when creating the document
-    const { dates, ...remaiingEventData } = event;
+    const { dates, ...remainingEventData } = event;
     return {
-      ...remaiingEventData,
+      ...remainingEventData,
       dates: {
         from: Timestamp.fromDate(dates.from),
         to: Timestamp.fromDate(dates.to),
