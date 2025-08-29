@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, ArrowRight, Text } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, ArrowRight, Text, Check, ChevronsUpDown } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import Link from 'next/link';
 
@@ -28,6 +28,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
   Card,
   CardContent,
   CardDescription,
@@ -42,6 +50,7 @@ import { Separator } from '@/components/ui/separator';
 import { ActionCard } from '@/components/ui/action-card';
 import { uploadFile } from '@/lib/storage';
 import { db } from '@/lib/firebase.client';
+import { romanianCities } from '@/lib/romanian-cities';
 
 
 export default function CreateEventPage() {
@@ -334,17 +343,64 @@ export default function CreateEventPage() {
                       )}
                     />
                     <FormField
-                        control={form.control}
-                        name="hqLocation"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>HQ Location</FormLabel>
-                            <FormControl>
-                                <Input placeholder="e.g. Sibiu, Romania" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
+                      control={form.control}
+                      name="hqLocation"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>HQ Location</FormLabel>
+                           <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? romanianCities.find(
+                                        (city) => city === field.value
+                                      )
+                                    : "Select city"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                               <Command>
+                                <CommandInput placeholder="Search city..." />
+                                <CommandList>
+                                  <CommandEmpty>No city found.</CommandEmpty>
+                                  <CommandGroup>
+                                    {romanianCities.map((city) => (
+                                      <CommandItem
+                                        value={city}
+                                        key={city}
+                                        onSelect={() => {
+                                          form.setValue("hqLocation", city)
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            city === field.value
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                        {city}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                     <FormField
                         control={form.control}
