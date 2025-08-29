@@ -375,8 +375,8 @@ export default function CreateEventPage() {
                                         <CommandItem
                                             value={`${city}, ${group.county}`}
                                             key={`${city}-${group.county}`}
-                                            onSelect={(currentValue) => {
-                                                form.setValue("hqLocation", currentValue === field.value ? "" : currentValue)
+                                            onSelect={(value) => {
+                                                form.setValue("hqLocation", value === field.value ? "" : value)
                                             }}
                                         >
                                             <Check
