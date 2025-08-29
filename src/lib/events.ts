@@ -24,7 +24,7 @@ export const eventFormSchema = z.object({
     from: z.date({ required_error: 'A start date is required.' }),
     to: z.date({ required_error: 'An end date is required.' }),
   }),
-  hqLocation: z.string().min(3, { message: 'HQ Location is required.' }),
+  hqLocation: z.string().min(1, { message: 'HQ Location is required.' }),
   coverImage: z.any().optional(),
   logoImage: z.any().optional(),
   whatsappLink: z.string().url().optional().or(z.literal('')),
