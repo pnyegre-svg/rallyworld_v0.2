@@ -16,7 +16,7 @@ export function QuickActions() {
                 <Link href="/entries"><Users className="mr-2 h-4 w-4"/> Manage Entries</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
-                <Link href="#"><FileUp className="mr-2 h-4 w-4"/> Upload Docs</Link>
+                <Link href="/uploads"><FileUp className="mr-2 h-4 w-4"/> Upload Files</Link>
             </Button>
             <Button asChild size="sm" variant="outline">
                 <Link href="/announcements/new"><Megaphone className="mr-2 h-4 w-4"/> Post Announcement</Link>
