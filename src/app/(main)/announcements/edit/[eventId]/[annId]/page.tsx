@@ -92,8 +92,9 @@ export default function EditAnnouncementPage() {
 
     try {
         if (submitAction === 'publish') {
+            await updateAnnouncementFn({ ...payload, ...data });
             await publishAnnouncementFn(payload);
-            toast({ kind: 'success', text: 'Announcement published successfully.' });
+            toast({ kind: 'success', text: 'Announcement saved and published successfully.' });
         } else {
             await updateAnnouncementFn({ ...payload, ...data });
             toast({ kind: 'success', text: 'Announcement updated successfully.' });
