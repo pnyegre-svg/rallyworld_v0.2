@@ -15,11 +15,22 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/components/ui/toaster';
-import { getAnnouncement, updateAnnouncementFn, type Announcement } from '@/lib/announcements.client';
+import { getAnnouncement, updateAnnouncementFn, publishAnnouncementFn, deleteAnnouncementFn, type Announcement } from '@/lib/announcements.client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarIcon, PinIcon } from 'lucide-react';
+import { CalendarIcon, PinIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 
 const announcementFormSchema = z.object({
@@ -31,14 +42,17 @@ const announcementFormSchema = z.object({
 });
 
 type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
+type SubmitAction = 'save' | 'publish' | 'delete';
 
 export default function EditAnnouncementPage() {
   const router = useRouter();
   const params = useParams();
   const { eventId, annId } = params;
   const { push: toast } = useToast();
+  const [announcement, setAnnouncement] = React.useState<Announcement | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitAction, setSubmitAction] = React.useState<SubmitAction>('save');
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementFormSchema),
@@ -55,6 +69,7 @@ export default function EditAnnouncementPage() {
     if (eventId && annId) {
       getAnnouncement(eventId as string, annId as string).then(ann => {
         if (ann) {
+          setAnnouncement(ann);
           form.reset({
             title: ann.title,
             body: ann.body,
@@ -73,20 +88,42 @@ export default function EditAnnouncementPage() {
 
   const onSubmit = async (data: AnnouncementFormValues) => {
     setIsSubmitting(true);
+    const payload = { eventId: eventId as string, annId: annId as string };
+
     try {
-      await updateAnnouncementFn({
-        eventId: eventId as string,
-        annId: annId as string,
-        ...data,
-      });
-      toast({ kind: 'success', text: 'Announcement updated successfully.' });
+        if (submitAction === 'publish') {
+            await publishAnnouncementFn(payload);
+            toast({ kind: 'success', text: 'Announcement published successfully.' });
+        } else {
+            await updateAnnouncementFn({ ...payload, ...data });
+            toast({ kind: 'success', text: 'Announcement updated successfully.' });
+        }
       router.push(`/announcements?event=${eventId}`);
     } catch (e: any) {
-      toast({ kind: 'error', text: e.message || 'Failed to update announcement.' });
+      toast({ kind: 'error', text: e.message || `Failed to ${submitAction} announcement.` });
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+     try {
+      await deleteAnnouncementFn({ eventId: eventId as string, annId: annId as string });
+      toast({ kind: 'success', text: 'Announcement deleted.' });
+      router.push(`/announcements?event=${eventId}`);
+    } catch (e: any) {
+      toast({ kind: 'error', text: e.message || 'Failed to delete announcement.' });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const handleButtonClick = (action: SubmitAction) => {
+    setSubmitAction(action);
+    form.handleSubmit(onSubmit)();
+  };
+
 
   if (isLoading) {
     return (
@@ -109,11 +146,11 @@ export default function EditAnnouncementPage() {
     <Card>
       <CardHeader>
         <CardTitle>Edit Announcement</CardTitle>
-        <CardDescription>Make changes to your announcement below.</CardDescription>
+        <CardDescription>Make changes to your announcement below. Current status: <span className="font-bold capitalize">{announcement?.status}</span></CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
             <FormField
               control={form.control}
               name="title"
@@ -217,9 +254,39 @@ export default function EditAnnouncementPage() {
                 </FormItem>
               )}
             />
-            <div className="flex gap-2">
-                <Button type="submit" disabled={isSubmitting} className="bg-accent hover:bg-accent/90">{isSubmitting ? 'Saving...' : 'Save Changes'}</Button>
-                 <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+            <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                    {announcement?.status !== 'published' && (
+                        <Button type="button" onClick={() => handleButtonClick('publish')} disabled={isSubmitting} className="bg-accent hover:bg-accent/90">
+                            {isSubmitting && submitAction === 'publish' ? 'Publishing...' : 'Publish'}
+                        </Button>
+                    )}
+                    <Button type="button" onClick={() => handleButtonClick('save')} disabled={isSubmitting} variant="outline">
+                        {isSubmitting && submitAction === 'save' ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
+                </div>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive" disabled={isSubmitting}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete this announcement. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                {isSubmitting ? 'Deleting...' : 'Yes, delete'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
           </form>
         </Form>
