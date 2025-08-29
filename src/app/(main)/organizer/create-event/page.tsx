@@ -118,43 +118,47 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
-        const dataToSave: Partial<EventFormValues> & { organizerId: string } = {
+        let coverImageUrl: string | undefined = undefined;
+        let logoImageUrl: string | undefined = undefined;
+
+        if (values.coverImage instanceof File) {
+            coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+        }
+        if (values.logoImage instanceof File) {
+            logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+        }
+
+        const uploadedItineraryFiles = await Promise.all(
+            (values.itineraryFiles || [])
+                .filter(item => item.file instanceof File)
+                .map(async (item) => {
+                    const file = item.file as File;
+                    const url = await uploadFile(file, 'organizer');
+                    return { url, name: file.name, type: file.type, size: file.size };
+                })
+        );
+        
+        const uploadedDocsFiles = await Promise.all(
+             (values.docsFiles || [])
+                .filter(item => item.file instanceof File)
+                .map(async (item) => {
+                    const file = item.file as File;
+                    const url = await uploadFile(file, 'organizer');
+                    return { url, name: file.name, type: file.type, size: file.size };
+                })
+        );
+
+        const dataToSave = {
             ...values,
             organizerId: user.organizerProfile.id,
+            coverImage: coverImageUrl,
+            logoImage: logoImageUrl,
+            itineraryFiles: uploadedItineraryFiles,
+            docsFiles: uploadedDocsFiles,
+            itineraryLinks: (values.itineraryLinks || []).filter(link => link.value),
+            docsLinks: (values.docsLinks || []).filter(link => link.value),
         };
-
-        // Handle single file uploads
-        if (values.coverImage instanceof File) {
-            dataToSave.coverImage = await uploadFile(values.coverImage, 'organizer');
-        } else {
-            delete dataToSave.coverImage;
-        }
-
-        if (values.logoImage instanceof File) {
-            dataToSave.logoImage = await uploadFile(values.logoImage, 'organizer');
-        } else {
-            delete dataToSave.logoImage;
-        }
-
-        // Handle array file uploads
-        const processFiles = async (files: any[] | undefined) => {
-            if (!files) return [];
-            const uploadedFiles = await Promise.all(
-                files.filter(f => f.file instanceof File).map(async (f) => {
-                    const url = await uploadFile(f.file, 'organizer');
-                    return { url, name: f.file.name, type: f.file.type, size: f.file.size };
-                })
-            );
-            return uploadedFiles;
-        };
-
-        dataToSave.itineraryFiles = await processFiles(values.itineraryFiles);
-        dataToSave.docsFiles = await processFiles(values.docsFiles);
         
-        // Filter out empty links
-        dataToSave.itineraryLinks = (values.itineraryLinks || []).filter(link => link.value);
-        dataToSave.docsLinks = (values.docsLinks || []).filter(link => link.value);
-
         await addEvent(db, dataToSave as EventFormValues);
         
         toast({
@@ -597,5 +601,7 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
 
     
