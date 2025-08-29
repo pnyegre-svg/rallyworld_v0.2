@@ -1,41 +1,53 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() { return request.auth != null; }
-    function isEventOwner(eventId) {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    
+    // Helper function to get event data
+    function getEvent(eventId) {
+      return get(/databases/$(database)/documents/events/$(eventId)).data;
     }
 
-    match /users/{uid} {
-      // Admins can read any user profile, users can read/update their own
-      allow read: if request.auth.token.role == 'admin' || (isSignedIn() && request.auth.uid == uid);
-      allow update: if isSignedIn() && request.auth.uid == uid;
-      allow create: if isSignedIn();
-    }
-
-    match /dashboard_summary/{uid} {
-      allow read: if isSignedIn() && request.auth.uid == uid;
-      allow write: if false; // Cloud Functions only
-    }
-
+    // Rules for the 'events' collection
     match /events/{eventId} {
-      allow read: if true; // Publicly readable
-      allow create: if isSignedIn() && request.resource.data.organizerId == request.auth.uid;
-      allow update, delete: if isEventOwner(eventId);
+      // Anyone can read event details
+      allow read: if true;
+      
+      // Only the organizer can create or update their event
+      allow create, update: if request.auth != null && request.auth.uid == request.resource.data.organizerId;
+      
+      // Rules for the 'files' subcollection within an event
+      match /files/{fileId} {
+        // Any authenticated user can read the file list
+        allow read: if request.auth != null;
+        
+        // Only the event organizer can write to the file list
+        allow write: if request.auth != null && request.auth.uid == getEvent(eventId).organizerId;
+      }
 
-      match /stages/{stageId} {
-        allow read: if true;
-        allow write: if isEventOwner(eventId);
+      // Allow organizers to manage their own subcollections (e.g., entries, stages)
+      match /{subcollection}/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == getEvent(eventId).organizerId;
       }
-      match /entries/{entryId} {
-        allow read: if isSignedIn();
-        allow write: if isEventOwner(eventId);
-      }
-      match /announcements/{annId} {
-        allow read: if true;
-        allow write: if isEventOwner(eventId);
-      }
+    }
+
+    // Rules for top-level collections
+    match /users/{userId} {
+      // A user can read anyone's profile, but only write to their own
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    match /competitors/{competitorId} {
+      // Anyone can read competitor data
+      allow read: if true;
+      // Only admins/organizers should write (further rules needed for specifics)
+      allow write: if request.auth != null; // Placeholder - tighten this in future
+    }
+    
+    match /dashboard_summary/{userId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
