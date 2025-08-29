@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Megaphone, Pin } from 'lucide-react';
+import { Megaphone, Pin, Eye, PenSquare } from 'lucide-react';
 import type { DashboardAnnouncement } from '@/lib/dashboard';
 import Link from 'next/link';
 
@@ -51,13 +51,27 @@ export function Announcements({ items = [] }: AnnouncementsProps) {
                 ) : (
                     <ul className="space-y-3">
                     {ordered.map((a) => (
-                        <li key={a.annId || (a as any).id} className="rounded-lg border bg-card text-card-foreground p-3 shadow-sm">
-                            <div className="flex justify-between items-start">
-                                <p className="font-medium pr-4">{a.title}</p>
-                                {(a as any).pinned && <Pin className="h-4 w-4 text-yellow-500 shrink-0" />}
+                        <li key={a.annId || (a as any).id} className="rounded-lg border bg-card text-card-foreground p-3 shadow-sm flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                     {(a as any).pinned && <Pin className="h-4 w-4 text-yellow-500 shrink-0" />}
+                                     <p className="font-medium pr-4">{a.title}</p>
+                                </div>
+                                <div className="text-xs text-muted-foreground pt-1">
+                                    {a.eventTitle} &middot; {fmt(a.publishedAt)}
+                                </div>
                             </div>
-                            <div className="text-xs text-muted-foreground pt-1">
-                                {a.eventTitle} &middot; {fmt(a.publishedAt)}
+                            <div className="flex gap-2">
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/organizer/event/view/${a.eventId}?tab=announcements`}>
+                                        <Eye className="mr-2 h-4 w-4"/> View
+                                    </Link>
+                                </Button>
+                                <Button asChild variant="secondary" size="sm">
+                                     <Link href={`/announcements/edit/${a.eventId}/${a.annId}`}>
+                                        <PenSquare className="mr-2 h-4 w-4"/> Edit
+                                    </Link>
+                                </Button>
                             </div>
                         </li>
                     ))}
