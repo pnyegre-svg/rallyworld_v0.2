@@ -10,8 +10,8 @@ function getRoot(eventId?: string, category?: string): StorageReference {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('User not authenticated');
   
-  let path = `uploads/${uid}`;
-  if (eventId) path += `/${eventId}`;
+  // New path structure to match the storageIndex.ts trigger
+  let path = `events/${eventId}/docs`;
   if (category) path += `/${category}`;
 
   return ref(getStorage(getFirebaseApp()), path);

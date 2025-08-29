@@ -1,7 +1,8 @@
-import * as functions from 'firebase-functions';
-import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday, processScheduledAnnouncements, onFileUpload } from './triggers';
-import { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard } from './callables';
 
+import * as functions from 'firebase-functions';
+import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday, processScheduledAnnouncements } from './triggers';
+import { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard } from './callables';
+import { fileIndexed, fileDeleted } from './storageIndex';
 
 export const entryChanged = functions.firestore
 .document('events/{eventId}/entries/{entryId}')
@@ -23,7 +24,7 @@ export const eventChanged = functions.firestore
 .onWrite(onEventWrite);
 
 
-export { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard };
+export { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard, fileIndexed, fileDeleted };
 
 
 export const scheduledRefresh = functions.pubsub
@@ -36,4 +37,4 @@ export const midnightRebuild = functions.pubsub
 .timeZone('Etc/UTC')
 .onRun(refreshAllForToday);
 
-export { processScheduledAnnouncements, onFileUpload };
+export { processScheduledAnnouncements };

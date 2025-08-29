@@ -17,33 +17,11 @@ export const processScheduledAnnouncements = functions.region(region).pubsub
   });
 
 
-export const onFileUpload = functions.region(region).storage.object().onFinalize(async (object) => {
-    const { bucket, name, contentType, size, timeCreated, updated } = object;
-    if (!name) return;
-
-    // Example path: uploads/{uid}/{eventId}/{category}/{filename}
-    const parts = name.split('/');
-    if (parts[0] !== 'uploads' || parts.length < 4) {
-        console.log(`Object ${name} is not in a tracked uploads path.`);
-        return;
-    }
-
-    const [, ownerId, eventId, category] = parts;
-    const filename = parts.slice(3).join('/');
-
-    const fileMeta = {
-        ownerId,
-        eventId,
-        category,
-        path: name,
-        filename,
-        contentType,
-        size: Number(size),
-        createdAt: timeCreated,
-        updatedAt: updated,
-    };
-    
-    // Use filename as document ID to prevent duplicates on rewrite
-    const docId = name.replace(/\//g, '_');
-    await db.collection('events').doc(eventId).collection('files').doc(docId).set(fileMeta, { merge: true });
-});
+// This is a placeholder for any other trigger functions you might want to add,
+// for example, onEntryWrite, onStageWrite, etc.
+// The onFileUpload function has been replaced by the more detailed indexing in storageIndex.ts
+export const onEntryWrite = () => {};
+export const onStageWrite = () => {};
+export const onAnnouncementWrite = () => {};
+export const onEventWrite = () => {};
+export const refreshAllForToday = () => {};
