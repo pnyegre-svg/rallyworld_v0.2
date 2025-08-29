@@ -5,11 +5,11 @@ import { httpsCallable } from 'firebase/functions';
 import { fns } from './functions.region';
 
 
-export type Announcement = { id:string; title:string; body:string; audience:'competitors'|'officials'|'public'; status:'draft'|'scheduled'|'published'; pinned:boolean; publishedAt?:any; publishAt?:any };
+export type Announcement = { id:string; title:string; body:string; audience:'competitors'|'officials'|'public'; status:'draft'|'scheduled'|'published'; pinned:boolean; publishedAt?:any; publishAt?:any, createdAt?: any };
 
 
 export async function listAnnouncements(eventId: string): Promise<Announcement[]>{
-const q = query(collection(db,'events',eventId,'announcements'), orderBy('publishedAt','desc'));
+const q = query(collection(db,'events',eventId,'announcements'), orderBy('createdAt','desc'));
 const snap = await getDocs(q);
 return snap.docs.map(d=> ({ id:d.id, ...(d.data() as any) }));
 }

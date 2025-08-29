@@ -100,20 +100,23 @@ export default function AnnouncementsList(){
     catch(e:any){ push({kind:'error', text:e?.message||'Pin failed'}); }
   }
 
-  // Sort: pinned first, then by publishedAt desc
-  const display = [...items].sort((a,b)=>{
-    const pin = Number(!!b.pinned) - Number(!!a.pinned);
-    if (pin) return pin;
-    const ad = a.publishedAt?.toDate ? a.publishedAt.toDate() : a.publishedAt ? new Date(a.publishedAt) : null;
-    const bd = b.publishedAt?.toDate ? b.publishedAt.toDate() : b.publishedAt ? new Date(b.publishedAt) : null;
-    return (bd?.getTime()||0) - (ad?.getTime()||0);
+  // Sort: pinned first, then drafts, then by created at desc
+  const display = [...items].sort((a, b) => {
+    if (a.pinned && !b.pinned) return -1;
+    if (!a.pinned && b.pinned) return 1;
+    if (a.status === 'draft' && b.status !== 'draft') return -1;
+    if (a.status !== 'draft' && b.status === 'draft') return 1;
+
+    const ad = a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : null;
+    const bd = b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : null;
+    return (bd?.getTime() || 0) - (ad?.getTime() || 0);
   });
   
   const statusBadge = (v:string) => {
     const variant: "default" | "secondary" | "destructive" = 
         v === 'published' ? 'default' :
         v === 'scheduled' ? 'secondary' :
-        'destructive';
+        'destructive'; // Draft will use destructive
     return <Badge variant={variant} className="capitalize">{v}</Badge>;
   }
 
