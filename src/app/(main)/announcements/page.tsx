@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 const LS_KEY = 'announcements:lastEvent';
 
@@ -151,7 +152,7 @@ export default function AnnouncementsList(){
         v === 'published' ? 'default' :
         v === 'scheduled' ? 'secondary' :
         'destructive'; // Draft will use destructive
-    return <Badge variant={variant} className="capitalize">{v}</Badge>;
+    return <Badge variant={variant} className={cn("capitalize", v === 'published' && "bg-green-600/80 text-white")}>{v}</Badge>;
   }
 
   const handleSelectAll = (checked: boolean) => {
