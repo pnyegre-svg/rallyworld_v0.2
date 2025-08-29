@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -23,10 +22,20 @@ import { storage } from '@/lib/firebase.client';
 
 type FileCategory = 'maps' | 'bulletins' | 'regulations';
 
+const FOLDERS: {key: FileCategory, label: string}[] = [
+  { key: 'maps', label: 'Maps' },
+  { key: 'bulletins', label: 'Bulletins' },
+  { key: 'regulations', label: 'Regulations' },
+];
+
+const LS_EVENT = 'uploads:lastEvent';
+const LS_FOLDER = 'uploads:lastFolder';
+
 export default function UploadsPage() {
   const { user } = useUserStore();
   const [events, setEvents] = React.useState<EventLite[]>([]);
   const [selectedEventId, setSelectedEventId] = React.useState<string>('');
+  
   const [activeTab, setActiveTab] = React.useState<FileCategory>('maps');
   
   const { uploads, addFiles, removeUpload, clearUploads } = useUploader(selectedEventId, activeTab);
@@ -41,14 +50,20 @@ export default function UploadsPage() {
       setLoadingEvents(true);
       listOrganizerEvents(db, user.id).then(fetchedEvents => {
         setEvents(fetchedEvents);
-        if (fetchedEvents.length > 0) {
-          setSelectedEventId(fetchedEvents[0].id);
+        const storedEvent = localStorage.getItem(LS_EVENT);
+        const pickEvent = (storedEvent && fetchedEvents.find(e=>e.id===storedEvent)) ? storedEvent : fetchedEvents[0]?.id;
+        if (pickEvent) {
+          setSelectedEventId(pickEvent);
         }
         setLoadingEvents(false);
       });
     }
   }, [user?.id]);
   
+  // Persist selections
+  React.useEffect(() => { if (selectedEventId) localStorage.setItem(LS_EVENT, selectedEventId) }, [selectedEventId]);
+  React.useEffect(() => { if (activeTab) localStorage.setItem(LS_FOLDER, activeTab) }, [activeTab]);
+
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     if (!selectedEventId) {
       toast({ text: 'Please select an event before uploading files.', kind: 'error' });
@@ -127,19 +142,23 @@ export default function UploadsPage() {
       <CardContent>
          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FileCategory)} className="w-full">
             <TabsList>
-                <TabsTrigger value="maps">Maps</TabsTrigger>
-                <TabsTrigger value="bulletins">Bulletins</TabsTrigger>
-                <TabsTrigger value="regulations">Regulations</TabsTrigger>
+                {FOLDERS.map(f => <TabsTrigger key={f.key} value={f.key}>{f.label}</TabsTrigger>)}
             </TabsList>
-            <TabsContent value="maps" className="mt-4">
-              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
-            </TabsContent>
-            <TabsContent value="bulletins" className="mt-4">
-              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
-            </TabsContent>
-            <TabsContent value="regulations" className="mt-4">
-              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
-            </TabsContent>
+            {FOLDERS.map(f => (
+                 <TabsContent key={f.key} value={f.key} className="mt-4">
+                    <FileCategoryContent 
+                        key={`${f.key}-${selectedEventId}`} 
+                        isLoading={loadingFiles} 
+                        storedFiles={storedFiles} 
+                        handleDelete={handleDelete} 
+                        getRootProps={getRootProps} 
+                        getInputProps={getInputProps} 
+                        isDragActive={isDragActive} 
+                        uploads={uploads.filter(u => u.category === f.key)} 
+                        removeUpload={removeUpload}
+                        onUploadSuccess={handleUploadSuccess} />
+                </TabsContent>
+            ))}
         </Tabs>
       </CardContent>
     </Card>
@@ -154,6 +173,7 @@ const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps
         if (upload.state === 'success') {
             onUploadSuccess();
         }
+       // eslint-disable-next-line react-hooks/exhaustive-deps
        }, [upload.state])
     
         return (

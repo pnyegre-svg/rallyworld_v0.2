@@ -12,6 +12,7 @@ export interface Upload {
   state: 'pending' | 'uploading' | 'success' | 'error';
   cancel: () => void;
   result?: any;
+  category: string;
 }
 
 export function useUploader(eventId: string, category: string) {
@@ -42,6 +43,7 @@ export function useUploader(eventId: string, category: string) {
         error: null,
         state: 'uploading',
         cancel: () => task.cancel(),
+        category,
       };
 
       promise.then(
