@@ -68,16 +68,14 @@ export const createAnnouncement = functions.region(region).https.onCall(async (d
       createdBy: uid, createdAt: FieldValue.serverTimestamp(),
     };
     if (when) {
-      if (when.getTime() <= Date.now()) {
-        status = 'published';
-        base.publishedAt = FieldValue.serverTimestamp();
-      } else {
-        status = 'scheduled';
-        base.publishAt = when;
-      }
+      base.publishAt = when;
+      status = when.getTime() <= Date.now() ? 'published' : 'scheduled';
+      base.status = status;
+      if (status === 'published')
+          base.publishedAt = FieldValue.serverTimestamp();
     }
     
-    base.status = status;
+    if (!base.status) base.status = status;
 
     const ref = await db.collection('events').doc(eventId)
       .collection('announcements').add(clean(base));
@@ -145,6 +143,12 @@ export const deleteAnnouncement = functions.region(region).https.onCall(async (d
     const { eventId, annId } = data || {};
     await assertEventOwner(asString(eventId), uid);
     await db.doc(`events/${eventId}/announcements/${annId}`).delete();
+    await recomputeSummaryFor(uid);
+    return { ok: true };
+});
+
+export const recomputeDashboard = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    const uid = assertAuthed(context);
     await recomputeSummaryFor(uid);
     return { ok: true };
 });
