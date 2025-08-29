@@ -1,160 +1,81 @@
 
-'use client';
-
-import * as React from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
 import type { Metadata } from 'next';
-import { EventHeader } from './event-header';
-import { Skeleton } from '@/components/ui/skeleton';
-import { getEvent, type Event } from '@/lib/events';
-import { useUserStore } from '@/hooks/use-user';
-import { useToast } from '@/components/ui/toaster';
-import { useRouter } from 'next/navigation';
-import { getUser } from '@/lib/users';
-import type { User } from '@/lib/data';
-import { db } from '@/lib/firebase.client';
-import { listAnnouncements, type Announcement } from '@/lib/announcements.client';
-import { getResizedImageUrl } from '@/lib/utils';
-import { doc, getDoc } from 'firebase/firestore';
+import EventPublicClient from './EventPublicClient';
 
+type FirestoreDoc = {
+  fields?: Record<string, any>;
+};
 
-export async function generateMetadata({ params }: { params: { eventId: string } }): Promise<Metadata> {
-  const eventId = params.eventId;
-  
-  try {
-    // This runs on the server, so we can't use the client-side `getEvent` directly
-    // which uses the client db instance. We'll fetch directly.
-    const eventDoc = await getDoc(doc(db, 'events', eventId));
-
-    if (!eventDoc.exists()) {
-        return {
-            title: 'Event Not Found',
-            description: 'The event you are looking for does not exist.',
-        };
-    }
-    const event = eventDoc.data() as Event;
-    const from = event.dates.from.toDate ? event.dates.from.toDate() : new Date(event.dates.from);
-    
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-    const coverImage = getResizedImageUrl(event.coverImage, '1200x630') || `${siteUrl}/og-event.png`;
-
-    const description = `${event.hqLocation} • ${from.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-
-    return {
-        title: `${event.title} | Rally World`,
-        description: description,
-        openGraph: {
-            title: event.title,
-            description: description,
-            url: `${siteUrl}/events/${eventId}`,
-            siteName: 'Rally World',
-            images: [
-                {
-                    url: coverImage,
-                    width: 1200,
-                    height: 630,
-                    alt: event.title,
-                },
-            ],
-            locale: 'en_US',
-            type: 'website',
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title: event.title,
-            description: description,
-            images: [coverImage],
-        },
-    };
-  } catch (error) {
-      console.error("Error generating metadata:", error);
-      return {
-          title: 'Rally World Event',
-          description: 'Join the excitement at a rally event near you.'
-      }
-  }
+function getField(fields: Record<string, any> | undefined, path: string): any {
+  if (!fields) return undefined;
+  // Supports top-level or one-level nested (e.g., "dates.from")
+  const [a, b] = path.split('.');
+  const node = b ? fields[a]?.mapValue?.fields?.[b] : fields[a];
+  if (!node) return undefined;
+  // Basic Firestore value kinds used here
+  return node.stringValue ?? node.timestampValue ?? node.booleanValue ?? node.integerValue ?? node.doubleValue ?? undefined;
 }
 
+async function fetchEventForMeta(eventId: string) {
+  const projectId = process.env.NEXT_PUBLIC_FB_PROJECT_ID!;
+  const apiKey = process.env.NEXT_PUBLIC_FB_API_KEY!;
+  if (!projectId || !apiKey) return null;
 
-export default function ViewEventPage() {
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const eventId = params.eventId as string;
-  const [event, setEvent] = React.useState<Event | null>(null);
-  const [announcements, setAnnouncements] = React.useState<Announcement[]>([]);
-  const [organizer, setOrganizer] = React.useState<User | null>(null);
-  const [loading, setLoading] = React.useState(true);
-  
-  const initialTab = searchParams.get('tab') || 'results';
-  const [activeTab, setActiveTab] = React.useState(initialTab);
-  
-  const { user } = useUserStore();
-  const { push: toast } = useToast();
-  const router = useRouter();
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/events/${encodeURIComponent(eventId)}?key=${apiKey}`;
+  const res = await fetch(url, { next: { revalidate: 60 } });
+  if (!res.ok) return null;
+  const json = (await res.json()) as FirestoreDoc;
+  const fields = json.fields || {};
 
+  const isPublic = getField(fields, 'public') === true;
+  if (!isPublic) return null;
 
-  React.useEffect(() => {
-    if (eventId) {
-      const fetchEventData = async () => {
-        setLoading(true);
-        const eventData = await getEvent(db, eventId);
-         if (eventData) {
-            setEvent(eventData);
-            if (eventData.livestreamLink && !searchParams.get('tab')) {
-                setActiveTab('livestream');
-            }
+  const title = getField(fields, 'title') || 'Event';
+  const location = getField(fields, 'hqLocation') || '';
+  const from = getField(fields, 'dates.from');
+  const to = getField(fields, 'dates.to');
+  const fmt = (ts?: string) => {
+    if (!ts) return '';
+    try { return new Date(ts).toLocaleDateString(); } catch { return ''; }
+  };
+  const dateStr = from && to ? `${fmt(from)} – ${fmt(to)}` : fmt(from) || fmt(to) || '';
 
-            // Fetch organizer details
-            const organizerData = await getUser(db, eventData.organizerId);
-            setOrganizer(organizerData);
+  // Optional cover field if you have one; otherwise use fallback image
+  const coverUrl = getField(fields, 'coverImage') || '/og-event.png';
 
-            // Fetch announcements
-            const announcementsData = await listAnnouncements(eventId);
-            setAnnouncements(announcementsData);
+  return {
+    title: String(title),
+    description: [dateStr, location].filter(Boolean).join(' • '),
+    image: String(coverUrl),
+  };
+}
 
-        } else {
-            toast({
-                text: "The event you are looking for does not exist.",
-                kind: "error",
-            });
-            router.push('/dashboard');
-        }
-        setLoading(false);
-      };
-      fetchEventData();
+export async function generateMetadata(
+  { params }: { params: { eventId: string } }
+): Promise<Metadata> {
+  const meta = await fetchEventForMeta(params.eventId);
+
+  const title = meta?.title ? `${meta.title} – Rally World` : 'Event – Rally World';
+  const description = meta?.description || 'Live stages and announcements.';
+  const image = meta?.image || '/og-event.png';
+  const url = `/events/${params.eventId}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title, description, url,
+      images: [{ url: image, width: 1200, height: 630 }],
+      type: 'website'
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title, description, images: [image]
     }
-  }, [eventId, router, toast, searchParams]);
+  };
+}
 
-
-  if (loading) {
-    return (
-        <div className="container py-8">
-            <div className="space-y-8">
-                <Skeleton className="h-[450px] w-full rounded-2xl" />
-                <div className="space-y-4">
-                    <Skeleton className="h-10 w-1/2" />
-                    <Skeleton className="h-64 w-full" />
-                </div>
-            </div>
-        </div>
-    )
-  }
-
-  if (!event) {
-    // This will usually be handled by the loading state and redirect, but it's a good fallback.
-    return <div className="container py-8">Event not found.</div>;
-  }
-
-  return (
-    <div className="container w-full py-8">
-        <EventHeader 
-            event={event} 
-            organizerName={organizer?.organizerProfile?.name} 
-            setEvent={setEvent} 
-            activeTab={activeTab} 
-            setActiveTab={setActiveTab} 
-            announcements={announcements} 
-        />
-    </div>
-  );
+export default function Page({ params }: { params: { eventId: string } }) {
+  return <EventPublicClient eventId={params.eventId} />;
 }
