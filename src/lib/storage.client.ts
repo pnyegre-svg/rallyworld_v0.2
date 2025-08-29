@@ -1,7 +1,7 @@
 
 'use client';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject as deleteFile, listAll, type StorageReference, type UploadTask, type UploadTaskSnapshot } from 'firebase/storage';
-import { getFirebaseApp } from './firebase.client';
+import { app } from './firebase.client';
 import { auth } from './firebase.client';
 
 export type ProgressHandler = (p: { loaded: number, total: number, progress: number, snapshot: UploadTaskSnapshot }) => void;
@@ -15,7 +15,7 @@ function getRoot(eventId?: string, category?: string): StorageReference {
   let path = `events/${eventId}/docs`;
   if (category) path += `/${category}`;
 
-  return ref(getStorage(getFirebaseApp()), path);
+  return ref(getStorage(app), path);
 }
 
 export function upload(file: File, eventId: string, category: string, onProgress?: ProgressHandler): { task: UploadTask, promise: Promise<any> } {
@@ -39,6 +39,6 @@ export function upload(file: File, eventId: string, category: string, onProgress
 }
 
 export async function deleteObject(path: string) {
-  const fileRef = ref(getStorage(getFirebaseApp()), path);
+  const fileRef = ref(getStorage(app), path);
   await deleteFile(fileRef);
 }
