@@ -120,21 +120,29 @@ export default function CreateEventPage() {
     try {
       const dataToSave: Partial<EventFormValues> = { ...values };
       
+      // Handle file uploads and get URLs
       if (values.coverImage instanceof File) {
         dataToSave.coverImage = await uploadFile(values.coverImage, 'organizer');
+      } else {
+        delete dataToSave.coverImage;
       }
+      
       if (values.logoImage instanceof File) {
         dataToSave.logoImage = await uploadFile(values.logoImage, 'organizer');
+      } else {
+        delete dataToSave.logoImage;
       }
 
       dataToSave.organizerId = user.organizerProfile.id;
 
-      // Remove undefined properties before saving to Firestore
-      Object.keys(dataToSave).forEach(key => {
-        if (dataToSave[key as keyof typeof dataToSave] === undefined) {
-          delete dataToSave[key as keyof typeof dataToSave];
-        }
-      });
+      // Filter out empty links and files before saving
+      dataToSave.itineraryLinks = (dataToSave.itineraryLinks || []).filter(link => link.value);
+      dataToSave.docsLinks = (dataToSave.docsLinks || []).filter(link => link.value);
+      
+      // IMPORTANT: Filter out file inputs that were not filled
+      dataToSave.itineraryFiles = (dataToSave.itineraryFiles || []).filter(f => f.file);
+      dataToSave.docsFiles = (dataToSave.docsFiles || []).filter(f => f.file);
+
 
       await addEvent(db, dataToSave as EventFormValues);
       
@@ -375,8 +383,8 @@ export default function CreateEventPage() {
                                         <CommandItem
                                             value={`${city}, ${group.county}`}
                                             key={`${city}-${group.county}`}
-                                            onSelect={(value) => {
-                                                form.setValue("hqLocation", value === field.value ? "" : value)
+                                            onSelect={(currentValue) => {
+                                                form.setValue("hqLocation", currentValue === field.value ? "" : currentValue)
                                             }}
                                         >
                                             <Check
@@ -578,3 +586,5 @@ export default function CreateEventPage() {
     </Card>
   );
 }
+
+    
