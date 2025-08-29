@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import { listOrganizerEvents } from '@/lib/events';
-import { Announcement, listAnnouncements } from '@/lib/announcements.client';
+import { Announcement, listAnnouncements, deleteAnnouncementFn } from '@/lib/announcements.client';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toaster';
 import { publishAnnouncementFn, pinAnnouncementFn } from '@/lib/announcements.client';
@@ -12,9 +12,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase.client';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 const LS_KEY = 'announcements:lastEvent';
 
@@ -26,6 +37,8 @@ export default function AnnouncementsList(){
   const [items,setItems] = useState<Announcement[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const [isLoadingAnnouncements, setIsLoadingAnnouncements] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load events and restore last-used event from localStorage if valid
   useEffect(()=>{ 
@@ -55,12 +68,16 @@ export default function AnnouncementsList(){
 
   // Fetch announcements for selected event
   useEffect(()=>{ 
-      if(!eventId) return; 
+      if(!eventId) {
+        setItems([]);
+        return;
+      }; 
       setIsLoadingAnnouncements(true);
-      (async()=> {
-          setItems(await listAnnouncements(eventId));
-          setIsLoadingAnnouncements(false);
-      })(); 
+      listAnnouncements(eventId).then(newItems => {
+        setItems(newItems);
+        setIsLoadingAnnouncements(false);
+        setSelected([]); // Clear selection when event changes
+      });
     },
     [eventId]
 );
@@ -92,12 +109,29 @@ export default function AnnouncementsList(){
     }
     catch(e:any){ push({kind:'error', text:e?.message||'Publish failed'}); }
   }
+
   async function togglePin(id:string, value:boolean){
     try{ 
         await pinAnnouncementFn({ eventId, annId:id, pinned:value }); 
         setItems(await listAnnouncements(eventId)); 
     }
     catch(e:any){ push({kind:'error', text:e?.message||'Pin failed'}); }
+  }
+
+  async function handleDelete() {
+    setIsDeleting(true);
+    try {
+      await Promise.all(
+        selected.map(annId => deleteAnnouncementFn({ eventId, annId }))
+      );
+      push({ kind: 'success', text: `Deleted ${selected.length} announcement(s).`});
+      setItems(await listAnnouncements(eventId));
+      setSelected([]);
+    } catch(e: any) {
+      push({ kind: 'error', text: e?.message || 'Delete failed' });
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   // Sort: pinned first, then drafts, then by created at desc
@@ -120,11 +154,47 @@ export default function AnnouncementsList(){
     return <Badge variant={variant} className="capitalize">{v}</Badge>;
   }
 
+  const handleSelectAll = (checked: boolean) => {
+    setSelected(checked ? display.map(item => item.id) : []);
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    setSelected(prev => checked ? [...prev, id] : prev.filter(item => item !== id));
+  };
+  
+  const numSelected = selected.length;
+
   return (
     <Card>
         <CardHeader>
             <div className="flex items-center justify-between">
-                <CardTitle>Announcements</CardTitle>
+                <div className="flex items-center gap-4">
+                  <CardTitle>Announcements</CardTitle>
+                  {numSelected > 0 && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="destructive" size="sm" disabled={isDeleting}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete ({numSelected})
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete {numSelected} announcement(s). This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                            {isDeleting ? 'Deleting...' : 'Yes, delete'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
                 <div className="flex items-center gap-4">
                      <Select value={eventId} onValueChange={setEventId} disabled={events.length === 0}>
                         <SelectTrigger className="w-[280px]">
@@ -149,18 +219,32 @@ export default function AnnouncementsList(){
         <CardContent>
             <div className="overflow-hidden rounded-md border">
                 <Table>
-                <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Pinned</TableHead><TableHead>Published</TableHead><TableHead className="w-[1%]"></TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow>
+                    <TableHead className="w-[50px]">
+                         <Checkbox 
+                            checked={numSelected > 0 && numSelected === display.length}
+                            indeterminate={numSelected > 0 && numSelected < display.length}
+                            onCheckedChange={handleSelectAll}
+                         />
+                    </TableHead>
+                    <TableHead>Title</TableHead><TableHead>Status</TableHead><TableHead>Pinned</TableHead><TableHead>Published</TableHead><TableHead className="w-[1%]"></TableHead></TableRow></TableHeader>
                 <TableBody>
                     {isLoadingAnnouncements ? (
                         Array.from({length: 3}).map((_, i) => (
                             <TableRow key={i}>
-                                <TableCell colSpan={5}><Skeleton className="h-8 w-full"/></TableCell>
+                                <TableCell colSpan={6}><Skeleton className="h-8 w-full"/></TableCell>
                             </TableRow>
                         ))
                     ) : display.length === 0 ? (
-                        <TableRow><TableCell colSpan={5} className="h-24 text-center">No announcements for this event.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="h-24 text-center">No announcements for this event.</TableCell></TableRow>
                     ) : display.map(a=> (
-                    <TableRow key={a.id}>
+                    <TableRow key={a.id} data-state={selected.includes(a.id) ? "selected" : ""}>
+                        <TableCell>
+                            <Checkbox 
+                                checked={selected.includes(a.id)}
+                                onCheckedChange={(checked) => handleSelectOne(a.id, !!checked)}
+                            />
+                        </TableCell>
                         <TableCell className="font-medium">{a.title}</TableCell>
                         <TableCell>{statusBadge(a.status)}</TableCell>
                         <TableCell>

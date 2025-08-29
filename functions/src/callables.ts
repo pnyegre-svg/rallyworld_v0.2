@@ -139,3 +139,12 @@ export const pinAnnouncement = functions.region(region).https.onCall(async (data
   await recomputeSummaryFor(uid);
   return { ok: true };
 });
+
+export const deleteAnnouncement = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    const uid = assertAuthed(context);
+    const { eventId, annId } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await db.doc(`events/${eventId}/announcements/${annId}`).delete();
+    await recomputeSummaryFor(uid);
+    return { ok: true };
+});

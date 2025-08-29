@@ -31,3 +31,6 @@ return (await httpsCallable(fns,'publishAnnouncement')(input)).data as any;
 export async function pinAnnouncementFn(input: { eventId:string; annId:string; pinned:boolean }){
 return (await httpsCallable(fns,'pinAnnouncement')(input)).data as any;
 }
+export async function deleteAnnouncementFn(input: { eventId:string; annId:string; }){
+    return (await httpsCallable(fns,'deleteAnnouncement')(input)).data as any;
+}
