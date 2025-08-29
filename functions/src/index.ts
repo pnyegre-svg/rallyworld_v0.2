@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday, processScheduledAnnouncements } from './triggers';
+import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday, processScheduledAnnouncements, onFileUpload } from './triggers';
 import { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard } from './callables';
 
 
@@ -36,4 +36,4 @@ export const midnightRebuild = functions.pubsub
 .timeZone('Etc/UTC')
 .onRun(refreshAllForToday);
 
-export { processScheduledAnnouncements };
+export { processScheduledAnnouncements, onFileUpload };

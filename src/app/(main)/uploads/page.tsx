@@ -48,7 +48,7 @@ export default function UploadsPage() {
   
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     if (!selectedEventId) {
-      toast({ kind: 'error', text: 'Please select an event before uploading files.' });
+      toast({ text: 'Please select an event before uploading files.', kind: 'error' });
       return;
     }
     addFiles(acceptedFiles);
@@ -143,13 +143,13 @@ export default function UploadsPage() {
                 <TabsTrigger value="regulations">Regulations</TabsTrigger>
             </TabsList>
             <TabsContent value="maps" className="mt-4">
-              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} />
             </TabsContent>
             <TabsContent value="bulletins" className="mt-4">
-              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload}/>
             </TabsContent>
             <TabsContent value="regulations" className="mt-4">
-              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload}/>
             </TabsContent>
         </Tabs>
       </CardContent>
@@ -158,7 +158,7 @@ export default function UploadsPage() {
 }
 
 // Helper component to avoid prop drilling and simplify main component
-const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps, getInputProps, isDragActive, uploads}: any) => {
+const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps, getInputProps, isDragActive, uploads, removeUpload}: any) => {
     const UploadItem = ({ upload }: { upload: Upload }) => (
     <div className="flex items-center gap-4 rounded-lg border p-3">
         <FileIcon className="h-6 w-6 text-muted-foreground" />
@@ -173,7 +173,7 @@ const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps
         </div>
         <Button variant="ghost" size="icon" onClick={() => {
             if(upload.state === 'uploading') upload.cancel();
-            // removeUpload(upload.id); // This would need to be passed down
+            removeUpload(upload.id);
         }}>
             <X className="h-4 w-4" />
         </Button>
@@ -190,7 +190,7 @@ const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps
                 </div>
                  {uploads.length > 0 && (
                     <div className="mt-6 space-y-4">
-                        {uploads.map(upload => <UploadItem key={upload.id} upload={upload} />)}
+                        {uploads.map((upload: Upload) => <UploadItem key={upload.id} upload={upload} />)}
                     </div>
                 )}
             </div>
