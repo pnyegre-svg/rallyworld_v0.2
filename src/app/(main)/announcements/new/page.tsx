@@ -35,6 +35,7 @@ const announcementFormSchema = z.object({
 });
 
 type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
+type SubmitAction = 'draft' | 'publish';
 
 export default function NewAnnouncementPage() {
   const router = useRouter();
@@ -46,6 +47,7 @@ export default function NewAnnouncementPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [events, setEvents] = React.useState<EventLite[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
+  const [submitAction, setSubmitAction] = React.useState<SubmitAction>('draft');
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementFormSchema),
@@ -83,7 +85,13 @@ export default function NewAnnouncementPage() {
           audience: data.audience,
           pinned: data.pinned,
         };
-        if (data.publishAt) payload.publishAt = data.publishAt.toISOString();
+        
+        if (submitAction === 'publish') {
+            payload.publishAt = new Date().toISOString();
+        } else if (data.publishAt) {
+            payload.publishAt = data.publishAt.toISOString();
+        }
+
 
         const res:any = await createAnnouncementFn(payload);
         
@@ -98,6 +106,11 @@ export default function NewAnnouncementPage() {
     }
   };
 
+  const handleButtonClick = (action: SubmitAction) => {
+    setSubmitAction(action);
+    form.handleSubmit(onSubmit)();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -106,7 +119,7 @@ export default function NewAnnouncementPage() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={e => e.preventDefault()} className="space-y-6">
              <FormField
                 control={form.control}
                 name="eventId"
@@ -238,8 +251,13 @@ export default function NewAnnouncementPage() {
               )}
             />
             <div className="flex gap-2">
-                <Button type="submit" disabled={isSubmitting || isLoadingEvents} className="bg-accent hover:bg-accent/90">{isSubmitting ? 'Creating...' : 'Create Announcement'}</Button>
-                 <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+                 <Button type="button" onClick={() => handleButtonClick('publish')} disabled={isSubmitting || isLoadingEvents} className="bg-accent hover:bg-accent/90">
+                    {isSubmitting && submitAction === 'publish' ? 'Publishing...' : 'Publish'}
+                </Button>
+                <Button type="button" onClick={() => handleButtonClick('draft')} disabled={isSubmitting || isLoadingEvents} variant="outline">
+                     {isSubmitting && submitAction === 'draft' ? 'Saving...' : 'Save Draft'}
+                </Button>
+                 <Button type="button" variant="ghost" onClick={() => router.back()}>Cancel</Button>
             </div>
           </form>
         </Form>
