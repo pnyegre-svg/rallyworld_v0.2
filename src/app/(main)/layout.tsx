@@ -48,6 +48,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     if (path.startsWith('/announcements/new')) return 'New Announcement';
     if (path.startsWith('/announcements/edit')) return 'Edit Announcement';
     if (path.startsWith('/announcements')) return 'Announcements';
+    if (path.startsWith('/uploads')) return 'File Uploads';
     return 'Rally World';
   };
   
