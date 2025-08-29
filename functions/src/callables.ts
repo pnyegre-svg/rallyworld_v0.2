@@ -1,3 +1,4 @@
+
 import * as functions from 'firebase-functions';
 import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
@@ -67,12 +68,16 @@ export const createAnnouncement = functions.region(region).https.onCall(async (d
       createdBy: uid, createdAt: FieldValue.serverTimestamp(),
     };
     if (when) {
-      base.publishAt = when;
-      status = when.getTime() <= Date.now() ? 'published' : 'scheduled';
-      base.status = status;
-      if (status === 'published') base.publishedAt = FieldValue.serverTimestamp();
+      if (when.getTime() <= Date.now()) {
+        status = 'published';
+        base.publishedAt = FieldValue.serverTimestamp();
+      } else {
+        status = 'scheduled';
+        base.publishAt = when;
+      }
     }
-    if (!base.status) base.status = status;
+    
+    base.status = status;
 
     const ref = await db.collection('events').doc(eventId)
       .collection('announcements').add(clean(base));
