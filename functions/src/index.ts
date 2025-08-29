@@ -3,6 +3,10 @@ import * as functions from 'firebase-functions';
 import { onEntryWrite, onStageWrite, onAnnouncementWrite, onEventWrite, refreshAllForToday, processScheduledAnnouncements } from './triggers';
 import { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard } from './callables';
 import { fileIndexed, fileDeleted } from './storageIndex';
+import {
+  createStage, updateStage, deleteStage,
+  startStage, completeStage, cancelStage, delayStage
+} from './stages';
 
 export const entryChanged = functions.firestore
 .document('events/{eventId}/entries/{entryId}')
@@ -24,7 +28,7 @@ export const eventChanged = functions.firestore
 .onWrite(onEventWrite);
 
 
-export { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard, fileIndexed, fileDeleted };
+export { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, recomputeDashboard, fileIndexed, fileDeleted, createStage, updateStage, deleteStage, startStage, completeStage, cancelStage, delayStage };
 
 
 export const scheduledRefresh = functions.pubsub
