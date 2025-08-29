@@ -87,7 +87,7 @@ export default function NewAnnouncementPage() {
 
         const res:any = await createAnnouncementFn(payload);
         
-        toast({ kind:'success', text: res.status==='published' ? 'Published' : res.status==='scheduled' ? 'Saved draft' });
+        toast({ kind:'success', text: res.status === 'published' ? 'Published' : res.status === 'scheduled' ? 'Scheduled' : 'Saved draft' });
         router.push(`/announcements?event=${data.eventId}`);
     } catch (e: any) {
        const msg = e?.message || e?.code || 'Create failed';
