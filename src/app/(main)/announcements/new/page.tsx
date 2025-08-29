@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -19,9 +20,13 @@ import { createAnnouncementFn } from '@/lib/announcements.client';
 import { CalendarIcon, PinIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-
+import { useUserStore } from '@/hooks/use-user';
+import { listOrganizerEvents, type EventLite } from '@/lib/events';
+import { db } from '@/lib/firebase.client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const announcementFormSchema = z.object({
+  eventId: z.string().min(1, 'You must select an event.'),
   title: z.string().min(3, 'Title must be at least 3 characters.'),
   body: z.string().optional(),
   audience: z.enum(['competitors', 'officials', 'public']),
@@ -34,13 +39,18 @@ type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
 export default function NewAnnouncementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const eventId = searchParams.get('eventId');
+  const { user } = useUserStore();
+  const initialEventId = searchParams.get('eventId');
   const { push: toast } = useToast();
+  
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [events, setEvents] = React.useState<EventLite[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementFormSchema),
     defaultValues: {
+      eventId: initialEventId || '',
       title: '',
       body: '',
       audience: 'competitors',
@@ -49,19 +59,27 @@ export default function NewAnnouncementPage() {
     },
   });
 
-  const onSubmit = async (data: AnnouncementFormValues) => {
-    if (!eventId) {
-        toast({kind:'error', text:'Event ID is missing from the URL.'});
-        return;
+  React.useEffect(() => {
+    if (user?.id) {
+        setIsLoadingEvents(true);
+        listOrganizerEvents(db, user.id).then(fetchedEvents => {
+            setEvents(fetchedEvents);
+            setIsLoadingEvents(false);
+            if (!initialEventId && fetchedEvents.length > 0) {
+                form.setValue('eventId', fetchedEvents[0].id);
+            }
+        });
     }
-    
+  }, [user?.id, initialEventId, form]);
+
+  const onSubmit = async (data: AnnouncementFormValues) => {
     setIsSubmitting(true);
     
     try {
         const payload: any = {
-          eventId,
+          eventId: data.eventId,
           title: (data.title || '').trim(),
-          body:  data.body ?? '',                 // 👈 force string
+          body:  data.body ?? '',
           audience: data.audience,
           pinned: data.pinned,
         };
@@ -69,8 +87,8 @@ export default function NewAnnouncementPage() {
 
         const res:any = await createAnnouncementFn(payload);
         
-        toast({ kind:'success', text: res.status==='published' ? 'Published' : res.status==='scheduled' ? 'Scheduled' : 'Saved draft' });
-        router.push(`/announcements?event=${eventId}`);
+        toast({ kind:'success', text: res.status==='published' ? 'Published' : res.status==='scheduled' ? 'Saved draft' });
+        router.push(`/announcements?event=${data.eventId}`);
     } catch (e: any) {
        const msg = e?.message || e?.code || 'Create failed';
        const details = e?.details ? ` (${JSON.stringify(e.details)})` : '';
@@ -89,6 +107,33 @@ export default function NewAnnouncementPage() {
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+             <FormField
+                control={form.control}
+                name="eventId"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Event</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value} disabled={isLoadingEvents}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder={isLoadingEvents ? "Loading events..." : "Select an event"} />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {!isLoadingEvents && events.length === 0 && (
+                                <SelectItem value="no-events" disabled>No events found</SelectItem>
+                            )}
+                            {events.map((event) => (
+                                <SelectItem key={event.id} value={event.id}>
+                                    {event.title}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
             <FormField
               control={form.control}
               name="title"
@@ -193,7 +238,7 @@ export default function NewAnnouncementPage() {
               )}
             />
             <div className="flex gap-2">
-                <Button type="submit" disabled={isSubmitting || !eventId} className="bg-accent hover:bg-accent/90">{isSubmitting ? 'Creating...' : 'Create Announcement'}</Button>
+                <Button type="submit" disabled={isSubmitting || isLoadingEvents} className="bg-accent hover:bg-accent/90">{isSubmitting ? 'Creating...' : 'Create Announcement'}</Button>
                  <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
             </div>
           </form>
