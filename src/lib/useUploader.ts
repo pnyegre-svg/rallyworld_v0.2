@@ -14,7 +14,7 @@ export interface Upload {
   result?: any;
 }
 
-export function useUploader() {
+export function useUploader(eventId: string, category: string) {
   const [uploads, setUploads] = useState<Upload[]>([]);
 
   const updateProgress = useCallback((id: string, progress: number) => {
@@ -26,10 +26,12 @@ export function useUploader() {
   }, []);
 
   const addFiles = useCallback((files: File[]) => {
+    if (!eventId || !category) return;
+    
     const newUploads: Upload[] = Array.from(files).map(file => {
       const id = `${file.name}-${file.size}-${Date.now()}`;
       
-      const { task, promise } = uploadFile(file, (p) => {
+      const { task, promise } = uploadFile(file, eventId, category, (p) => {
         updateProgress(id, p.progress);
       });
 
@@ -55,11 +57,15 @@ export function useUploader() {
     });
 
     setUploads(prev => [...prev, ...newUploads]);
-  }, [updateProgress, updateState]);
+  }, [eventId, category, updateProgress, updateState]);
   
   const removeUpload = useCallback((id: string) => {
     setUploads(prev => prev.filter(u => u.id !== id));
   }, []);
 
-  return { uploads, addFiles, removeUpload };
+  const clearUploads = useCallback(() => {
+    setUploads([]);
+  }, []);
+
+  return { uploads, addFiles, removeUpload, clearUploads };
 }

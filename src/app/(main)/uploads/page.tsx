@@ -11,36 +11,76 @@ import { useDropzone } from 'react-dropzone';
 import { listAllFiles, deleteObject } from '@/lib/storage.client';
 import { useToast } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
+import { listOrganizerEvents, type EventLite } from '@/lib/events';
+import { useUserStore } from '@/hooks/use-user';
+import { db } from '@/lib/firebase.client';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type StoredFile = { name: string; url: string; path: string };
+type FileCategory = 'maps' | 'bulletins' | 'regulations';
 
 export default function UploadsPage() {
-  const { uploads, addFiles, removeUpload } = useUploader();
+  const { user } = useUserStore();
+  const [events, setEvents] = React.useState<EventLite[]>([]);
+  const [selectedEventId, setSelectedEventId] = React.useState<string>('');
+  const [activeTab, setActiveTab] = React.useState<FileCategory>('maps');
+  
+  const { uploads, addFiles, removeUpload, clearUploads } = useUploader(selectedEventId, activeTab);
   const { push: toast } = useToast();
   const [storedFiles, setStoredFiles] = React.useState<StoredFile[]>([]);
   const [loadingFiles, setLoadingFiles] = React.useState(true);
+  const [loadingEvents, setLoadingEvents] = React.useState(true);
 
+  // Fetch events
+  React.useEffect(() => {
+    if (user?.id) {
+      setLoadingEvents(true);
+      listOrganizerEvents(db, user.id).then(fetchedEvents => {
+        setEvents(fetchedEvents);
+        if (fetchedEvents.length > 0) {
+          setSelectedEventId(fetchedEvents[0].id);
+        }
+        setLoadingEvents(false);
+      });
+    }
+  }, [user?.id]);
+  
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
+    if (!selectedEventId) {
+      toast({ kind: 'error', text: 'Please select an event before uploading files.' });
+      return;
+    }
     addFiles(acceptedFiles);
-  }, [addFiles]);
+  }, [addFiles, selectedEventId, toast]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   const fetchFiles = React.useCallback(async () => {
+    if (!selectedEventId || !activeTab) {
+        setStoredFiles([]);
+        setLoadingFiles(false);
+        return;
+    }
     setLoadingFiles(true);
     try {
-        const files = await listAllFiles();
+        const files = await listAllFiles(selectedEventId, activeTab);
         setStoredFiles(files);
     } catch(e: any) {
-        toast({kind: 'error', text: e.message || 'Failed to list files.'});
+        if (e.code !== 'storage/object-not-found') { // Ignore folder-not-found errors
+            toast({kind: 'error', text: e.message || 'Failed to list files.'});
+        } else {
+            setStoredFiles([]); // Folder doesn't exist, so no files
+        }
     } finally {
         setLoadingFiles(false);
     }
-  }, [toast]);
+  }, [toast, selectedEventId, activeTab]);
 
   React.useEffect(() => {
     fetchFiles();
-  }, [fetchFiles]);
+    clearUploads(); // Clear completed uploads when tab or event changes
+  }, [fetchFiles, clearUploads]);
   
   const handleDelete = async (file: StoredFile) => {
     try {
@@ -74,60 +114,116 @@ export default function UploadsPage() {
   );
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle>Upload Files</CardTitle>
-          <CardDescription>Drag and drop files or click to browse.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div {...getRootProps()} className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
-            <input {...getInputProps()} />
-            <UploadCloud className="h-12 w-12 text-muted-foreground" />
-            <p className="mt-4 text-muted-foreground">{isDragActive ? 'Drop the files here...' : 'Drag files here, or click to select'}</p>
-          </div>
-          {uploads.length > 0 && (
-            <div className="mt-6 space-y-4">
-                {uploads.map(upload => <UploadItem key={upload.id} upload={upload} />)}
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+            <div>
+                 <CardTitle>Manage Event Files</CardTitle>
+                 <CardDescription>Upload and manage documents for your events.</CardDescription>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Uploaded Files</CardTitle>
-          <CardDescription>Manage your previously uploaded files.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {loadingFiles ? (
-                <div className="space-y-2">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-12 w-full" />
-                </div>
-            ) : storedFiles.length > 0 ? (
-                <ul className="space-y-2">
-                    {storedFiles.map(file => (
-                        <li key={file.path} className="flex items-center gap-3 rounded-md border p-2">
-                            <FileIcon className="h-5 w-5 text-muted-foreground" />
-                            <span className="flex-1 text-sm truncate">{file.name}</span>
-                            <Button asChild variant="ghost" size="icon">
-                                <a href={file.url} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4" />
-                                </a>
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(file)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p className="text-center text-muted-foreground py-10">No files uploaded yet.</p>
-            )}
-        </CardContent>
-      </Card>
+            <Select value={selectedEventId} onValueChange={setSelectedEventId} disabled={loadingEvents || events.length === 0}>
+                <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder={loadingEvents ? "Loading..." : "Select an event"} />
+                </SelectTrigger>
+                <SelectContent>
+                {events.map(event => (
+                    <SelectItem key={event.id} value={event.id}>
+                    {event.title}
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FileCategory)} className="w-full">
+            <TabsList>
+                <TabsTrigger value="maps">Maps</TabsTrigger>
+                <TabsTrigger value="bulletins">Bulletins</TabsTrigger>
+                <TabsTrigger value="regulations">Regulations</TabsTrigger>
+            </TabsList>
+            <TabsContent value="maps" className="mt-4">
+              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+            </TabsContent>
+            <TabsContent value="bulletins" className="mt-4">
+              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+            </TabsContent>
+            <TabsContent value="regulations" className="mt-4">
+              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} />
+            </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Helper component to avoid prop drilling and simplify main component
+const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps, getInputProps, isDragActive, uploads}: any) => {
+    const UploadItem = ({ upload }: { upload: Upload }) => (
+    <div className="flex items-center gap-4 rounded-lg border p-3">
+        <FileIcon className="h-6 w-6 text-muted-foreground" />
+        <div className="flex-1">
+            <p className="text-sm font-medium truncate">{upload.file.name}</p>
+            <Progress value={upload.progress} className="h-2 mt-1" />
+            <p className="text-xs text-muted-foreground mt-1">
+                 {upload.state === 'uploading' && `Uploading... ${Math.round(upload.progress)}%`}
+                 {upload.state === 'success' && <span className="flex items-center text-green-500"><CheckCircle className="h-3 w-3 mr-1"/>Complete</span>}
+                 {upload.state === 'error' && <span className="flex items-center text-red-500"><AlertCircle className="h-3 w-3 mr-1"/>Error: {upload.error?.message}</span>}
+            </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => {
+            if(upload.state === 'uploading') upload.cancel();
+            // removeUpload(upload.id); // This would need to be passed down
+        }}>
+            <X className="h-4 w-4" />
+        </Button>
     </div>
   );
+
+    return (
+        <div className="grid gap-6 md:grid-cols-2">
+            <div>
+                 <div {...getRootProps()} className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}>
+                    <input {...getInputProps()} />
+                    <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                    <p className="mt-4 text-muted-foreground">{isDragActive ? 'Drop the files here...' : 'Drag files here, or click to select'}</p>
+                </div>
+                 {uploads.length > 0 && (
+                    <div className="mt-6 space-y-4">
+                        {uploads.map(upload => <UploadItem key={upload.id} upload={upload} />)}
+                    </div>
+                )}
+            </div>
+             <div>
+                {isLoading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                ) : storedFiles.length > 0 ? (
+                    <ul className="space-y-2">
+                        {storedFiles.map((file: StoredFile) => (
+                            <li key={file.path} className="flex items-center gap-3 rounded-md border p-2">
+                                <FileIcon className="h-5 w-5 text-muted-foreground" />
+                                <span className="flex-1 text-sm truncate">{file.name}</span>
+                                <Button asChild variant="ghost" size="icon">
+                                    <a href={file.url} target="_blank" rel="noopener noreferrer">
+                                        <ExternalLink className="h-4 w-4" />
+                                    </a>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => handleDelete(file)}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <div className="flex items-center justify-center h-full">
+                        <p className="text-center text-muted-foreground py-10">No files uploaded to this category.</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    )
 }

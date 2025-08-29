@@ -6,14 +6,19 @@ import { auth } from './firebase.client';
 
 export type ProgressHandler = (p: { loaded: number, total: number, progress: number, snapshot: UploadTaskSnapshot }) => void;
 
-function getRoot(): StorageReference {
+function getRoot(eventId?: string, category?: string): StorageReference {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('User not authenticated');
-  return ref(getStorage(getFirebaseApp()), `uploads/${uid}`);
+  
+  let path = `uploads/${uid}`;
+  if (eventId) path += `/${eventId}`;
+  if (category) path += `/${category}`;
+
+  return ref(getStorage(getFirebaseApp()), path);
 }
 
-export function upload(file: File, onProgress?: ProgressHandler): { task: UploadTask, promise: Promise<any> } {
-  const fileRef = ref(getRoot(), file.name);
+export function upload(file: File, eventId: string, category: string, onProgress?: ProgressHandler): { task: UploadTask, promise: Promise<any> } {
+  const fileRef = ref(getRoot(eventId, category), file.name);
   const task = uploadBytesResumable(fileRef, file);
   
   const promise = new Promise((resolve, reject) => {
@@ -32,8 +37,8 @@ export function upload(file: File, onProgress?: ProgressHandler): { task: Upload
   return { task, promise };
 }
 
-export async function listAllFiles() {
-  const root = getRoot();
+export async function listAllFiles(eventId: string, category: string) {
+  const root = getRoot(eventId, category);
   const res = await listAll(root);
   return Promise.all(res.items.map(async (itemRef) => {
     const [url, meta] = await Promise.all([
