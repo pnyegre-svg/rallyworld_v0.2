@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/lib/useAuth';
-import { useUserDoc } from '@/lib/useUserDoc';
+import { useUserStore } from '@/hooks/use-user';
 import { listOrganizerEvents } from '@/lib/events';
 import { Announcement, listAnnouncements } from '@/lib/announcements.client';
 import Link from 'next/link';
@@ -20,8 +19,7 @@ import { db } from '@/lib/firebase.client';
 const LS_KEY = 'announcements:lastEvent';
 
 export default function AnnouncementsList(){
-  const { user, loading } = useAuth();
-  const userDoc = useUserDoc(user?.uid);
+  const { user, isAuthReady } = useUserStore();
   const { push } = useToast();
   const [events,setEvents] = useState<{id:string; title:string}[]>([]);
   const [eventId,setEventId] = useState('');
@@ -31,10 +29,10 @@ export default function AnnouncementsList(){
 
   // Load events and restore last-used event from localStorage if valid
   useEffect(()=>{ 
-    if(!user?.uid) return; 
+    if(!user?.id) return; 
     setIsLoadingEvents(true);
     (async()=>{
-      const evs = await listOrganizerEvents(db, user.uid); 
+      const evs = await listOrganizerEvents(db, user.id); 
       setEvents(evs as any);
       if (!eventId) {
         const stored = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) : null;
@@ -43,7 +41,7 @@ export default function AnnouncementsList(){
       }
       setIsLoadingEvents(false);
     })(); 
-  },[user?.uid, eventId]);
+  },[user?.id, eventId]);
 
   // Persist current selection
   useEffect(()=>{ 
@@ -67,9 +65,9 @@ export default function AnnouncementsList(){
     [eventId]
 );
 
-  const canView = useMemo(()=> user && (userDoc?.role==='organizer' || userDoc?.role==='admin'), [user,userDoc]);
+  const canView = useMemo(()=> user && (user.currentRole==='organizer' || user.email==='admin@rally.world'), [user]);
   
-  if (loading || isLoadingEvents) return (
+  if (!isAuthReady || isLoadingEvents) return (
     <Card>
         <CardHeader>
             <CardTitle>Announcements</CardTitle>
