@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { EventHeader } from './event-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getEvent, type Event } from '@/lib/events';
@@ -17,12 +17,16 @@ import { listAnnouncements, type Announcement } from '@/lib/announcements.client
 
 export default function ViewEventPage() {
   const params = useParams();
-  const eventId = params.id as string;
+  const searchParams = useSearchParams();
+  const eventId = params.eventId as string;
   const [event, setEvent] = React.useState<Event | null>(null);
   const [announcements, setAnnouncements] = React.useState<Announcement[]>([]);
   const [organizer, setOrganizer] = React.useState<User | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [activeTab, setActiveTab] = React.useState('results');
+  
+  const initialTab = searchParams.get('tab') || 'results';
+  const [activeTab, setActiveTab] = React.useState(initialTab);
+  
   const { user } = useUserStore();
   const { push: toast } = useToast();
   const router = useRouter();
@@ -35,7 +39,7 @@ export default function ViewEventPage() {
         const eventData = await getEvent(db, eventId);
          if (eventData) {
             setEvent(eventData);
-            if (eventData.livestreamLink) {
+            if (eventData.livestreamLink && !searchParams.get('tab')) {
                 setActiveTab('livestream');
             }
 
@@ -58,16 +62,18 @@ export default function ViewEventPage() {
       };
       fetchEventData();
     }
-  }, [eventId, router, toast]);
+  }, [eventId, router, toast, searchParams]);
 
 
   if (loading) {
     return (
-        <div className="space-y-8">
-            <Skeleton className="h-[450px] w-full rounded-2xl" />
-            <div className="space-y-4">
-                <Skeleton className="h-10 w-1/2" />
-                <Skeleton className="h-64 w-full" />
+        <div className="container py-8">
+            <div className="space-y-8">
+                <Skeleton className="h-[450px] w-full rounded-2xl" />
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-1/2" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
             </div>
         </div>
     )
@@ -75,11 +81,11 @@ export default function ViewEventPage() {
 
   if (!event) {
     // This will usually be handled by the loading state and redirect, but it's a good fallback.
-    return <div>Event not found.</div>;
+    return <div className="container py-8">Event not found.</div>;
   }
 
   return (
-    <div className="w-full mx-auto">
+    <div className="container w-full py-8">
         <EventHeader 
             event={event} 
             organizerName={organizer?.organizerProfile?.name} 

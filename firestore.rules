@@ -1,28 +1,59 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
     match /users/{userId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      allow read: if isAuthed();
+      allow write: if isOwner(userId);
     }
+    
+    match /competitors/{competitorId} {
+        allow read: if true;
+        allow write: if isAuthed(); // Or more specific rules, e.g. admins
+    }
+
     match /events/{eventId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == resource.data.organizerId;
+      allow read: if true; // Public read access
+      allow write: if isAuthed() && resource.data.organizerId == request.auth.uid;
+      
+      match /entries/{entryId} {
+        allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+        allow write: if isAuthed(); // Let cloud functions handle authZ
+      }
+      
+      match /stages/{stageId} {
+        allow read: if true; // Public read access
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
+      
+      match /announcements/{annId} {
+        allow read: if resource.data.status == 'published';
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
+
+      match /files/{fileId} {
+        allow read: if true;
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      }
     }
-    match /events/{eventId}/stages/{stageId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
-    }
-    match /events/{eventId}/files/{fileId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
-    }
+    
     match /dashboard_summary/{userId} {
-      allow read: if request.auth.uid == userId;
-      allow write: if false; // only backend can write
+      allow read: if isOwner(userId);
+      // Writes should only be from trusted server environments (cloud functions)
+      allow write: if false; 
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if false; // Admin/internal only
+      allow write: if false; // Functions only
     }
   }
 }
