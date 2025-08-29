@@ -50,6 +50,7 @@
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
     "next-themes": "^0.3.0",
+    "papaparse": "^5.4.1",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -65,6 +66,7 @@
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "firebase-admin": "^12.2.0",

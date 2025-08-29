@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -19,6 +18,7 @@ import {
   Calendar,
   Megaphone,
   Upload,
+  Route,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -41,6 +41,7 @@ export function MainNav() {
   const menuItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
     { href: '/myevents', label: 'My Events', icon: Calendar, roles: ['fan', 'competitor', 'timekeeper', 'organizer', 'stage_commander', 'scrutineer', 'event_secretary', 'communications_officer', 'competitor_relations_officer'] },
+    { href: '/stages', label: 'Manage Stages', icon: Route, roles: ['organizer'] },
     { href: '/entries', label: 'Manage Entries', icon: Users, roles: ['organizer'] },
     { href: '/announcements', label: 'Announcements', icon: Megaphone, roles: ['organizer'] },
     { href: '/uploads', label: 'Uploads', icon: Upload, roles: ['organizer'] },
