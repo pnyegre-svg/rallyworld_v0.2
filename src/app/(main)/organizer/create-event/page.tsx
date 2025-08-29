@@ -50,7 +50,7 @@ import { Separator } from '@/components/ui/separator';
 import { ActionCard } from '@/components/ui/action-card';
 import { uploadFile } from '@/lib/storage';
 import { db } from '@/lib/firebase.client';
-import { romanianCities } from '@/lib/romanian-cities';
+import { romanianCountiesWithCities } from '@/lib/romanian-cities';
 
 
 export default function CreateEventPage() {
@@ -359,41 +359,39 @@ export default function CreateEventPage() {
                                     !field.value && "text-muted-foreground"
                                   )}
                                 >
-                                  {field.value
-                                    ? romanianCities.find(
-                                        (city) => city === field.value
-                                      )
-                                    : "Select city"}
+                                  {field.value || "Select city"}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                               </FormControl>
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                <Command>
-                                <CommandInput placeholder="Search city..." />
+                                <CommandInput placeholder="Search city or county..." />
                                 <CommandList>
                                   <CommandEmpty>No city found.</CommandEmpty>
-                                  <CommandGroup>
-                                    {romanianCities.map((city) => (
-                                      <CommandItem
-                                        value={city}
-                                        key={city}
-                                        onSelect={() => {
-                                          form.setValue("hqLocation", city)
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            city === field.value
-                                              ? "opacity-100"
-                                              : "opacity-0"
-                                          )}
-                                        />
-                                        {city}
-                                      </CommandItem>
-                                    ))}
-                                  </CommandGroup>
+                                  {romanianCountiesWithCities.map((group) => (
+                                    <CommandGroup key={group.county} heading={group.county}>
+                                        {group.cities.map((city) => (
+                                        <CommandItem
+                                            value={`${city}, ${group.county}`}
+                                            key={`${city}-${group.county}`}
+                                            onSelect={(currentValue) => {
+                                                form.setValue("hqLocation", currentValue === field.value ? "" : currentValue)
+                                            }}
+                                        >
+                                            <Check
+                                            className={cn(
+                                                "mr-2 h-4 w-4",
+                                                `${city}, ${group.county}` === field.value
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                            />
+                                            {city}
+                                        </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                  ))}
                                 </CommandList>
                               </Command>
                             </PopoverContent>
