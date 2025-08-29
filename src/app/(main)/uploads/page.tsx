@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { useUploader, type Upload } from '@/lib/useUploader';
 import { UploadCloud, File as FileIcon, X, Trash2, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
-import { listAllFiles, deleteObject } from '@/lib/storage.client';
+import { deleteObject } from '@/lib/storage.client';
 import { useToast } from '@/components/ui/toaster';
 import { Skeleton } from '@/components/ui/skeleton';
 import { listOrganizerEvents, type EventLite } from '@/lib/events';
@@ -16,8 +16,11 @@ import { useUserStore } from '@/hooks/use-user';
 import { db } from '@/lib/firebase.client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { listFileMeta, type FileMeta } from '@/lib/filesIndex.client';
+import { getDownloadURL, ref } from 'firebase/storage';
+import { storage } from '@/lib/firebase.client';
 
-type StoredFile = { name: string; url: string; path: string };
+
 type FileCategory = 'maps' | 'bulletins' | 'regulations';
 
 export default function UploadsPage() {
@@ -28,7 +31,7 @@ export default function UploadsPage() {
   
   const { uploads, addFiles, removeUpload, clearUploads } = useUploader(selectedEventId, activeTab);
   const { push: toast } = useToast();
-  const [storedFiles, setStoredFiles] = React.useState<StoredFile[]>([]);
+  const [storedFiles, setStoredFiles] = React.useState<FileMeta[]>([]);
   const [loadingFiles, setLoadingFiles] = React.useState(true);
   const [loadingEvents, setLoadingEvents] = React.useState(true);
 
@@ -64,8 +67,8 @@ export default function UploadsPage() {
     }
     setLoadingFiles(true);
     try {
-        const files = await listAllFiles(selectedEventId, activeTab);
-        setStoredFiles(files);
+        const { items } = await listFileMeta(selectedEventId, activeTab);
+        setStoredFiles(items);
     } catch(e: any) {
         if (e.code !== 'storage/object-not-found') { // Ignore folder-not-found errors
             toast({kind: 'error', text: e.message || 'Failed to list files.'});
@@ -82,36 +85,22 @@ export default function UploadsPage() {
     clearUploads(); // Clear completed uploads when tab or event changes
   }, [fetchFiles, clearUploads]);
   
-  const handleDelete = async (file: StoredFile) => {
+  const handleDelete = async (file: FileMeta) => {
     try {
         await deleteObject(file.path);
-        setStoredFiles(prev => prev.filter(f => f.path !== file.path));
+        // Optimistically remove from UI
+        setStoredFiles(prev => prev.filter(f => f.id !== file.id));
         toast({ kind: 'success', text: `Deleted ${file.name}` });
     } catch (e: any) {
         toast({ kind: 'error', text: e.message || 'Failed to delete file.' });
+        // Re-fetch to get correct state if delete failed
+        fetchFiles();
     }
   };
 
-  const UploadItem = ({ upload }: { upload: Upload }) => (
-    <div className="flex items-center gap-4 rounded-lg border p-3">
-        <FileIcon className="h-6 w-6 text-muted-foreground" />
-        <div className="flex-1">
-            <p className="text-sm font-medium truncate">{upload.file.name}</p>
-            <Progress value={upload.progress} className="h-2 mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">
-                 {upload.state === 'uploading' && `Uploading... ${Math.round(upload.progress)}%`}
-                 {upload.state === 'success' && <span className="flex items-center text-green-500"><CheckCircle className="h-3 w-3 mr-1"/>Complete</span>}
-                 {upload.state === 'error' && <span className="flex items-center text-red-500"><AlertCircle className="h-3 w-3 mr-1"/>Error: {upload.error?.message}</span>}
-            </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => {
-            if(upload.state === 'uploading') upload.cancel();
-            removeUpload(upload.id);
-        }}>
-            <X className="h-4 w-4" />
-        </Button>
-    </div>
-  );
+  const handleUploadSuccess = () => {
+    fetchFiles(); // Re-fetch files after a successful upload
+  }
 
   return (
     <Card>
@@ -143,13 +132,13 @@ export default function UploadsPage() {
                 <TabsTrigger value="regulations">Regulations</TabsTrigger>
             </TabsList>
             <TabsContent value="maps" className="mt-4">
-              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} />
+              <FileCategoryContent key={`maps-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
             </TabsContent>
             <TabsContent value="bulletins" className="mt-4">
-              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload}/>
+              <FileCategoryContent key={`bulletins-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
             </TabsContent>
             <TabsContent value="regulations" className="mt-4">
-              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload}/>
+              <FileCategoryContent key={`regulations-${selectedEventId}`} isLoading={loadingFiles} storedFiles={storedFiles} handleDelete={handleDelete} getRootProps={getRootProps} getInputProps={getInputProps} isDragActive={isDragActive} uploads={uploads} removeUpload={removeUpload} onUploadSuccess={handleUploadSuccess} />
             </TabsContent>
         </Tabs>
       </CardContent>
@@ -158,27 +147,63 @@ export default function UploadsPage() {
 }
 
 // Helper component to avoid prop drilling and simplify main component
-const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps, getInputProps, isDragActive, uploads, removeUpload}: any) => {
-    const UploadItem = ({ upload }: { upload: Upload }) => (
-    <div className="flex items-center gap-4 rounded-lg border p-3">
-        <FileIcon className="h-6 w-6 text-muted-foreground" />
-        <div className="flex-1">
-            <p className="text-sm font-medium truncate">{upload.file.name}</p>
-            <Progress value={upload.progress} className="h-2 mt-1" />
-            <p className="text-xs text-muted-foreground mt-1">
-                 {upload.state === 'uploading' && `Uploading... ${Math.round(upload.progress)}%`}
-                 {upload.state === 'success' && <span className="flex items-center text-green-500"><CheckCircle className="h-3 w-3 mr-1"/>Complete</span>}
-                 {upload.state === 'error' && <span className="flex items-center text-red-500"><AlertCircle className="h-3 w-3 mr-1"/>Error: {upload.error?.message}</span>}
-            </p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={() => {
-            if(upload.state === 'uploading') upload.cancel();
-            removeUpload(upload.id);
-        }}>
-            <X className="h-4 w-4" />
-        </Button>
-    </div>
-  );
+const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps, getInputProps, isDragActive, uploads, removeUpload, onUploadSuccess}: any) => {
+
+    const UploadItem = ({ upload }: { upload: Upload }) => {
+       React.useEffect(() => {
+        if (upload.state === 'success') {
+            onUploadSuccess();
+        }
+       }, [upload.state])
+    
+        return (
+            <div className="flex items-center gap-4 rounded-lg border p-3">
+                <FileIcon className="h-6 w-6 text-muted-foreground" />
+                <div className="flex-1">
+                    <p className="text-sm font-medium truncate">{upload.file.name}</p>
+                    <Progress value={upload.progress} className="h-2 mt-1" />
+                    <p className="text-xs text-muted-foreground mt-1">
+                        {upload.state === 'uploading' && `Uploading... ${Math.round(upload.progress)}%`}
+                        {upload.state === 'success' && <span className="flex items-center text-green-500"><CheckCircle className="h-3 w-3 mr-1"/>Complete</span>}
+                        {upload.state === 'error' && <span className="flex items-center text-red-500"><AlertCircle className="h-3 w-3 mr-1"/>Error: {upload.error?.message}</span>}
+                    </p>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => {
+                    if(upload.state === 'uploading') upload.cancel();
+                    removeUpload(upload.id);
+                }}>
+                    <X className="h-4 w-4" />
+                </Button>
+            </div>
+        );
+    };
+
+    const StoredFileItem = ({file}: {file: FileMeta}) => {
+        const [url, setUrl] = React.useState<string | null>(null);
+
+        React.useEffect(() => {
+            getDownloadURL(ref(storage, file.path))
+                .then(setUrl)
+                .catch(console.error);
+        }, [file.path]);
+
+        return (
+             <li key={file.id} className="flex items-center gap-3 rounded-md border p-2">
+                <FileIcon className="h-5 w-5 text-muted-foreground" />
+                <span className="flex-1 text-sm truncate">{file.name}</span>
+                {url && (
+                    <Button asChild variant="ghost" size="icon">
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="h-4 w-4" />
+                        </a>
+                    </Button>
+                )}
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(file)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+            </li>
+        )
+    }
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -203,19 +228,8 @@ const FileCategoryContent = ({isLoading, storedFiles, handleDelete, getRootProps
                     </div>
                 ) : storedFiles.length > 0 ? (
                     <ul className="space-y-2">
-                        {storedFiles.map((file: StoredFile) => (
-                            <li key={file.path} className="flex items-center gap-3 rounded-md border p-2">
-                                <FileIcon className="h-5 w-5 text-muted-foreground" />
-                                <span className="flex-1 text-sm truncate">{file.name}</span>
-                                <Button asChild variant="ghost" size="icon">
-                                    <a href={file.url} target="_blank" rel="noopener noreferrer">
-                                        <ExternalLink className="h-4 w-4" />
-                                    </a>
-                                </Button>
-                                <Button variant="ghost" size="icon" onClick={() => handleDelete(file)}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </li>
+                        {storedFiles.map((file: FileMeta) => (
+                           <StoredFileItem key={file.id} file={file} />
                         ))}
                     </ul>
                 ) : (
