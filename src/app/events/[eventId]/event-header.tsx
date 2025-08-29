@@ -98,6 +98,25 @@ export function EventHeader({ event, organizerName, setEvent, activeTab, setActi
     setEventUrl(window.location.href);
   }, []);
 
+  const handleShare = async () => {
+    const shareData = {
+        title: event.title,
+        text: `Check out this rally event: ${event.title}`,
+        url: eventUrl,
+    };
+    if (navigator.share && navigator.canShare(shareData)) {
+        try {
+            await navigator.share(shareData);
+        } catch (error) {
+            console.error('Error sharing:', error);
+        }
+    } else {
+        // Fallback for desktop or unsupported browsers
+        copyToClipboard();
+    }
+  };
+
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(eventUrl);
     toast({
@@ -200,6 +219,7 @@ export function EventHeader({ event, organizerName, setEvent, activeTab, setActi
                 data-ai-hint="rally car racing"
                 fill
                 className="object-cover"
+                priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
             
@@ -261,33 +281,9 @@ export function EventHeader({ event, organizerName, setEvent, activeTab, setActi
                         <Youtube className="mr-2" /> Watch Live
                     </Button>
                 )}
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50">
-                            <Share2 className="mr-2" /> Share
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                            <a href={createShareLink('facebook')} target="_blank" rel="noopener noreferrer">
-                                <FacebookIcon className="mr-2 h-4 w-4" /> Facebook
-                            </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href={createShareLink('twitter')} target="_blank" rel="noopener noreferrer">
-                                <TwitterIcon className="mr-2 h-4 w-4" /> Twitter / X
-                            </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <a href={createShareLink('whatsapp')} target="_blank" rel="noopener noreferrer">
-                                <WhatsAppIcon className="mr-2 h-4 w-4" /> WhatsApp
-                            </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={copyToClipboard}>
-                            <Copy className="mr-2 h-4 w-4" /> Copy Link
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <Button variant="outline" className="bg-black/20 border-white/20 hover:bg-black/50" onClick={handleShare}>
+                    <Share2 className="mr-2" /> Share
+                </Button>
                 {isOwner ? (
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

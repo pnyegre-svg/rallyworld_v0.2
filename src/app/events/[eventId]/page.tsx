@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import type { Metadata } from 'next';
 import { EventHeader } from './event-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getEvent, type Event } from '@/lib/events';
@@ -13,6 +14,66 @@ import { getUser } from '@/lib/users';
 import type { User } from '@/lib/data';
 import { db } from '@/lib/firebase.client';
 import { listAnnouncements, type Announcement } from '@/lib/announcements.client';
+import { getResizedImageUrl } from '@/lib/utils';
+import { doc, getDoc } from 'firebase/firestore';
+
+
+export async function generateMetadata({ params }: { params: { eventId: string } }): Promise<Metadata> {
+  const eventId = params.eventId;
+  
+  try {
+    // This runs on the server, so we can't use the client-side `getEvent` directly
+    // which uses the client db instance. We'll fetch directly.
+    const eventDoc = await getDoc(doc(db, 'events', eventId));
+
+    if (!eventDoc.exists()) {
+        return {
+            title: 'Event Not Found',
+            description: 'The event you are looking for does not exist.',
+        };
+    }
+    const event = eventDoc.data() as Event;
+    const from = event.dates.from.toDate ? event.dates.from.toDate() : new Date(event.dates.from);
+    
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+    const coverImage = getResizedImageUrl(event.coverImage, '1200x630') || `${siteUrl}/og-event.png`;
+
+    const description = `${event.hqLocation} • ${from.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+    return {
+        title: `${event.title} | Rally World`,
+        description: description,
+        openGraph: {
+            title: event.title,
+            description: description,
+            url: `${siteUrl}/events/${eventId}`,
+            siteName: 'Rally World',
+            images: [
+                {
+                    url: coverImage,
+                    width: 1200,
+                    height: 630,
+                    alt: event.title,
+                },
+            ],
+            locale: 'en_US',
+            type: 'website',
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: event.title,
+            description: description,
+            images: [coverImage],
+        },
+    };
+  } catch (error) {
+      console.error("Error generating metadata:", error);
+      return {
+          title: 'Rally World Event',
+          description: 'Join the excitement at a rally event near you.'
+      }
+  }
+}
 
 
 export default function ViewEventPage() {
