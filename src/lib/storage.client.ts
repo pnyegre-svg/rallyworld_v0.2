@@ -11,6 +11,7 @@ function getRoot(eventId?: string, category?: string): StorageReference {
   if (!uid) throw new Error('User not authenticated');
   
   // New path structure to match the storageIndex.ts trigger
+  // e.g., events/EVENT_ID/docs/maps/filename.pdf
   let path = `events/${eventId}/docs`;
   if (category) path += `/${category}`;
 
@@ -35,18 +36,6 @@ export function upload(file: File, eventId: string, category: string, onProgress
   });
 
   return { task, promise };
-}
-
-export async function listAllFiles(eventId: string, category: string) {
-  const root = getRoot(eventId, category);
-  const res = await listAll(root);
-  return Promise.all(res.items.map(async (itemRef) => {
-    const [url, meta] = await Promise.all([
-        getDownloadURL(itemRef),
-        itemRef.fullPath,
-    ]);
-    return { name: itemRef.name, url, path: meta };
-  }));
 }
 
 export async function deleteObject(path: string) {
