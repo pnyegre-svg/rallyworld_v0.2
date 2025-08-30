@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { auth } from '@/lib/firebase.client';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, type User } from 'firebase/auth';
 import { UserNav } from '@/components/user-nav';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { Bell } from 'lucide-react';
 
 export default function LandingPage() {
   const [user, setUser] = React.useState<User | null>(null);
@@ -17,15 +19,11 @@ export default function LandingPage() {
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        router.push('/dashboard');
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
+      setUser(currentUser);
+      setLoading(false);
     });
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (
@@ -40,6 +38,21 @@ export default function LandingPage() {
         </div>
     )
   }
+  
+  if (user) {
+    router.push('/dashboard');
+    return (
+       <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
+            <Image
+              src="/RW_transp.svg"
+              alt="Rally World Logo"
+              width={80}
+              height={80}
+              className="animate-pulse"
+            />
+        </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
@@ -48,15 +61,26 @@ export default function LandingPage() {
           <Image src="/RW_txt5.svg" alt="Rally World Logo" width={120} height={35} />
           <span className="sr-only">Rally World</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          
-              <Button asChild variant="ghost">
-                <Link href="/auth/sign-in">Sign In</Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
+          {user ? (
+            <>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Bell className="h-5 w-5" />
+                <span className="sr-only">Notifications</span>
               </Button>
-              <Button asChild className="bg-accent hover:bg-accent/90">
-                <Link href="/auth/sign-up">Sign Up</Link>
-              </Button>
-            
+              <UserNav />
+              <ThemeToggle />
+            </>
+          ) : (
+              <>
+                <Button asChild variant="ghost">
+                  <Link href="/auth/sign-in">Sign In</Link>
+                </Button>
+                <Button asChild className="bg-accent hover:bg-accent/90">
+                  <Link href="/auth/sign-up">Sign Up</Link>
+                </Button>
+              </>
+          )}
         </nav>
       </header>
       <main className="flex-1">
