@@ -97,7 +97,7 @@ export default function MyEventsPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.map(event => (
                     <Card key={event.id} className="overflow-hidden shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 flex flex-col">
-                        <Link href={`/organizer/event/view/${event.id}`} className="block relative h-48 w-full group">
+                        <Link href={`/events/${event.id}`} className="block relative h-48 w-full group">
                             <Image
                                 src={getResizedImageUrl(event.coverImage, '400x200') || `https://picsum.photos/seed/${event.id}/400/200`}
                                 alt={event.title}
@@ -131,7 +131,7 @@ export default function MyEventsPage() {
                            </div>
                             <div className="mt-4 flex gap-2">
                                  <Button asChild variant="outline" size="sm" className="w-full relative z-10">
-                                    <Link href={`/organizer/event/view/${event.id}`}>
+                                    <Link href={`/events/${event.id}`}>
                                         <Eye className="mr-2 h-4 w-4" /> View
                                     </Link>
                                 </Button>
