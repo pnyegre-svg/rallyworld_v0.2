@@ -64,7 +64,7 @@ export default function LandingPage() {
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <Image
-                src="https://picsum.photos/1200/800"
+                src="https://images.unsplash.com/photo-1548504240-3dd72f99dc72?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxyYWxseXxlbnwwfHx8fDE3NTY1MzI0MTV8MA&ixlib=rb-4.1.0&q=80&w=1080"
                 alt="Rally Car"
                 data-ai-hint="rally car racing"
                 width={1200}
