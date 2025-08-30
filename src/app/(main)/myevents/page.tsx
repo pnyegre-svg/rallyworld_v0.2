@@ -8,9 +8,20 @@ import {
   CardContent,
   CardHeader,
 } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useUserStore } from '@/hooks/use-user';
-import { Eye, MapPin, PenSquare, PlusCircle } from 'lucide-react';
-import { getEvents, type Event } from '@/lib/events';
+import { Eye, MapPin, PenSquare, PlusCircle, Trash2 } from 'lucide-react';
+import { getEvents, deleteEvent as deleteEventFn, type Event } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -19,36 +30,60 @@ import { getResizedImageUrl } from '@/lib/utils';
 import { getUser } from '@/lib/users';
 import type { User } from '@/lib/data';
 import { db } from '@/lib/firebase.client';
+import { useToast } from '@/components/ui/toaster';
 
 export default function MyEventsPage() {
   const { user } = useUserStore();
+  const { push: toast } = useToast();
   const [events, setEvents] = React.useState<Event[]>([]);
   const [organizers, setOrganizers] = React.useState<Record<string, User>>({});
   const [loading, setLoading] = React.useState(true);
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null);
   const isOrganizer = user.currentRole === 'organizer';
 
-  React.useEffect(() => {
-    async function loadEventsAndOrganizers() {
-        setLoading(true);
-        // This is where you would fetch all events from your database
-        // For now, it will be empty as we don't have a full user list yet.
-        const allEvents = await getEvents(db);
-        setEvents(allEvents);
+  const fetchEventsAndOrganizers = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const allEvents = await getEvents(db);
+      setEvents(allEvents);
 
-        // Fetch unique organizer details
-        const organizerIds = [...new Set(allEvents.map(e => e.organizerId))];
-        const organizerData: Record<string, User> = {};
-        for (const id of organizerIds) {
+      const organizerIds = [...new Set(allEvents.map(e => e.organizerId))];
+      const organizerData: Record<string, User> = {};
+      for (const id of organizerIds) {
+          if (!organizers[id]) { // Fetch only if not already fetched
             const orgUser = await getUser(db, id);
             if (orgUser) {
                 organizerData[id] = orgUser;
             }
-        }
-        setOrganizers(organizerData);
+          }
+      }
+      setOrganizers(prev => ({ ...prev, ...organizerData }));
+    } catch (error) {
+        console.error("Failed to load events", error);
+        toast({ text: 'Failed to load events.', kind: 'error' });
+    } finally {
         setLoading(false);
     }
-    loadEventsAndOrganizers();
-  }, [])
+  }, [organizers, toast]);
+
+  React.useEffect(() => {
+    fetchEventsAndOrganizers();
+  }, []);
+
+  const handleDelete = async (eventId: string) => {
+    setIsDeleting(eventId);
+    try {
+      await deleteEventFn(eventId);
+      toast({ text: 'Event deleted successfully.', kind: 'success' });
+      // Refresh the list after deletion
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+    } catch (error: any) {
+      toast({ text: error.message || 'Failed to delete event.', kind: 'error' });
+    } finally {
+      setIsDeleting(null);
+    }
+  };
+
 
   const LoadingSkeletons = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -136,11 +171,38 @@ export default function MyEventsPage() {
                                     </Link>
                                 </Button>
                                 {isOrganizer && user.organizerProfile?.id === event.organizerId && (
-                                    <Button asChild variant="secondary" size="sm" className="w-full relative z-10">
-                                        <Link href={`/organizer/event/edit/${event.id}`}>
-                                            <PenSquare className="mr-2 h-4 w-4" /> Edit
-                                        </Link>
-                                    </Button>
+                                    <>
+                                        <Button asChild variant="secondary" size="sm" className="w-full relative z-10">
+                                            <Link href={`/organizer/event/edit/${event.id}`}>
+                                                <PenSquare className="mr-2 h-4 w-4" /> Edit
+                                            </Link>
+                                        </Button>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="destructive" size="icon" disabled={!!isDeleting}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action will permanently delete the event "{event.title}". This cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => handleDelete(event.id)}
+                                                        disabled={isDeleting === event.id}
+                                                        className="bg-destructive hover:bg-destructive/90"
+                                                    >
+                                                        {isDeleting === event.id ? 'Deleting...' : 'Delete'}
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </>
                                 )}
                             </div>
                         </CardContent>

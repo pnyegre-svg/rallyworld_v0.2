@@ -147,6 +147,31 @@ export const deleteAnnouncement = functions.region(region).https.onCall(async (d
     return { ok: true };
 });
 
+// --- Events ---
+export const deleteEvent = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
+    const uid = assertAuthed(context);
+    const { eventId } = data || {};
+    if (!eventId) {
+        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "eventId" argument.');
+    }
+    await assertEventOwner(asString(eventId), uid);
+    
+    // Note: This deletes the main event document. Subcollections (stages, entries, etc.)
+    // will NOT be automatically deleted. For a full cleanup, a more complex recursive
+    // delete function or the Firebase Extension "Delete User Data" would be required.
+    // For now, this handles the main record.
+    await db.doc(`events/${eventId}`).delete();
+    
+    await db.collection('audit_logs').add({
+        at: FieldValue.serverTimestamp(),
+        action: 'deleteEvent',
+        by: uid,
+        eventId
+    });
+    
+    return { ok: true };
+});
+
 export const recomputeDashboard = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
     const uid = assertAuthed(context);
     await recomputeSummaryFor(uid);

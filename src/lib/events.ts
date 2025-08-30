@@ -1,6 +1,8 @@
 
-import { collection, addDoc, getDocs, doc, getDoc, updateDoc, Timestamp, query, where, orderBy, Firestore } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, Timestamp, query, where, orderBy, Firestore } from 'firebase/firestore';
 import { z } from 'zod';
+import { httpsCallable } from 'firebase/functions';
+import { fns } from './functions.region';
 
 const stageSchema = z.object({
   name: z.string().min(1, { message: 'Stage name is required.' }),
@@ -159,6 +161,16 @@ export const updateEvent = async (db: Firestore, eventId: string, eventData: Par
     } catch (error) {
         console.error("Error updating event: ", error);
         throw new Error("Could not update event.");
+    }
+};
+
+export const deleteEvent = async (eventId: string) => {
+    try {
+        const deleteEventFn = httpsCallable(fns, 'deleteEvent');
+        await deleteEventFn({ eventId });
+    } catch (error) {
+        console.error("Error deleting event: ", error);
+        throw new Error("Could not delete event.");
     }
 };
 
