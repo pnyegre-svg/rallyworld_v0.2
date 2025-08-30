@@ -25,7 +25,14 @@ export default function LandingPage() {
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
+  React.useEffect(() => {
+    if (user) {
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+
+  if (loading || user) {
     return (
         <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
             <Image
@@ -39,21 +46,6 @@ export default function LandingPage() {
     )
   }
   
-  if (user) {
-    router.push('/dashboard');
-    return (
-       <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
-            <Image
-              src="/RW_transp.svg"
-              alt="Rally World Logo"
-              width={80}
-              height={80}
-              className="animate-pulse"
-            />
-        </div>
-    );
-  }
-
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
       <header className="px-4 lg:px-6 h-14 flex items-center">
