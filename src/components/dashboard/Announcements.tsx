@@ -63,7 +63,7 @@ export function Announcements({ items = [] }: AnnouncementsProps) {
                             </div>
                             <div className="flex gap-2">
                                 <Button asChild variant="outline" size="sm">
-                                    <Link href={`/organizer/event/view/${a.eventId}?tab=announcements`}>
+                                    <Link href={`/events/${a.eventId}?tab=announcements`}>
                                         <Eye className="mr-2 h-4 w-4"/> View
                                     </Link>
                                 </Button>
