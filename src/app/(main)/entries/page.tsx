@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -34,8 +35,10 @@ import { fetchEntriesForEvent, type Entry } from '@/lib/entries';
 import { approveEntryFn, markEntryPaidFn } from '@/lib/functions.client';
 import { format } from 'date-fns';
 import { Download, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
-import { db } from '@/lib/firebase.client';
+import { db, app } from '@/lib/firebase.client';
 import { downloadCsv } from '@/lib/csv';
+import { useAppCheckToken } from 'react-firebase-hooks/app-check';
+
 
 type OptimisticUpdate = {
   entryId: string;
@@ -54,6 +57,7 @@ export default function EntriesPage() {
   const [loadingEntries, setLoadingEntries] = React.useState(false);
   const [filters, setFilters] = React.useState({ showPending: false, showUnpaid: false });
   const [busy, setBusy] = React.useState<string>('');
+  const [token, loadingToken, errorToken] = useAppCheckToken(app);
 
 
   // Fetch organizer's events
@@ -91,13 +95,16 @@ export default function EntriesPage() {
 
 
   const handleApprove = async (entry: Entry) => {
-    if (!selectedEventId) return;
+    if (!selectedEventId || !token) {
+        toast({ text: 'reCAPTCHA token not ready. Please try again.', kind: 'error' });
+        return;
+    };
     setBusy(entry.id);
     const originalStatus = entry.status;
     setEntries(items => items.map(it => it.id === entry.id ? { ...it, status: 'approved' } : it));
 
     try {
-      await approveEntryFn(selectedEventId, entry.id);
+      await approveEntryFn(selectedEventId, entry.id, token);
       toast({ text: 'Entry approved successfully.', kind: 'success' });
     } catch (error: any) {
       console.error(error);
@@ -262,7 +269,7 @@ export default function EntriesPage() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="outline" size="sm" onClick={() => handleApprove(entry)} disabled={entry.status === 'approved' || busy === entry.id}>
+                  <Button variant="outline" size="sm" onClick={() => handleApprove(entry)} disabled={entry.status === 'approved' || busy === entry.id || loadingToken}>
                     {busy === entry.id && entry.status !== 'approved' ? 'Approving...': 'Approve'}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => handleMarkPaid(entry)} disabled={entry.paymentStatus === 'paid' || busy === entry.id}>
