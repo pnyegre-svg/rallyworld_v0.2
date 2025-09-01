@@ -5,12 +5,18 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ThemeProvider } from '@/components/theme-provider';
 import { ThemeToggle } from '@/components/theme-toggle';
 import Toaster from '@/components/ui/toaster';
 
 export default function EventLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <ThemeProvider
+        attribute="class"
+        defaultTheme="dark"
+        enableSystem
+        disableTransitionOnChange
+    >
       <div className="flex min-h-screen w-full flex-col bg-background">
         <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="container flex h-14 items-center">
@@ -43,6 +49,6 @@ export default function EventLayout({ children }: { children: React.ReactNode })
         </footer>
       </div>
       <Toaster />
-    </>
+    </ThemeProvider>
   );
 }

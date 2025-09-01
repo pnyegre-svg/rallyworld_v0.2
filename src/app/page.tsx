@@ -5,12 +5,25 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { auth } from '@/lib/firebase.client';
-import { onAuthStateChanged, type User } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { UserNav } from '@/components/user-nav';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Bell } from 'lucide-react';
+import { getApps, initializeApp } from 'firebase/app';
+
+// This page has its own lightweight firebase initialization
+// because it does not use the main app layout (and thus the providers).
+const firebaseConfig = {
+    apiKey: process.env.NEXT_PUBLIC_FB_API_KEY!,
+    authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN!,
+    projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID!,
+    storageBucket: process.env.NEXT_PUBLIC_FB_STORAGE_BUCKET!,
+    appId: process.env.NEXT_PUBLIC_FB_APP_ID!,
+};
+if (getApps().length === 0) {
+  initializeApp(firebaseConfig);
+}
 
 export default function LandingPage() {
   const [user, setUser] = React.useState<User | null>(null);
@@ -18,21 +31,19 @@ export default function LandingPage() {
   const router = useRouter();
 
   React.useEffect(() => {
+    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+      if (currentUser) {
+        router.push('/dashboard');
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
-  React.useEffect(() => {
-    if (user) {
-      router.push('/dashboard');
-    }
-  }, [user, router]);
-
-
-  if (loading || user) {
+  if (loading) {
     return (
         <div className="flex flex-col min-h-[100dvh] bg-background items-center justify-center">
             <Image
@@ -45,7 +56,7 @@ export default function LandingPage() {
         </div>
     )
   }
-  
+
   return (
     <div className="flex flex-col min-h-[100dvh] bg-background">
       <header className="px-4 lg:px-6 h-14 flex items-center">
