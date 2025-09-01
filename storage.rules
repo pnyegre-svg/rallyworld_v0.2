@@ -1,25 +1,30 @@
-
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Default rule: Deny all reads and writes
-    match /{allPaths=**} {
-      allow read, write: if false;
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(eventId) {
+      return isSignedIn() &&
+        get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
+    function isAllowedContent() {
+      return request.resource.contentType.matches('application/pdf')
+        || request.resource.contentType.matches('image/.*')
+        || request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*')
+        || request.resource.contentType.matches('application/msword')
+        || request.resource.contentType.matches('text/plain');
+    }
+    function isSmall() { return request.resource.size < 20 * 1024 * 1024; }
 
-    // Allow public read access to files in the 'public' folder
+    // This path is for public-facing event assets.
+    // Making it readable by everyone.
     match /public/{allPaths=**} {
       allow read: if true;
     }
 
-    // Allow authenticated users to write to their own folder within 'public/users'
-    match /public/users/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-    }
-    
-    // Allow authenticated organizers to write to their own folder within 'public/organizers'
-    match /public/organizers/{userId}/{allPaths=**} {
-      allow write: if request.auth != null && request.auth.uid == userId;
+    match /events/{eventId}/docs/{file=**} {
+      allow read: if true; // Public assets should be readable by anyone
+      allow write: if isOwner(eventId) && isAllowedContent() && isSmall();
+      allow delete: if isOwner(eventId);
     }
   }
 }
