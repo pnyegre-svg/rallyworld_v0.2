@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
+import { ThemeProvider } from '@/components/theme-provider';
+import Toaster from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'Rally World',
@@ -23,7 +25,16 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <Providers>{children}</Providers>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+        >
+            <Toaster>
+                <Providers>{children}</Providers>
+            </Toaster>
+        </ThemeProvider>
       </body>
     </html>
   );
