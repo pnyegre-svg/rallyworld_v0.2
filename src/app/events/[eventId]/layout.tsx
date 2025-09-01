@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Toaster } from '@/components/ui/toaster';
+import Toaster from '@/components/ui/toaster';
 
 export default function EventLayout({ children }: { children: React.ReactNode }) {
   return (
