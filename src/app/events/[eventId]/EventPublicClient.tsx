@@ -45,7 +45,8 @@ export default function EventPublicClient({ eventId }: { eventId: string }) {
             setOrganizer(organizerData);
 
             // Fetch announcements
-            const announcementsData = await listAnnouncements(eventId);
+            const isOrganizer = user?.id === eventData.organizerId;
+            const announcementsData = await listAnnouncements(eventId, !isOrganizer);
             setAnnouncements(announcementsData);
 
         } else {
@@ -59,7 +60,7 @@ export default function EventPublicClient({ eventId }: { eventId: string }) {
       };
       fetchEventData();
     }
-  }, [eventId, router, toast, searchParams]);
+  }, [eventId, router, toast, searchParams, user?.id]);
 
 
   if (loading) {

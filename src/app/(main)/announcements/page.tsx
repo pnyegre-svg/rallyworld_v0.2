@@ -74,7 +74,8 @@ export default function AnnouncementsList(){
         return;
       }; 
       setIsLoadingAnnouncements(true);
-      listAnnouncements(eventId).then(newItems => {
+      // Organizer always sees all announcements, including drafts
+      listAnnouncements(eventId, false).then(newItems => {
         setItems(newItems);
         setIsLoadingAnnouncements(false);
         setSelected([]); // Clear selection when event changes
@@ -106,7 +107,7 @@ export default function AnnouncementsList(){
     try{ 
         await publishAnnouncementFn({ eventId, annId:id }); 
         push({kind:'success', text:'Published'}); 
-        setItems(await listAnnouncements(eventId)); 
+        setItems(await listAnnouncements(eventId, false)); 
     }
     catch(e:any){ push({kind:'error', text:e?.message||'Publish failed'}); }
   }
@@ -114,7 +115,7 @@ export default function AnnouncementsList(){
   async function togglePin(id:string, value:boolean){
     try{ 
         await pinAnnouncementFn({ eventId, annId:id, pinned:value }); 
-        setItems(await listAnnouncements(eventId)); 
+        setItems(await listAnnouncements(eventId, false)); 
     }
     catch(e:any){ push({kind:'error', text:e?.message||'Pin failed'}); }
   }
@@ -126,7 +127,7 @@ export default function AnnouncementsList(){
         selected.map(annId => deleteAnnouncementFn({ eventId, annId }))
       );
       push({ kind: 'success', text: `Deleted ${selected.length} announcement(s).`});
-      setItems(await listAnnouncements(eventId));
+      setItems(await listAnnouncements(eventId, false));
       setSelected([]);
     } catch(e: any) {
       push({ kind: 'error', text: e?.message || 'Delete failed' });
@@ -135,13 +136,10 @@ export default function AnnouncementsList(){
     }
   }
 
-  // Sort: pinned first, then drafts, then by created at desc
+  // Sort: pinned first, then by created at desc
   const display = [...items].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
-    if (a.status === 'draft' && b.status !== 'draft') return -1;
-    if (a.status !== 'draft' && b.status === 'draft') return 1;
-
     const ad = a.createdAt?.toDate ? a.createdAt.toDate() : a.createdAt ? new Date(a.createdAt) : null;
     const bd = b.createdAt?.toDate ? b.createdAt.toDate() : b.createdAt ? new Date(b.createdAt) : null;
     return (bd?.getTime() || 0) - (ad?.getTime() || 0);
