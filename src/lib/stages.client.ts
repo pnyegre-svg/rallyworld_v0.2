@@ -2,7 +2,7 @@
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase.client';
 import { httpsCallable } from 'firebase/functions';
-import { fns } from '@/lib/functions.region';
+import { fns } from './firebase.client';
 
 export type Stage = {
   id: string;

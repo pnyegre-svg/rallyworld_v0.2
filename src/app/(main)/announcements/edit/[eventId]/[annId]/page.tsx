@@ -78,7 +78,7 @@ export default function EditAnnouncementPage() {
             publishAt: ann.publishAt ? (ann.publishAt.toDate ? ann.publishAt.toDate() : new Date(ann.publishAt)) : undefined,
           });
         } else {
-          toast({ kind: 'error', text: 'Announcement not found.' });
+          toast({ text: 'Announcement not found.', kind: 'error' });
           router.push('/announcements');
         }
         setIsLoading(false);
@@ -94,14 +94,14 @@ export default function EditAnnouncementPage() {
         if (submitAction === 'publish') {
             await updateAnnouncementFn({ ...payload, ...data });
             await publishAnnouncementFn(payload);
-            toast({ kind: 'success', text: 'Announcement saved and published successfully.' });
+            toast({ text: 'Announcement saved and published successfully.', kind: 'success' });
         } else {
             await updateAnnouncementFn({ ...payload, ...data });
-            toast({ kind: 'success', text: 'Announcement updated successfully.' });
+            toast({ text: 'Announcement updated successfully.', kind: 'success' });
         }
       router.push(`/announcements?event=${eventId}`);
     } catch (e: any) {
-      toast({ kind: 'error', text: e.message || `Failed to ${submitAction} announcement.` });
+      toast({ text: e.message || `Failed to ${submitAction} announcement.`, kind: 'error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -111,10 +111,10 @@ export default function EditAnnouncementPage() {
     setIsSubmitting(true);
      try {
       await deleteAnnouncementFn({ eventId: eventId as string, annId: annId as string });
-      toast({ kind: 'success', text: 'Announcement deleted.' });
+      toast({ text: 'Announcement deleted.', kind: 'success' });
       router.push(`/announcements?event=${eventId}`);
     } catch (e: any) {
-      toast({ kind: 'error', text: e.message || 'Failed to delete announcement.' });
+      toast({ text: e.message || 'Failed to delete announcement.', kind: 'error' });
     } finally {
       setIsSubmitting(false);
     }

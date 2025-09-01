@@ -2,7 +2,7 @@
 import { collection, doc, getDoc, getDocs, orderBy, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase.client';
 import { httpsCallable } from 'firebase/functions';
-import { fns } from './functions.region';
+import { fns } from './firebase.client';
 
 
 export type Announcement = { id:string; title:string; body:string; audience:'competitors'|'officials'|'public'; status:'draft'|'scheduled'|'published'; pinned:boolean; publishedAt?:any; publishAt?:any, createdAt?: any };

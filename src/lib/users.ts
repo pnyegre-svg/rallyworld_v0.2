@@ -1,6 +1,6 @@
-
 import { collection, addDoc, getDocs, doc, setDoc, updateDoc, query, where, DocumentData, QueryDocumentSnapshot, getDoc, Firestore } from 'firebase/firestore';
 import type { User, Organizer, UserRole } from './data';
+import { db } from './firebase.client';
 
 // Firestore converter for the User object
 const userConverter = {

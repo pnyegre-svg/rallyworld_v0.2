@@ -50,8 +50,8 @@ export async function uploadFile(eventId: string, file: File) {
 
   await assertCanUpload(eventId, file);
 
-  const safeName = file.name.replace(/[^\w.-]+/g, '_');
-  const path = `events/${eventId}/${Date.now()}-${safeName}`;
+  const safeName = file.name.replace(/[^\\w.-]+/g, '_');
+  const path = `events/${eventId}/docs/${safeName}`;
 
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };

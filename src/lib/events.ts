@@ -1,8 +1,7 @@
-
 import { collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, Timestamp, query, where, orderBy, Firestore } from 'firebase/firestore';
 import { z } from 'zod';
 import { httpsCallable } from 'firebase/functions';
-import { fns } from './functions.region';
+import { db, fns } from './firebase.client';
 
 const stageSchema = z.object({
   name: z.string().min(1, { message: 'Stage name is required.' }),
