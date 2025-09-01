@@ -1,8 +1,7 @@
 
 'use client';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject as deleteFile, listAll, type StorageReference, type UploadTask, type UploadTaskSnapshot } from 'firebase/storage';
-import { app } from './firebase.client';
-import { auth } from './firebase.client';
+import { auth, storage } from './firebase.client';
 
 export type ProgressHandler = (p: { loaded: number, total: number, progress: number, snapshot: UploadTaskSnapshot }) => void;
 
@@ -10,12 +9,10 @@ function getRoot(eventId?: string, category?: string): StorageReference {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('User not authenticated');
   
-  // New path structure to match the storageIndex.ts trigger
-  // e.g., events/EVENT_ID/docs/maps/filename.pdf
   let path = `events/${eventId}/docs`;
   if (category) path += `/${category}`;
 
-  return ref(getStorage(app), path);
+  return ref(storage, path);
 }
 
 export function upload(file: File, eventId: string, category: string, onProgress?: ProgressHandler): { task: UploadTask, promise: Promise<any> } {
@@ -39,6 +36,6 @@ export function upload(file: File, eventId: string, category: string, onProgress
 }
 
 export async function deleteObject(path: string) {
-  const fileRef = ref(getStorage(app), path);
+  const fileRef = ref(storage, path);
   await deleteFile(fileRef);
 }

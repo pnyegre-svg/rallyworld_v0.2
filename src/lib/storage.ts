@@ -1,11 +1,9 @@
 
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { getAuth } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase.client';
+import { db, auth, storage } from '@/lib/firebase.client';
 import { getAppCheck, getToken } from 'firebase/app-check';
 
-const storage = getStorage();
 
 function guessMime(name: string) {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -34,7 +32,7 @@ function toError(e: any): Error {
 }
 
 async function assertCanUpload(eventId: string, file: File) {
-  const uid = getAuth().currentUser?.uid;
+  const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
   const ev = await getDoc(doc(db, 'events', eventId));
   if (!ev.exists()) throw new Error('Selected event no longer exists.');
@@ -44,13 +42,14 @@ async function assertCanUpload(eventId: string, file: File) {
 
 export async function uploadFile(eventId: string, file: File) {
   try {
-    const ac = getAppCheck();
+    const app = auth.app;
+    const ac = getAppCheck(app);
     await getToken(ac, true);
   } catch {}
 
   await assertCanUpload(eventId, file);
 
-  const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+  const safeName = file.name.replace(/[^\w.-]+/g, '_');
   const path = `events/${eventId}/${Date.now()}-${safeName}`;
 
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
@@ -81,10 +80,7 @@ export async function uploadFile(eventId: string, file: File) {
 
     const code = (err as any).code || '';
     if (code === 'storage/unauthorized' || code === 'storage/unauthenticated') {
-      const hint = err?.message?.toLowerCase().includes('app check')
-        ? 'App Check token invalid or origin not allowed.'
-        : 'Rule denied: not organizer, file type/size, or event missing.';
-      throw new Error(`Not allowed to upload: ${hint}`);
+      throw new Error('Not allowed to upload. Verify you are signed in, organizer of the selected event, file type/size allowed, and App Check origin is authorized.');
     }
     if (code === 'storage/canceled') {
       throw new Error('Upload was canceled.');

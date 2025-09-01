@@ -5,13 +5,25 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User, UserRole, Organizer } from '@/lib/data';
 import { getUser, createUser, updateUser } from '@/lib/users';
-import { auth, db } from '@/lib/firebase.client';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, Auth } from 'firebase/auth';
+import { Firestore } from 'firebase/firestore';
+import { FirebaseStorage } from 'firebase/storage';
+import { FirebaseFunctions } from 'firebase/functions';
+
+// Hold the initialized services in a non-state object
+// to avoid serialization issues with Zustand's persistance middleware.
+let services: {
+    auth: Auth;
+    db: Firestore;
+    storage: FirebaseStorage;
+    functions: FirebaseFunctions;
+} | null = null;
+
 
 type UserState = {
   user: User | null;
-  isAuthReady: boolean; // To confirm Firebase auth state is resolved AND user profile is loaded
-  initializeAuth: () => () => void; // Returns the unsubscribe function
+  isAuthReady: boolean;
+  initialize: (deps: typeof services) => () => void; // Returns the unsubscribe function
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
   switchRole: (role: UserRole) => Promise<void>;
@@ -24,22 +36,21 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       user: null,
       isAuthReady: false,
-      initializeAuth: () => {
+      initialize: (deps) => {
+        services = deps;
+        const { auth, db } = deps;
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
             if (firebaseUser) {
-              // Only fetch profile if it's a new user logging in
               if (!get().user || get().user?.email !== firebaseUser.email) {
                   console.log("Auth state changed: User is signed in. Fetching profile...");
                   await get().signInUser(firebaseUser.email!, firebaseUser.displayName || undefined);
               } else {
-                  // User is already in state, just ensure auth is ready
                   if (!get().isAuthReady) {
                     set({ isAuthReady: true });
                   }
               }
             } else {
               console.log("Auth state changed: User is signed out.");
-              // When signed out, we are "ready" and there is no user.
               set({ user: null, isAuthReady: true });
             }
         });
@@ -49,6 +60,8 @@ export const useUserStore = create<UserState>()(
         set({ user: null, isAuthReady: false });
       },
       signInUser: async (email, name) => {
+        if (!services) throw new Error("Firebase services not initialized.");
+        const { auth, db } = services;
         const firebaseUser = auth.currentUser;
         if (!firebaseUser) throw new Error("User not authenticated in Firebase");
 
@@ -76,10 +89,11 @@ export const useUserStore = create<UserState>()(
             userProfile.currentRole = 'organizer';
             await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
-        // This is the single source of truth for setting the user and readiness
         set({ user: userProfile, isAuthReady: true });
       },
       setRole: async (role: UserRole) => {
+        if (!services) throw new Error("Firebase services not initialized.");
+        const { db } = services;
         const currentUser = get().user;
         if (!currentUser) return;
 
@@ -93,6 +107,8 @@ export const useUserStore = create<UserState>()(
         await updateUser(db, currentUser.id, { roles: newRoles, currentRole: role });
       },
       switchRole: async (role: UserRole) => {
+        if (!services) throw new Error("Firebase services not initialized.");
+        const { db } = services;
         const currentUser = get().user;
         if (!currentUser) return;
         
@@ -100,6 +116,8 @@ export const useUserStore = create<UserState>()(
         await updateUser(db, currentUser.id, { currentRole: role });
       },
       updateUserProfile: async (data) => {
+        if (!services) throw new Error("Firebase services not initialized.");
+        const { db } = services;
         const currentUser = get().user;
         if (!currentUser) return;
 
@@ -121,3 +139,11 @@ export const useUserStore = create<UserState>()(
     }
   )
 );
+
+// Export a hook to get the services safely.
+export const useFirebaseServices = () => {
+    if (!services) {
+        throw new Error("Firebase services have not been initialized. Ensure Providers component is at the root.");
+    }
+    return services;
+}
