@@ -4,6 +4,7 @@ import { getFirestore, BulkWriter, DocumentReference, CollectionReference } from
 import { getStorage } from 'firebase-admin/storage';
 import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
+import { createAssessment } from './recaptcha';
 
 // if you have your own authz helpers, keep using them;
 // for now, minimal assert:
@@ -31,7 +32,22 @@ const parseWhen = (v: any): Date | null => {
 // --- Entries (samples kept minimal) ---
 export const approveEntry = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
   const uid = assertAuthed(context);
-  const { eventId, entryId } = data || {};
+  const { eventId, entryId, recaptchaToken } = data || {};
+
+  if (!recaptchaToken) {
+    throw new functions.https.HttpsError('invalid-argument', 'reCAPTCHA token is missing.');
+  }
+
+  const score = await createAssessment({
+      token: recaptchaToken,
+      recaptchaAction: 'approveEntry',
+  });
+
+  if (score === null || score < 0.5) { // Example threshold
+      throw new functions.https.HttpsError('permission-denied', 'reCAPTCHA verification failed.');
+  }
+
+
   await assertEventOwner(asString(eventId), uid);
   await db.doc(`events/${eventId}/entries/${entryId}`).update({ status: 'approved' });
   await recomputeSummaryFor(uid);
