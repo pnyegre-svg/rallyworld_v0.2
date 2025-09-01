@@ -1,47 +1,23 @@
-
 rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
 
-    function isSignedIn() { return request.auth != null; }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
+    function isSignedIn() {
+      return request.auth != null;
     }
 
-    function isEventOwner(eventId) {
-      return isSignedIn() &&
-        get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    function isOwner(eventId) {
+      return isSignedIn() && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
     
-    function isAllowedContent() {
-      return request.resource.contentType.matches('image/.*') ||
-             request.resource.contentType.matches('application/pdf');
+    function isEventPublic(eventId) {
+      return get(/databases/$(database)/documents/events/$(eventId)).data.public == true;
     }
 
-    function isSmall() {
-      return request.resource.size < 10 * 1024 * 1024; // 10 MB limit
+    match /events/{eventId}/{allPaths=**} {
+      allow read: if isEventPublic(eventId) || isOwner(eventId);
+      allow write: if isOwner(eventId);
     }
-
-    // Public read for event-specific assets (cover photos, logos, public docs)
-    match /events/{eventId}/docs/{file=**} {
-        allow read: if true;
-        allow write: if isEventOwner(eventId) && isSmall() && isAllowedContent();
-        allow delete: if isEventOwner(eventId);
-    }
-
-    // User-specific files (e.g. profile pictures)
-    match /users/{userId}/{allPaths=**} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId) && isSmall() && isAllowedContent();
-    }
-    
-    // Organizer-specific files (e.g. club profile pictures)
-     match /public/organizers/{organizerId}/{allPaths=**} {
-        allow read: if true; // Logos are public
-        allow write: if isOwner(organizerId) && isSmall() && isAllowedContent();
-    }
-
   }
 }
