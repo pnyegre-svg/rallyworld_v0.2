@@ -1,75 +1,63 @@
 rules_version = '2';
 
 service cloud.firestore {
-  match /databases/{database}/documents {
+  match /databases/{db}/documents {
 
-    function isAuthed() {
+    function isSignedIn() {
       return request.auth != null;
     }
-    function isOwner(uid) {
-      return request.auth.uid == uid;
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
     }
+    
     function isEventOwner(eventId) {
-      let doc = get(/databases/$(database)/documents/events/$(eventId));
-      // Check for existence before accessing data
-      return doc.exists && doc.data.organizerId == request.auth.uid;
+      return isSignedIn() && get(/databases/$(db)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
 
+    function isEventPublic(eventId) {
+      return get(/databases/$(db)/documents/events/$(eventId)).data.public == true;
+    }
+
+    // User profiles can be read by anyone, but only the owner can write.
     match /users/{userId} {
-      allow read: if isAuthed();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      // No explicit delete rule, so it's disallowed by default
+      allow read;
+      allow write: if isOwner(userId);
     }
     
-    match /competitors/{competitorId} {
-        allow read: if true;
-        allow write: if isAuthed(); 
-    }
-
-    match /events/{eventId} {
-      allow get: if true;
-      allow list: if isAuthed();
-      
-      // For create, check the incoming resource
-      allow create: if isAuthed() && request.resource.data.organizerId == request.auth.uid;
-      // For update, check the existing resource
-      allow update: if isAuthed() && isEventOwner(eventId);
-      // Delete is handled by a Cloud Function, so no client-side delete permission is needed.
-      allow delete: if false; 
-      
-      match /entries/{entryId} {
-        allow read: if isEventOwner(eventId);
-        allow write: if isAuthed(); // Let cloud functions handle authZ
-      }
-      
-      match /stages/{stageId} {
-        allow read: if true; // Public read access
-        allow write: if isEventOwner(eventId);
-      }
-      
-      match /announcements/{annId} {
-        allow get: if true; // Public can read any single announcement
-        // Allow listing documents only if they are published, or if you are the owner
-        allow list: if isEventOwner(eventId) || request.query.where.status == 'published';
-        allow write: if isEventOwner(eventId);
-      }
-
-      match /files/{fileId} {
-        allow read: if true;
-        allow write: if isEventOwner(eventId);
-      }
-    }
-    
+    // Organizers can see their own dashboard summary.
     match /dashboard_summary/{userId} {
-      allow read: if isOwner(userId);
-      // Writes should only be from trusted server environments (cloud functions)
-      allow write: if false; 
+      allow read, write: if isOwner(userId);
     }
 
+    // Events can be read by the public if flagged, otherwise only by signed-in users.
+    // Events can only be written to by their owner.
+    match /events/{eventId} {
+      allow read: if isEventPublic(eventId) || isSignedIn();
+      allow write: if isEventOwner(eventId);
+    }
+    
+    // Subcollections follow event permissions.
+    match /events/{eventId}/{subcollection}/{docId} {
+       allow read: if isEventPublic(eventId) || isSignedIn();
+       allow write: if isEventOwner(eventId);
+    }
+
+    // Announcements have a more specific public read rule.
+    match /events/{eventId}/announcements/{annId} {
+      allow read: if (isEventPublic(eventId) && resource.data.status == 'published') || isSignedIn();
+      allow write: if isEventOwner(eventId);
+    }
+    
+    // Competitors list is public.
+    match /competitors/{docId} {
+        allow read;
+        // Write rules would go here if organizers could edit them.
+    }
+    
+    // Audit logs are write-only by cloud functions (no client access).
     match /audit_logs/{logId} {
-      allow read: if false; // Admin/internal only
-      allow write: if false; // Functions only
+      allow read, write: if false;
     }
   }
 }
