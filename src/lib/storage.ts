@@ -1,4 +1,5 @@
 
+
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth, storage } from '@/lib/firebase.client';
@@ -31,16 +32,22 @@ function toError(e: any): Error {
   return new Error('Unknown error');
 }
 
-async function assertCanUpload(eventId: string, file: File) {
+async function assertCanUpload(contextId: string, file: File, category: 'event-doc' | 'user-profile') {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
-  const ev = await getDoc(doc(db, 'events', eventId));
-  if (!ev.exists()) throw new Error('Selected event no longer exists.');
-  if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
+  
+  if (category === 'event-doc') {
+    const ev = await getDoc(doc(db, 'events', contextId));
+    if (!ev.exists()) throw new Error('Selected event no longer exists.');
+    if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
+  } else if (category === 'user-profile') {
+    if (contextId !== uid) throw new Error('You can only upload to your own profile.');
+  }
+  
   if (file.size > 20 * 1024 * 1024) throw new Error('File too large (20 MB limit).');
 }
 
-export async function uploadFile(eventId: string, file: File) {
+export async function uploadFile(contextId: string, file: File, category: 'event-doc' | 'user-profile') {
   // Warm up App Check token. It's ok if this fails, we still want to try.
   try {
     const app = auth.app;
@@ -48,10 +55,17 @@ export async function uploadFile(eventId: string, file: File) {
     await getToken(ac, true);
   } catch {}
 
-  await assertCanUpload(eventId, file);
+  await assertCanUpload(contextId, file, category);
 
-  const safeName = file.name.replace(/[^\\w.-]+/g, '_');
-  const path = `events/${eventId}/docs/${safeName}`;
+  const safeName = file.name.replace(/[^A-Za-z0-9_.-]/g, '_');
+  
+  let path: string;
+  if (category === 'event-doc') {
+    path = `events/${contextId}/docs/${safeName}`;
+  } else {
+    // For user-profile, contextId is the userId
+    path = `users/${contextId}/profile/${safeName}`;
+  }
 
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };

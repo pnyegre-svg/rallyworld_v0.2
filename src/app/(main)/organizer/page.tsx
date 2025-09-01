@@ -184,7 +184,8 @@ export default function OrganizerProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 profilePictureUrl = await uploadFile(profilePictureFile, 'organizer');
+                 const { downloadURL } = await uploadFile(user.id, profilePictureFile, 'user-profile');
+                 profilePictureUrl = downloadURL;
             }
 
             let profileData: Organizer = {

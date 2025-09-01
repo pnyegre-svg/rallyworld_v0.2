@@ -76,7 +76,8 @@ export default function ProfilePage() {
             const profilePictureFile = values.profilePicture;
 
             if (profilePictureFile instanceof File) {
-                 profilePictureUrl = await uploadFile(profilePictureFile, 'user');
+                 const { downloadURL } = await uploadFile(user.id, profilePictureFile, 'user-profile');
+                 profilePictureUrl = downloadURL;
             }
             
             await updateUserProfile({ 

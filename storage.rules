@@ -2,25 +2,44 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function isAppChecked() {
+      // In production, use: request.app != null;
+      // For local testing with emulators, this might need to be relaxed
+      // if you don't have a reliable way to generate App Check tokens.
+      // NEVER use return true in production.
+      return request.app != null;
+    }
     
-    // Public read access for all files. This allows anyone to view event
-    // images, public documents, etc., without needing to be signed in.
+    function isOwner(uid) {
+      return isAuthed() && request.auth.uid == uid;
+    }
+
+    function isEventOwner(eventId) {
+      return isAuthed() && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    }
+    
+    // PUBLIC READS: Allow anyone to read any file.
+    // This is useful for public images, event documents, etc.
     match /{allPaths=**} {
       allow read;
     }
 
-    // Restrict writes to event-specific folders.
+    // USER PROFILE WRITES: Allow a user to write to their own profile folder.
+    // e.g., users/{userId}/profile/avatar.jpg
+    match /users/{userId}/{allPaths=**} {
+      allow write: if isAppChecked() && isOwner(userId) && request.resource.size < (5 * 1024 * 1024); // 5MB limit
+    }
+
+    // EVENT WRITES: Only the event organizer can write to their event's folder.
+    // e.g., events/{eventId}/docs/map.pdf
     match /events/{eventId}/{allPaths=**} {
-      // Allow write (upload, update, delete) only if all conditions are met:
-      allow write: if 
-        // 1. The user is signed in.
-        request.auth != null &&
-        // 2. The request is verified by App Check.
-        request.app != null &&
-        // 3. The file being uploaded is less than 20MB.
-        request.resource.size < 20 * 1024 * 1024 &&
-        // 4. The user's ID matches the organizerId of the event document in Firestore.
-        get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      allow write: if isAppChecked() && isEventOwner(eventId) && request.resource.size < (20 * 1024 * 1024); // 20MB limit
     }
   }
 }
