@@ -36,7 +36,7 @@ export const eventFormSchema = z.object({
   itineraryFiles: z.array(fileSchema).optional(),
   docsLinks: z.array(linkSchema).optional(),
   docsFiles: z.array(fileSchema).optional(),
-  stages: z.array(stageSchema).optional().default([]),
+  stages: z.array(stageSchema).min(1, { message: 'At least one stage is required.' }),
   organizerId: z.string(),
 });
 

@@ -518,67 +518,76 @@ export default function CreateEventPage() {
             </div>
             
              <div className="space-y-6 rounded-lg border p-4">
-                 <h3 className="text-lg font-medium">Event Stages</h3>
-                <div className="space-y-4">
-                    {stageFields.map((item, index) => (
-                        <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-4 p-3 rounded-md border bg-muted/30">
-                            <FormField
-                                control={form.control}
-                                name={`stages.${index}.name`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
-                                            <Flag className="h-4 w-4"/> Stage Name
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="e.g. SS1 - Col de Turini" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name={`stages.${index}.location`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
-                                            <MapPin className="h-4 w-4"/> Location
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input {...field} placeholder="e.g. Monte Carlo" />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name={`stages.${index}.distance`}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
-                                            <Route className="h-4 w-4"/> Distance (km)
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input type="number" {...field} placeholder="15.31" className="w-32"/>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeStage(index)}
-                                className={cn(index !== 0 ? "mt-8" : "mt-8")}
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    ))}
-                </div>
+                <FormField
+                    control={form.control}
+                    name="stages"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-lg font-medium">Event Stages</FormLabel>
+                             <FormMessage className="text-destructive" />
+                             <div className="space-y-4 pt-2">
+                                {stageFields.map((item, index) => (
+                                    <div key={item.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-start gap-4 p-3 rounded-md border bg-muted/30">
+                                        <FormField
+                                            control={form.control}
+                                            name={`stages.${index}.name`}
+                                            render={({ field: stageField }) => (
+                                                <FormItem>
+                                                    <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                                        <Flag className="h-4 w-4"/> Stage Name
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input {...stageField} placeholder="e.g. SS1 - Col de Turini" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`stages.${index}.location`}
+                                            render={({ field: stageField }) => (
+                                                <FormItem>
+                                                    <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                                        <MapPin className="h-4 w-4"/> Location
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input {...stageField} placeholder="e.g. Monte Carlo" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`stages.${index}.distance`}
+                                            render={({ field: stageField }) => (
+                                                <FormItem>
+                                                    <FormLabel className={cn(index !== 0 && "sr-only", "flex items-center gap-2")}>
+                                                        <Route className="h-4 w-4"/> Distance (km)
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input type="number" {...stageField} placeholder="15.31" className="w-32"/>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => removeStage(index)}
+                                            className={cn(index !== 0 ? "mt-8" : "mt-8")}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </FormItem>
+                    )}
+                />
                 <Button
                     type="button"
                     variant="outline"
