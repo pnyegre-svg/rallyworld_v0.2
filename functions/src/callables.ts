@@ -1,8 +1,9 @@
 
 import * as functions from 'firebase-functions';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
-import * as firebase_helper from 'firebase-functions-helper';
 
 // if you have your own authz helpers, keep using them;
 // for now, minimal assert:
@@ -149,35 +150,45 @@ export const deleteAnnouncement = functions.region(region).https.onCall(async (d
 });
 
 // --- Events ---
-export const deleteEvent = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
-    const uid = assertAuthed(context);
-    const { eventId } = data || {};
-    
-    if (!eventId) {
-        throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "eventId" argument.');
-    }
-    await assertEventOwner(asString(eventId), uid);
-    
-    const docPath = `events/${eventId}`;
+export const deleteEvent = functions
+  .region(region)
+  .runWith({ timeoutSeconds: 540, memory: '1GB' }) // large events won’t time out
+  .https.onCall(async (data: any, ctx) => {
+    const uid = assertAuthed(ctx);
+    const eventId = String(data?.eventId || '').trim();
+    if (!eventId) throw new functions.https.HttpsError('invalid-argument', 'eventId required');
+
+    await assertEventOwner(eventId, uid);
 
     try {
-      await firebase_helper.firestore.deleteDocument(db, docPath);
+      const adminDb = getFirestore();
+      const docRef = adminDb.doc(`events/${eventId}`);
 
+      // 1) Firestore recursive delete (all subcollections)
+      await adminDb.recursiveDelete(docRef, { batchSize: 200 });
+
+      // 2) Storage files under this event
+      const bucket = getStorage().bucket(); // default app bucket
+      await bucket.deleteFiles({ prefix: `events/${eventId}/` }).catch(() => { /* ignore if none */ });
+
+      // 3) Audit + dashboard refresh
       await db.collection('audit_logs').add({
-          at: FieldValue.serverTimestamp(),
-          action: 'deleteEvent',
-          by: uid,
-          eventId
+        at: FieldValue.serverTimestamp(),
+        action: 'deleteEvent',
+        by: uid,
+        eventId
       });
-      
       await recomputeSummaryFor(uid);
-      return { ok: true, message: "Event and all its subcollections deleted successfully." };
 
-    } catch (error) {
-      functions.logger.error('Error deleting event:', { error, uid, eventId });
-      throw new functions.https.HttpsError('internal', 'Failed to delete event.');
+      return { ok: true };
+    } catch (err: any) {
+      functions.logger.error('deleteEvent failed', {
+        uid, eventId, code: err?.code, message: err?.message, stack: err?.stack
+      });
+      if (err instanceof functions.https.HttpsError) throw err;
+      throw new functions.https.HttpsError('internal', err?.message || 'Delete failed');
     }
-});
+  });
 
 export const recomputeDashboard = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
     const uid = assertAuthed(context);

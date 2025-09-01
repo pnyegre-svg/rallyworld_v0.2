@@ -164,15 +164,9 @@ export const updateEvent = async (db: Firestore, eventId: string, eventData: Par
     }
 };
 
-export const deleteEvent = async (eventId: string) => {
-    try {
-        const deleteEventFn = httpsCallable(fns, 'deleteEvent');
-        await deleteEventFn({ eventId });
-    } catch (error) {
-        console.error("Error deleting event: ", error);
-        throw new Error("Could not delete event.");
-    }
-};
+export async function deleteEvent(eventId: string){
+  return (await httpsCallable(fns, 'deleteEvent')({ eventId })).data as any;
+}
 
 export type EventLite = { id:string; title:string; dates: { from: Date, to: Date }, status:string };
 export async function listOrganizerEvents(db: Firestore, uid: string): Promise<EventLite[]> {

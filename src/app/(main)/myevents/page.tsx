@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useUserStore } from '@/hooks/use-user';
 import { Eye, MapPin, PenSquare, PlusCircle, Trash2 } from 'lucide-react';
-import { getEvents, deleteEvent as deleteEventFn, type Event } from '@/lib/events';
+import { getEvents, deleteEvent, type Event } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -73,7 +73,7 @@ export default function MyEventsPage() {
   const handleDelete = async (eventId: string) => {
     setIsDeleting(eventId);
     try {
-      await deleteEventFn(eventId);
+      await deleteEvent(eventId);
       toast({ text: 'Event deleted successfully.', kind: 'success' });
       // Refresh the list after deletion
       setEvents(prev => prev.filter(e => e.id !== eventId));
@@ -187,7 +187,7 @@ export default function MyEventsPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This action will permanently delete the event "{event.title}". This cannot be undone.
+                                                        This action will permanently delete the event "{event.title}" and all its associated data (stages, entries, files, etc.). This cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
