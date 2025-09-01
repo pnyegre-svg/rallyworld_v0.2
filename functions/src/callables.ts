@@ -150,37 +150,42 @@ export const deleteAnnouncement = functions.region(region).https.onCall(async (d
 });
 
 // --- Events ---
-/** Fallback recursive delete using BulkWriter (works on any Admin SDK) */
-async function deleteDocRecursively(docRef: DocumentReference, pageSize = 300) {
+/** Depth-first recursive delete using batched writes (no BulkWriter, works everywhere). */
+async function deleteDocTree(docRef: FirebaseFirestore.DocumentReference, pageSize = 200) {
   const adminDb = getFirestore();
-  const writer: BulkWriter = adminDb.bulkWriter();
 
-  async function walkDoc(ref: DocumentReference) {
-    // delete all subcollections under this document
-    const subcols: CollectionReference[] = await ref.listCollections();
-    for (const col of subcols) {
-      let last: FirebaseFirestore.QueryDocumentSnapshot | undefined = undefined;
-      // page through the collection to avoid loading too many docs at once
-      // (we recurse into each doc to delete deeper subcollections)
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        let q = col.limit(pageSize);
-        if (last) q = q.startAfter(last);
-        const snap = await q.get();
-        if (snap.empty) break;
-        for (const d of snap.docs) {
-          await walkDoc(d.ref);
-        }
-        last = snap.docs[snap.docs.length - 1];
-        if (snap.size < pageSize) break;
-      }
-    }
-    // after children are gone, delete the document itself
-    writer.delete(ref);
+  // Delete all subcollections first (depth-first)
+  const subcols = await docRef.listCollections();
+  for (const col of subcols) {
+    await deleteCollectionDeep(col, pageSize);
   }
 
-  await walkDoc(docRef);
-  await writer.close(); // flush all batched deletes
+  // Finally delete the document itself
+  await docRef.delete();
+}
+
+async function deleteCollectionDeep(
+  colRef: FirebaseFirestore.CollectionReference,
+  pageSize = 200
+) {
+  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined = undefined;
+
+  while (true) {
+    let q: FirebaseFirestore.Query = colRef.orderBy('__name__').limit(pageSize);
+    if (last) q = q.startAfter(last);
+
+    const snap = await q.get();
+    if (snap.empty) break;
+
+    // Depth-first: delete subtrees for each doc in this page
+    for (const d of snap.docs) {
+      await deleteDocTree(d.ref, pageSize);
+    }
+
+    // Advance the cursor based on the original snapshot
+    last = snap.docs[snap.docs.length - 1];
+    if (snap.size < pageSize) break;
+  }
 }
 
 export const deleteEvent = functions
@@ -200,23 +205,15 @@ export const deleteEvent = functions
     try {
       functions.logger.info('deleteEvent: start', { uid, eventId });
 
-      // 1) Firestore delete: try native recursiveDelete if present; otherwise fallback
-      const hasNative = typeof (adminDb as any).recursiveDelete === 'function';
-      if (hasNative) {
-        // @ts-ignore
-        await (adminDb as any).recursiveDelete(docRef, { batchSize: 200 });
-        functions.logger.info('deleteEvent: native recursiveDelete done', { eventId });
-      } else {
-        functions.logger.warn('deleteEvent: native recursiveDelete not available, using fallback', {});
-        await deleteDocRecursively(docRef, 300);
-        functions.logger.info('deleteEvent: fallback recursive delete done', { eventId });
-      }
+      // 1) Firestore: walk & delete everything under /events/{eventId}
+      await deleteDocTree(docRef, 200);
+      functions.logger.info('deleteEvent: firestore tree deleted', { eventId });
 
-      // 2) Storage cleanup (best effort)
+      // 2) Storage: best-effort cleanup under events/{eventId}/
       try {
         await bucket.deleteFiles({ prefix: `events/${eventId}/` });
         functions.logger.info('deleteEvent: storage cleaned', { bucket: bucket.name });
-      } catch (e:any) {
+      } catch (e: any) {
         functions.logger.warn('deleteEvent: storage cleanup failed (ignored)', { msg: e?.message, code: e?.code });
       }
 
@@ -231,7 +228,7 @@ export const deleteEvent = functions
 
       functions.logger.info('deleteEvent: success', { uid, eventId });
       return { ok: true };
-    } catch (err:any) {
+    } catch (err: any) {
       functions.logger.error('deleteEvent failed', {
         uid, eventId, code: err?.code || err?.name, message: err?.message, stack: err?.stack
       });

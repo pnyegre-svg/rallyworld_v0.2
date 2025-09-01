@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processScheduledAnnouncements = void 0;
+exports.refreshAllForToday = exports.onEventWrite = exports.onAnnouncementWrite = exports.onStageWrite = exports.onEntryWrite = exports.processScheduledAnnouncements = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin_1 = require("./admin");
 const region = 'europe-central2';
@@ -49,3 +49,16 @@ exports.processScheduledAnnouncements = functions.region(region).pubsub
         await d.ref.update({ status: 'published', publishedAt: admin_1.FieldValue.serverTimestamp(), publishAt: admin_1.FieldValue.delete() });
     }
 });
+// This is a placeholder for any other trigger functions you might want to add,
+// for example, onEntryWrite, onStageWrite, etc.
+// The onFileUpload function has been replaced by the more detailed indexing in storageIndex.ts
+const onEntryWrite = () => { };
+exports.onEntryWrite = onEntryWrite;
+const onStageWrite = () => { };
+exports.onStageWrite = onStageWrite;
+const onAnnouncementWrite = () => { };
+exports.onAnnouncementWrite = onAnnouncementWrite;
+const onEventWrite = () => { };
+exports.onEventWrite = onEventWrite;
+const refreshAllForToday = () => { };
+exports.refreshAllForToday = refreshAllForToday;

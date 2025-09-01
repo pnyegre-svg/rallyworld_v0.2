@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.processScheduledAnnouncements = exports.midnightRebuild = exports.scheduledRefresh = exports.recomputeDashboard = exports.pinAnnouncement = exports.publishAnnouncement = exports.updateAnnouncement = exports.createAnnouncement = exports.markEntryPaid = exports.approveEntry = exports.eventChanged = exports.announcementChanged = exports.stageChanged = exports.entryChanged = void 0;
+exports.processScheduledAnnouncements = exports.midnightRebuild = exports.scheduledRefresh = exports.delayStage = exports.cancelStage = exports.completeStage = exports.startStage = exports.deleteStage = exports.updateStage = exports.createStage = exports.fileDeleted = exports.fileIndexed = exports.recomputeDashboard = exports.deleteEvent = exports.deleteAnnouncement = exports.pinAnnouncement = exports.publishAnnouncement = exports.updateAnnouncement = exports.createAnnouncement = exports.markEntryPaid = exports.approveEntry = exports.eventChanged = exports.announcementChanged = exports.stageChanged = exports.entryChanged = void 0;
 const functions = __importStar(require("firebase-functions"));
 const triggers_1 = require("./triggers");
 Object.defineProperty(exports, "processScheduledAnnouncements", { enumerable: true, get: function () { return triggers_1.processScheduledAnnouncements; } });
@@ -44,7 +44,20 @@ Object.defineProperty(exports, "createAnnouncement", { enumerable: true, get: fu
 Object.defineProperty(exports, "updateAnnouncement", { enumerable: true, get: function () { return callables_1.updateAnnouncement; } });
 Object.defineProperty(exports, "publishAnnouncement", { enumerable: true, get: function () { return callables_1.publishAnnouncement; } });
 Object.defineProperty(exports, "pinAnnouncement", { enumerable: true, get: function () { return callables_1.pinAnnouncement; } });
+Object.defineProperty(exports, "deleteAnnouncement", { enumerable: true, get: function () { return callables_1.deleteAnnouncement; } });
+Object.defineProperty(exports, "deleteEvent", { enumerable: true, get: function () { return callables_1.deleteEvent; } });
 Object.defineProperty(exports, "recomputeDashboard", { enumerable: true, get: function () { return callables_1.recomputeDashboard; } });
+const storageIndex_1 = require("./storageIndex");
+Object.defineProperty(exports, "fileIndexed", { enumerable: true, get: function () { return storageIndex_1.fileIndexed; } });
+Object.defineProperty(exports, "fileDeleted", { enumerable: true, get: function () { return storageIndex_1.fileDeleted; } });
+const stages_1 = require("./stages");
+Object.defineProperty(exports, "createStage", { enumerable: true, get: function () { return stages_1.createStage; } });
+Object.defineProperty(exports, "updateStage", { enumerable: true, get: function () { return stages_1.updateStage; } });
+Object.defineProperty(exports, "deleteStage", { enumerable: true, get: function () { return stages_1.deleteStage; } });
+Object.defineProperty(exports, "startStage", { enumerable: true, get: function () { return stages_1.startStage; } });
+Object.defineProperty(exports, "completeStage", { enumerable: true, get: function () { return stages_1.completeStage; } });
+Object.defineProperty(exports, "cancelStage", { enumerable: true, get: function () { return stages_1.cancelStage; } });
+Object.defineProperty(exports, "delayStage", { enumerable: true, get: function () { return stages_1.delayStage; } });
 exports.entryChanged = functions.firestore
     .document('events/{eventId}/entries/{entryId}')
     .onWrite(triggers_1.onEntryWrite);

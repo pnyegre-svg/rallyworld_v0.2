@@ -33,8 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pinAnnouncement = exports.publishAnnouncement = exports.updateAnnouncement = exports.createAnnouncement = exports.markEntryPaid = exports.approveEntry = void 0;
+exports.recomputeDashboard = exports.deleteEvent = exports.deleteAnnouncement = exports.pinAnnouncement = exports.publishAnnouncement = exports.updateAnnouncement = exports.createAnnouncement = exports.markEntryPaid = exports.approveEntry = void 0;
 const functions = __importStar(require("firebase-functions"));
+const firestore_1 = require("firebase-admin/firestore");
+const storage_1 = require("firebase-admin/storage");
 const admin_1 = require("./admin");
 const recompute_1 = require("./recompute");
 // if you have your own authz helpers, keep using them;
@@ -165,6 +167,107 @@ exports.pinAnnouncement = functions.region(region).https.onCall(async (data, con
         pinned: pinned === true,
         updatedAt: admin_1.FieldValue.serverTimestamp()
     });
+    await (0, recompute_1.recomputeSummaryFor)(uid);
+    return { ok: true };
+});
+exports.deleteAnnouncement = functions.region(region).https.onCall(async (data, context) => {
+    const uid = assertAuthed(context);
+    const { eventId, annId } = data || {};
+    await assertEventOwner(asString(eventId), uid);
+    await admin_1.db.doc(`events/${eventId}/announcements/${annId}`).delete();
+    await (0, recompute_1.recomputeSummaryFor)(uid);
+    return { ok: true };
+});
+// --- Events ---
+/** Fallback recursive delete using BulkWriter (works on any Admin SDK) */
+async function deleteDocRecursively(docRef, pageSize = 300) {
+    const adminDb = (0, firestore_1.getFirestore)();
+    const writer = adminDb.bulkWriter();
+    async function walkDoc(ref) {
+        // delete all subcollections under this document
+        const subcols = await ref.listCollections();
+        for (const col of subcols) {
+            let last = undefined;
+            // page through the collection to avoid loading too many docs at once
+            // (we recurse into each doc to delete deeper subcollections)
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                let q = col.limit(pageSize);
+                if (last)
+                    q = q.startAfter(last);
+                const snap = await q.get();
+                if (snap.empty)
+                    break;
+                for (const d of snap.docs) {
+                    await walkDoc(d.ref);
+                }
+                last = snap.docs[snap.docs.length - 1];
+                if (snap.size < pageSize)
+                    break;
+            }
+        }
+        // after children are gone, delete the document itself
+        writer.delete(ref);
+    }
+    await walkDoc(docRef);
+    await writer.close(); // flush all batched deletes
+}
+exports.deleteEvent = functions
+    .region(region)
+    .runWith({ timeoutSeconds: 540, memory: '1GB' })
+    .https.onCall(async (data, ctx) => {
+    const uid = assertAuthed(ctx);
+    const eventId = String(data?.eventId || '').trim();
+    if (!eventId)
+        throw new functions.https.HttpsError('invalid-argument', 'eventId required');
+    await assertEventOwner(eventId, uid);
+    const adminDb = (0, firestore_1.getFirestore)();
+    const docRef = adminDb.doc(`events/${eventId}`);
+    const bucket = (0, storage_1.getStorage)().bucket();
+    try {
+        functions.logger.info('deleteEvent: start', { uid, eventId });
+        // 1) Firestore delete: try native recursiveDelete if present; otherwise fallback
+        const hasNative = typeof adminDb.recursiveDelete === 'function';
+        if (hasNative) {
+            // @ts-ignore
+            await adminDb.recursiveDelete(docRef, { batchSize: 200 });
+            functions.logger.info('deleteEvent: native recursiveDelete done', { eventId });
+        }
+        else {
+            functions.logger.warn('deleteEvent: native recursiveDelete not available, using fallback', {});
+            await deleteDocRecursively(docRef, 300);
+            functions.logger.info('deleteEvent: fallback recursive delete done', { eventId });
+        }
+        // 2) Storage cleanup (best effort)
+        try {
+            await bucket.deleteFiles({ prefix: `events/${eventId}/` });
+            functions.logger.info('deleteEvent: storage cleaned', { bucket: bucket.name });
+        }
+        catch (e) {
+            functions.logger.warn('deleteEvent: storage cleanup failed (ignored)', { msg: e?.message, code: e?.code });
+        }
+        // 3) Audit + dashboard refresh
+        await admin_1.db.collection('audit_logs').add({
+            at: admin_1.FieldValue.serverTimestamp(),
+            action: 'deleteEvent',
+            by: uid,
+            eventId
+        });
+        await (0, recompute_1.recomputeSummaryFor)(uid);
+        functions.logger.info('deleteEvent: success', { uid, eventId });
+        return { ok: true };
+    }
+    catch (err) {
+        functions.logger.error('deleteEvent failed', {
+            uid, eventId, code: err?.code || err?.name, message: err?.message, stack: err?.stack
+        });
+        if (err instanceof functions.https.HttpsError)
+            throw err;
+        throw new functions.https.HttpsError('internal', err?.message || 'Delete failed', { step: 'deleteEvent' });
+    }
+});
+exports.recomputeDashboard = functions.region(region).https.onCall(async (data, context) => {
+    const uid = assertAuthed(context);
     await (0, recompute_1.recomputeSummaryFor)(uid);
     return { ok: true };
 });
