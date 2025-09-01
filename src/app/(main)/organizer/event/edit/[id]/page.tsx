@@ -144,13 +144,15 @@ export default function EditEventPage() {
         const dataToUpdate: Partial<EventFormValues> & { coverImage?: any, logoImage?: any } = { ...values };
 
         if (values.coverImage instanceof File) {
-          dataToUpdate.coverImage = await uploadFile('event', values.coverImage, eventId);
+          const { downloadURL } = await uploadFile(eventId, values.coverImage);
+          dataToUpdate.coverImage = downloadURL
         } else {
           dataToUpdate.coverImage = form.getValues('coverImage');
         }
 
         if (values.logoImage instanceof File) {
-          dataToUpdate.logoImage = await uploadFile('event', values.logoImage, eventId);
+          const { downloadURL } = await uploadFile(eventId, values.logoImage);
+          dataToUpdate.logoImage = downloadURL;
         } else {
           dataToUpdate.logoImage = form.getValues('logoImage');
         }

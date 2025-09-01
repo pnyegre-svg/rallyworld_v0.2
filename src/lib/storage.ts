@@ -1,10 +1,7 @@
-
-'use client';
-
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase.client';
-import { getAuth } from 'firebase/auth';
 
 const storage = getStorage();
 
@@ -21,62 +18,71 @@ function guessMime(name: string) {
   return (ext && map[ext]) || '';
 }
 
-async function assertCanUpload(file: File, type: 'user' | 'organizer' | 'event', eventId?: string) {
+function toError(e: any): Error {
+  if (e instanceof Error) return e;
+  if (e && typeof e === 'object') {
+    const code = (e as any).code || (e as any).name || 'unknown';
+    const msg  = (e as any).message || JSON.stringify(e);
+    const err = new Error(msg);
+    (err as any).code = code;
+    return err;
+  }
+  if (typeof e === 'string') return new Error(e);
+  return new Error('Unknown error');
+}
+
+async function assertCanUpload(eventId: string, file: File) {
   const uid = getAuth().currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
-
-  if (type === 'event') {
-    if (!eventId) throw new Error('Event ID is required for event uploads.');
-    const ev = await getDoc(doc(db, 'events', eventId));
-    if (!ev.exists()) throw new Error('Selected event no longer exists.');
-    if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
-  }
-  
+  const ev = await getDoc(doc(db, 'events', eventId));
+  if (!ev.exists()) throw new Error('Selected event no longer exists.');
+  if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
   if (file.size > 20 * 1024 * 1024) throw new Error('File too large (20 MB limit).');
 }
 
-export async function uploadFile(type: 'user' | 'organizer' | 'event', file: File, eventId?: string) {
-  await assertCanUpload(file, type, eventId);
+export async function uploadFile(eventId: string, file: File) {
+  await assertCanUpload(eventId, file);
 
   const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-  
-  let path = '';
-  if (type === 'event') {
-    if (!eventId) throw new Error("Event ID is required for 'event' type uploads.");
-    path = `events/${eventId}/${Date.now()}-${safeName}`;
-  } else if (type === 'organizer') {
-    const uid = getAuth().currentUser!.uid;
-    path = `public/organizers/${uid}/${Date.now()}-${safeName}`;
-  } else {
-    const uid = getAuth().currentUser!.uid;
-    path = `public/users/${uid}/${Date.now()}-${safeName}`;
-  }
+  const path = `events/${eventId}/${Date.now()}-${safeName}`;
 
+  // ✅ ensure rules see an allowed contentType (fallback to guessed)
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };
 
   try {
-    const task = uploadBytesResumable(sref(storage, path), file, metadata);
+    const ref = sref(storage, path);
+    const task = uploadBytesResumable(ref, file, metadata);
 
+    // Capture errors explicitly from state_changed to avoid empty {} in catch
     await new Promise<void>((resolve, reject) => {
       task.on(
         'state_changed',
+        // progress listener (optional)
         undefined,
-        reject,
+        (e) => {
+          const err = toError(e);
+          console.error('upload state_changed error:', { code: (err as any).code, message: err.message, raw: e });
+          reject(err);
+        },
         () => resolve()
       );
     });
 
     const downloadURL = await getDownloadURL(task.snapshot.ref);
-    return downloadURL;
-  } catch (err: any) {
-    console.error('upload error:', { code: err?.code, message: err?.message, raw: err });
+    return { path, downloadURL };
+  } catch (e: any) {
+    const err = toError(e);
+    console.error('upload failed:', { code: (err as any).code, message: err.message, raw: e });
 
-    if (err?.code === 'storage/unauthorized' || err?.code === 'storage/unauthenticated') {
-      const hint = err?.message?.toLowerCase().includes('app check')
-        ? 'App Check token invalid or origin not allowed.'
-        : 'Rule denied: not organizer, file type/size, or event missing.';
-      throw new Error(`Not allowed to upload: ${hint}`);
+    // Helpful, specific messages
+    const code = (err as any).code || '';
+    if (code === 'storage/unauthorized' || code === 'storage/unauthenticated') {
+      // Could be: not organizer, event missing, disallowed MIME/ext, App Check
+      throw new Error('Not allowed to upload. Verify you are signed in, organizer of the selected event, file type/size allowed, and App Check origin is authorized.');
+    }
+    if (code === 'storage/canceled') {
+      throw new Error('Upload was canceled.');
     }
     throw err;
   }
