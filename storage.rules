@@ -2,22 +2,25 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(eventId) {
-      return isSignedIn() && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
-    }
     
-    function isEventPublic(eventId) {
-      return get(/databases/$(database)/documents/events/$(eventId)).data.public == true;
+    // Public read access for all files. This allows anyone to view event
+    // images, public documents, etc., without needing to be signed in.
+    match /{allPaths=**} {
+      allow read;
     }
 
+    // Restrict writes to event-specific folders.
     match /events/{eventId}/{allPaths=**} {
-      allow read: if isEventPublic(eventId) || isOwner(eventId);
-      allow write: if isOwner(eventId);
+      // Allow write (upload, update, delete) only if all conditions are met:
+      allow write: if 
+        // 1. The user is signed in.
+        request.auth != null &&
+        // 2. The request is verified by App Check.
+        request.app != null &&
+        // 3. The file being uploaded is less than 20MB.
+        request.resource.size < 20 * 1024 * 1024 &&
+        // 4. The user's ID matches the organizerId of the event document in Firestore.
+        get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
     }
   }
 }
