@@ -28,7 +28,31 @@ export const eventChanged = functions.firestore
 .onWrite(onEventWrite);
 
 
-export { approveEntry, markEntryPaid, createAnnouncement, updateAnnouncement, publishAnnouncement, pinAnnouncement, deleteAnnouncement, deleteEvent, recomputeDashboard, fileIndexed, fileDeleted, createStage, updateStage, deleteStage, startStage, completeStage, cancelStage, delayStage };
+export { 
+    // Callables
+    approveEntry, 
+    markEntryPaid, 
+    createAnnouncement, 
+    updateAnnouncement, 
+    publishAnnouncement, 
+    pinAnnouncement, 
+    deleteAnnouncement, 
+    deleteEvent, 
+    recomputeDashboard,
+
+    // Storage Triggers
+    fileIndexed, 
+    fileDeleted, 
+    
+    // Stage Callables
+    createStage, 
+    updateStage, 
+    deleteStage, 
+    startStage, 
+    completeStage, 
+    cancelStage, 
+    delayStage 
+};
 
 
 export const scheduledRefresh = functions.pubsub
