@@ -156,7 +156,10 @@ export const deleteEvent = functions.region(region).https.onCall(async (data: an
     }
     await assertEventOwner(asString(eventId), uid);
     
-    await db.doc(`events/${eventId}`).delete();
+    // This is a recursive delete. It's the proper way to delete a document and all its subcollections.
+    // NOTE: This uses the Firebase CLI's delete command feature, but adapted for Cloud Functions.
+    // This will delete the event and all subcollections like stages, entries, announcements, files, etc.
+    await db.recursiveDelete(db.collection('events').doc(eventId));
     
     await db.collection('audit_logs').add({
         at: FieldValue.serverTimestamp(),

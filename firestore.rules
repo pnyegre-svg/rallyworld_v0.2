@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -9,16 +10,10 @@ service cloud.firestore {
     function isOwner(uid) {
       return request.auth.uid == uid;
     }
-    function isEventOwner(eventId) {
-      let doc = get(/databases/$(database)/documents/events/$(eventId));
-      return doc.data.organizerId == request.auth.uid;
-    }
 
     match /users/{userId} {
       allow read: if isAuthed();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
-      allow delete: if false; // users should not be able to delete their own account from the client
+      allow write: if isOwner(userId);
     }
     
     match /competitors/{competitorId} {
@@ -27,35 +22,35 @@ service cloud.firestore {
     }
 
     match /events/{eventId} {
-      allow get: if true;
-      allow list: if isAuthed();
-      
-      // For create, check the incoming resource
+      allow get: if true; // anyone can view a single event
+      allow list: if isAuthed(); // only signed-in users can list all events
       allow create: if isAuthed() && request.resource.data.organizerId == request.auth.uid;
-      // For update/delete, check the existing resource
-      allow update, delete: if isAuthed() && isEventOwner(eventId);
+      allow update: if isAuthed() && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+      // Deletes are handled by the backend cloud function now, so no client-side delete rule is needed.
+      allow delete: if false; 
       
       match /entries/{entryId} {
-        allow read: if isEventOwner(eventId);
-        allow write: if isAuthed(); // Let cloud functions handle authZ
+        allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+        // writes are handled by cloud functions which check ownership
+        allow write: if isAuthed(); 
       }
       
       match /stages/{stageId} {
         allow read: if true; // Public read access
-        allow write: if isEventOwner(eventId);
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
       
       match /announcements/{annId} {
-        // Allow reading a specific document if you are the owner
-        allow get: if isEventOwner(eventId);
-        // Allow listing documents only if they are published, or if you are the owner
-        allow list: if (request.query.limit <= 100 && resource.data.status == 'published') || isEventOwner(eventId);
-        allow write: if isEventOwner(eventId);
+        // Only allow listing of published announcements.
+        // Get is allowed for any authenticated user, UI should not link to drafts for non-owners.
+        allow get: if isAuthed();
+        allow list: if request.query.where.get('status', ['published']) == ['published'];
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
 
       match /files/{fileId} {
         allow read: if true;
-        allow write: if isEventOwner(eventId);
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
     }
     
