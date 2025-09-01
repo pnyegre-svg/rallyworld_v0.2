@@ -77,8 +77,10 @@ export default function MyEventsPage() {
       toast({ text: 'Event deleted successfully.', kind: 'success' });
       // Refresh the list after deletion
       setEvents(prev => prev.filter(e => e.id !== eventId));
-    } catch (error: any) {
-      toast({ text: error.message || 'Failed to delete event.', kind: 'error' });
+    } catch (e: any) {
+      const msg = e?.message || 'Delete failed';
+      const det = e?.details ? ` (${JSON.stringify(e.details)})` : '';
+      toast({ text: `Delete failed: ${msg}${det}`, kind: 'error' });
     } finally {
       setIsDeleting(null);
     }
