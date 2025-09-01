@@ -1,45 +1,38 @@
 rules_version = '2';
-
 service firebase.storage {
   match /b/{bucket}/o {
-
-    // Helper functions
-    function isAuthed() {
-      return request.auth != null;
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(eventId) {
+      return isSignedIn() &&
+        get(/databases/(default)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
+    }
+    function isEventPublic(eventId) {
+      return get(/databases/(default)/documents/events/$(eventId)).data.public == true;
+    }
+    function typeAllowed() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('text/plain');
+    }
+    function extAllowed() {
+      return request.resource.name.matches('(?i)events/[^/]+/.*\\.(pdf|jpe?g|png|gif|webp|heic|heif|docx?|xlsx?|pptx?|txt)$');
+    }
+    // images <= 64MB, else <= 20MB
+    function withinSize() {
+      return (request.resource.contentType.matches('image/.*') && request.resource.size < 64 * 1024 * 1024) ||
+             (!request.resource.contentType.matches('image/.*') && request.resource.size < 20 * 1024 * 1024);
     }
 
-    function isAppChecked() {
-      // In production, use: request.app != null;
-      // For local testing with emulators, this might need to be relaxed
-      // if you don't have a reliable way to generate App Check tokens.
-      // NEVER use return true in production.
-      return request.app != null;
-    }
-    
-    function isOwner(uid) {
-      return isAuthed() && request.auth.uid == uid;
+    match /public/{allPaths=**} {
+      allow read: if true;
     }
 
-    function isEventOwner(eventId) {
-      return isAuthed() && get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
-    }
-    
-    // PUBLIC READS: Allow anyone to read any file.
-    // This is useful for public images, event documents, etc.
-    match /{allPaths=**} {
-      allow read;
-    }
-
-    // USER PROFILE WRITES: Allow a user to write to their own profile folder.
-    // e.g., users/{userId}/profile/avatar.jpg
-    match /users/{userId}/{allPaths=**} {
-      allow write: if isAppChecked() && isOwner(userId) && request.resource.size < (5 * 1024 * 1024); // 5MB limit
-    }
-
-    // EVENT WRITES: Only the event organizer can write to their event's folder.
-    // e.g., events/{eventId}/docs/map.pdf
-    match /events/{eventId}/{allPaths=**} {
-      allow write: if isAppChecked() && isEventOwner(eventId) && request.resource.size < (20 * 1024 * 1024); // 20MB limit
+    match /events/{eventId}/{path=**} {
+      allow read: if isSignedIn() || isEventPublic(eventId);
+      allow write: if isOwner(eventId) && withinSize() && (typeAllowed() || extAllowed());
+      allow delete: if isOwner(eventId);
     }
   }
 }
