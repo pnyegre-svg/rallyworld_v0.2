@@ -166,15 +166,15 @@ export default function MyEventsPage() {
                                     <p className="text-xs text-muted-foreground mt-1">by {getOrganizerName(event.organizerId)}</p>
                                 </div>
                            </div>
-                            <div className="mt-4 flex gap-2">
-                                 <Button asChild variant="outline" size="sm" className="w-full relative z-10">
+                            <div className="mt-4 flex justify-between gap-2">
+                                 <Button asChild variant="outline" size="sm" className="flex-1 relative z-10">
                                     <Link href={`/events/${event.id}`}>
                                         <Eye className="mr-2 h-4 w-4" /> View
                                     </Link>
                                 </Button>
                                 {isOrganizer && user.organizerProfile?.id === event.organizerId && (
                                     <>
-                                        <Button asChild variant="secondary" size="sm" className="w-full relative z-10">
+                                        <Button asChild variant="secondary" size="sm" className="flex-1 relative z-10">
                                             <Link href={`/organizer/event/edit/${event.id}`}>
                                                 <PenSquare className="mr-2 h-4 w-4" /> Edit
                                             </Link>
