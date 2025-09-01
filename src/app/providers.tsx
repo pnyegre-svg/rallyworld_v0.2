@@ -1,47 +1,39 @@
 
 'use client';
-import { useEffect, useState, createContext } from 'react';
-import { useUserStore } from '@/hooks/use-user';
-import { ThemeProvider } from '@/components/theme-provider';
-import Toaster from '@/components/ui/toaster';
-import { auth } from '@/lib/firebase.client';
-import { AppReadyContext } from '@/hooks/use-app-ready';
+import { useEffect } from 'react';
+import { initializeApp, getApp, getApps } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaV3Provider, getToken } from 'firebase/app-check';
 
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FB_API_KEY!,
+  authDomain: process.env.NEXT_PUBLIC_FB_AUTH_DOMAIN!,
+  projectId: process.env.NEXT_PUBLIC_FB_PROJECT_ID!,
+  storageBucket: process.env.NEXT_PUBLIC_FB_STORAGE_BUCKET!,
+  appId: process.env.NEXT_PUBLIC_FB_APP_ID!,
+};
+
+let booted = false;
 export function Providers({ children }: { children: React.ReactNode }) {
-  const { initialize } = useUserStore();
-  const [isAppReady, setIsAppReady] = useState(false);
-  
   useEffect(() => {
-    // Initialize the user store which sets up the auth listener
-    const unsubscribe = initialize();
+    if (booted) return;
+    booted = true;
 
-    // When the auth state is confirmed, the app is ready
-    const checkReadyState = () => {
-        if (auth.currentUser !== undefined) {
-            setIsAppReady(true);
-        }
-    };
-    
-    // Check immediately and also on auth state change
-    checkReadyState();
-    const unsubAuth = auth.onAuthStateChanged(checkReadyState);
+    // (A) set debug token BEFORE initializeAppCheck if you want to use it
+    if (process.env.NEXT_PUBLIC_APPCHECK_DEBUG) {
+      (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NEXT_PUBLIC_APPCHECK_DEBUG;
+    }
 
-    return () => {
-      unsubscribe();
-      unsubAuth();
-    };
-  }, [initialize]);
-  
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <AppReadyContext.Provider value={isAppReady}>
-        <Toaster>{children}</Toaster>
-      </AppReadyContext.Provider>
-    </ThemeProvider>
-  );
+    const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+
+    // (B) init App Check with the SAME reCAPTCHA v3 site key you configured in Firebase Console
+    const appCheck = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(process.env.NEXT_PUBLIC_RECAPTCHA_V3_SITE_KEY!),
+      isTokenAutoRefreshEnabled: true,
+    });
+
+    // (C) warm the token to avoid the first-request race
+    getToken(appCheck, true).catch(() => {});
+  }, []);
+
+  return <>{children}</>;
 }
