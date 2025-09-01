@@ -1,78 +1,70 @@
 
 'use client';
 
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { auth, storage } from './firebase.client';
-import { type User, onAuthStateChanged } from 'firebase/auth';
+import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase.client';
+import { getAuth } from 'firebase/auth';
 
-// Helper that waits for auth to be ready
-export async function requireUser(): Promise<User> {
-  const existing = auth.currentUser;
-  if (existing) return existing;
-  return new Promise((resolve, reject) => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      unsub();
-      if (u) resolve(u);
-      else reject(new Error('Not signed in'));
-    });
-  });
+const storage = getStorage();
+
+function guessMime(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase();
+  const map: Record<string,string> = {
+    pdf:'application/pdf',
+    jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp',
+    doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls:'application/vnd.ms-excel', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt:'application/vnd.ms-powerpoint', pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    txt:'text/plain'
+  };
+  return (ext && map[ext]) || '';
 }
 
+async function assertCanUpload(eventId: string, file: File) {
+  const uid = getAuth().currentUser?.uid;
+  if (!uid) throw new Error('Please sign in first.');
+  const ev = await getDoc(doc(db, 'events', eventId));
+  if (!ev.exists()) throw new Error('Selected event no longer exists.');
+  if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
+  if (file.size > 20 * 1024 * 1024) throw new Error('File too large (20 MB limit).');
+}
 
-/**
- * Uploads a file to a specified path in Firebase Storage.
- * This function now ensures a user is authenticated before proceeding.
- *
- * @param file The file to upload.
- * @param type The type of upload, determines the folder path.
- * @param eventId Optional event ID for event-specific uploads.
- * @returns A promise that resolves with the public download URL of the uploaded file.
- */
-export const uploadFile = async (file: File, type: 'organizer' | 'user' | 'event', eventId?: string): Promise<string> => {
-  const user = await requireUser(); // <-- Guarantees request.auth != null at rules time
-  
-  let folder;
-  switch (type) {
-    case 'organizer':
-        folder = `public/organizers/${user.uid}/club-profile-picture`;
-        break;
-    case 'user':
-        folder = `public/users/${user.uid}/profile-picture`;
-        break;
-    case 'event':
-        if (!eventId) {
-            throw new Error("eventId is required for 'event' type uploads.");
-        }
-        // This path now matches the storage rules for event-related documents.
-        folder = `events/${eventId}`;
-        break;
-    default:
-        throw new Error("Invalid upload type specified.");
-  }
-  
-  const path = `${folder}/${Date.now()}-${file.name}`;
-  
-  const storageRef = ref(storage, path);
+export async function uploadFile(eventId: string, file: File) {
+  await assertCanUpload(eventId, file);
+
+  const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+  const path = `events/${eventId}/${Date.now()}-${safeName}`;
+
+  // ✅ Always send a contentType that your rules allow
+  const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
+  const metadata = { contentType };
 
   try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (err: any) {
-    console.error('Firebase Storage upload error:', err);
+    const task = uploadBytesResumable(sref(storage, path), file, metadata);
 
-    // Provide clearer error messages for common issues.
-    if (err?.code === 'storage/unauthorized' || err?.code === 'storage/unauthenticated') {
-      throw new Error(
-        'Firebase Storage permission denied. Please ensure you are logged in and your storage rules are correct.'
+    await new Promise<void>((resolve, reject) => {
+      task.on(
+        'state_changed',
+        undefined,
+        reject,
+        () => resolve()
       );
+    });
+
+    const downloadURL = await getDownloadURL(task.snapshot.ref);
+    return { path, downloadURL };
+  } catch (err: any) {
+    // Surface the real reason so we can diagnose quickly
+    console.error('upload error:', { code: err?.code, message: err?.message, raw: err });
+
+    if (err?.code === 'storage/unauthorized' || err?.code === 'storage/unauthenticated') {
+      // App Check failures also come through as "unauthorized"
+      const hint = err?.message?.toLowerCase().includes('app check')
+        ? 'App Check token invalid or origin not allowed.'
+        : 'Rule denied: not organizer, file type/size, or event missing.';
+      throw new Error(`Not allowed to upload: ${hint}`);
     }
-    if (err?.code === 'storage/object-not-found') {
-        throw new Error(
-            'File not found. This can happen if the storage rules are not deployed correctly.'
-        )
-    }
-    
-    throw new Error('Could not upload file.');
+    throw err;
   }
-};
+}
