@@ -160,34 +160,47 @@ export const deleteEvent = functions
 
     await assertEventOwner(eventId, uid);
 
-    const adminDb = getFirestore();
-    const docRef = adminDb.doc(`events/${eventId}`);
-    const bucket = getStorage().bucket(); // default bucket
+    const eventPath = `events/${eventId}`;
+    const bucket = getStorage().bucket();
 
     try {
       functions.logger.info('deleteEvent: start', { uid, eventId });
 
-      // 1) Firestore recursive delete
-      try {
-        // Available on Admin SDK v9+ (you are on v12)
-        // @ts-ignore
-        await (adminDb as any).recursiveDelete(docRef, { batchSize: 200 });
-        functions.logger.info('deleteEvent: firestore recursiveDelete done', { eventId });
-      } catch (e:any) {
-        functions.logger.error('deleteEvent: recursiveDelete failed, will bubble', { msg: e?.message, code: e?.code, stack: e?.stack });
-        throw e; // Let it surface; manual fallback is rarely needed and slower
+      // Manually delete subcollections
+      const subcollections = ['stages', 'entries', 'announcements', 'files'];
+      for (const sub of subcollections) {
+        const subPath = `${eventPath}/${sub}`;
+        const docs = await db.collection(subPath).listDocuments();
+        let batch = db.batch();
+        let count = 0;
+        for (const doc of docs) {
+            batch.delete(doc);
+            count++;
+            if (count >= 400) { // Batch writes are limited to 500 ops
+                await batch.commit();
+                batch = db.batch();
+                count = 0;
+            }
+        }
+        if (count > 0) {
+            await batch.commit();
+        }
+        functions.logger.info(`deleteEvent: deleted ${docs.length} docs from ${sub}`, { eventId });
       }
 
-      // 2) Storage cleanup (best-effort)
+      // Delete the main event document
+      await db.doc(eventPath).delete();
+      functions.logger.info('deleteEvent: firestore document deleted', { eventId });
+      
+      // Storage cleanup (best-effort)
       try {
         await bucket.deleteFiles({ prefix: `events/${eventId}/` });
         functions.logger.info('deleteEvent: storage deleteFiles done', { bucket: bucket.name });
       } catch (e:any) {
-        // Don’t fail the whole op just because files weren’t present
         functions.logger.warn('deleteEvent: storage deleteFiles failed (ignored)', { msg: e?.message, code: e?.code });
       }
 
-      // 3) Audit + dashboard refresh
+      // Audit + dashboard refresh
       await db.collection('audit_logs').add({
         at: FieldValue.serverTimestamp(),
         action: 'deleteEvent',
@@ -203,7 +216,6 @@ export const deleteEvent = functions
         uid, eventId, code: err?.code, message: err?.message, stack: err?.stack
       });
       if (err instanceof functions.https.HttpsError) throw err;
-      // expose a concise reason to the client
       throw new functions.https.HttpsError('internal', err?.message || 'Delete failed', {
         code: err?.code || 'unknown',
         step: 'deleteEvent'
