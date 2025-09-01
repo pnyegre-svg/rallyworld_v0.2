@@ -21,7 +21,8 @@ service cloud.firestore {
     }
 
     match /events/{eventId} {
-      allow read: if true; // Public read access
+      allow get: if true; // Public read for a single document
+      allow list: if isAuthed(); // Allow listing events for authenticated users
       allow write: if isAuthed() && resource.data.organizerId == request.auth.uid;
       
       match /entries/{entryId} {
