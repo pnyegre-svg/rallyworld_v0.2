@@ -1,7 +1,8 @@
 
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { auth } from './firebase.client';
 import { doc, getDoc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase.client';
+import { db } from '@/lib/firebase.client';
 
 const storage = getStorage();
 
@@ -43,9 +44,10 @@ async function assertCanUpload(eventId: string, file: File) {
 export async function uploadFile(eventId: string, file: File) {
   await assertCanUpload(eventId, file);
 
-  const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+  const safeName = file.name.replace(/[^\w.-]+/g, '_');
   const path = `events/${eventId}/${Date.now()}-${safeName}`;
 
+  // ✅ ensure rules see an allowed contentType (fallback to guessed)
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };
 
@@ -53,10 +55,12 @@ export async function uploadFile(eventId: string, file: File) {
     const ref = sref(storage, path);
     const task = uploadBytesResumable(ref, file, metadata);
 
+    // Capture errors explicitly from state_changed to avoid empty {} in catch
     await new Promise<void>((resolve, reject) => {
       task.on(
         'state_changed',
-        undefined, 
+        // progress listener (optional)
+        undefined,
         (e) => {
           const err = toError(e);
           console.error('upload state_changed error:', { code: (err as any).code, message: err.message, raw: e });
@@ -72,8 +76,10 @@ export async function uploadFile(eventId: string, file: File) {
     const err = toError(e);
     console.error('upload failed:', { code: (err as any).code, message: err.message, raw: e });
 
+    // Helpful, specific messages
     const code = (err as any).code || '';
     if (code === 'storage/unauthorized' || code === 'storage/unauthenticated') {
+      // Could be: not organizer, event missing, disallowed MIME/ext, App Check
       throw new Error('Not allowed to upload. Verify you are signed in, organizer of the selected event, file type/size allowed, and App Check origin is authorized.');
     }
     if (code === 'storage/canceled') {
