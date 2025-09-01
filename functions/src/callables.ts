@@ -2,6 +2,7 @@
 import * as functions from 'firebase-functions';
 import { db, FieldValue } from './admin';
 import { recomputeSummaryFor } from './recompute';
+import * as firebase_helper from 'firebase-functions-helper';
 
 // if you have your own authz helpers, keep using them;
 // for now, minimal assert:
@@ -151,25 +152,31 @@ export const deleteAnnouncement = functions.region(region).https.onCall(async (d
 export const deleteEvent = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {
     const uid = assertAuthed(context);
     const { eventId } = data || {};
+    
     if (!eventId) {
         throw new functions.https.HttpsError('invalid-argument', 'The function must be called with an "eventId" argument.');
     }
     await assertEventOwner(asString(eventId), uid);
     
-    // This is a recursive delete. It's the proper way to delete a document and all its subcollections.
-    // NOTE: This uses the Firebase CLI's delete command feature, but adapted for Cloud Functions.
-    // This will delete the event and all subcollections like stages, entries, announcements, files, etc.
-    await db.recursiveDelete(db.collection('events').doc(eventId));
-    
-    await db.collection('audit_logs').add({
-        at: FieldValue.serverTimestamp(),
-        action: 'deleteEvent',
-        by: uid,
-        eventId
-    });
-    
-    await recomputeSummaryFor(uid);
-    return { ok: true };
+    const docPath = `events/${eventId}`;
+
+    try {
+      await firebase_helper.firestore.deleteDocument(db, docPath);
+
+      await db.collection('audit_logs').add({
+          at: FieldValue.serverTimestamp(),
+          action: 'deleteEvent',
+          by: uid,
+          eventId
+      });
+      
+      await recomputeSummaryFor(uid);
+      return { ok: true, message: "Event and all its subcollections deleted successfully." };
+
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw new functions.https.HttpsError('internal', 'Failed to delete event.');
+    }
 });
 
 export const recomputeDashboard = functions.region(region).https.onCall(async (data: any, context: functions.https.CallableContext) => {

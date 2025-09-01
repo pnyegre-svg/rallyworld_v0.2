@@ -11,46 +11,47 @@ service cloud.firestore {
     }
     function isEventOwner(eventId) {
       let doc = get(/databases/$(database)/documents/events/$(eventId));
-      return doc.data.organizerId == request.auth.uid;
+      // Check for existence before accessing data
+      return doc.exists && doc.data.organizerId == request.auth.uid;
     }
 
     match /users/{userId} {
       allow read: if isAuthed();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
+      // No explicit delete rule, so it's disallowed by default
     }
     
     match /competitors/{competitorId} {
         allow read: if true;
-        allow write: if isAuthed();
+        allow write: if isAuthed(); 
     }
 
     match /events/{eventId} {
       allow get: if true;
       allow list: if isAuthed();
       
+      // For create, check the incoming resource
       allow create: if isAuthed() && request.resource.data.organizerId == request.auth.uid;
+      // For update, check the existing resource
       allow update: if isAuthed() && isEventOwner(eventId);
-      // Deletes are handled by a secure Cloud Function, not directly by clients.
-      allow delete: if false;
-
+      // Delete is handled by a Cloud Function, so no client-side delete permission is needed.
+      allow delete: if false; 
+      
       match /entries/{entryId} {
         allow read: if isEventOwner(eventId);
-        // Let cloud functions handle authZ for writes
-        allow write: if isAuthed(); 
+        allow write: if isAuthed(); // Let cloud functions handle authZ
       }
       
       match /stages/{stageId} {
-        allow read: if true;
+        allow read: if true; // Public read access
         allow write: if isEventOwner(eventId);
       }
       
       match /announcements/{annId} {
-        // Anyone can get a single announcement if it's published. The owner can get any.
-        allow get: if resource.data.status == 'published' || isEventOwner(eventId);
-        // Anyone can list published announcements. The owner can list all.
-        allow list: if request.query.get('status') == 'published' || isEventOwner(eventId);
-        // The owner can write to announcements.
+        allow get: if true; // Public can read any single announcement
+        // Allow listing documents only if they are published, or if you are the owner
+        allow list: if isEventOwner(eventId) || request.query.where.status == 'published';
         allow write: if isEventOwner(eventId);
       }
 
