@@ -41,6 +41,7 @@ async function assertCanUpload(eventId: string, file: File) {
 }
 
 export async function uploadFile(eventId: string, file: File) {
+  // Warm up App Check token. It's ok if this fails, we still want to try.
   try {
     const app = auth.app;
     const ac = getAppCheck(app);
@@ -54,6 +55,8 @@ export async function uploadFile(eventId: string, file: File) {
 
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };
+
+  console.log('upload debug', { path, fileType: file.type, name: file.name, sizeMB: (file.size/1024/1024).toFixed(1) });
 
   try {
     const ref = sref(storage, path);
