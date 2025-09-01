@@ -20,9 +20,11 @@ function guessMime(name: string) {
 
 function toError(e: any): Error {
   if (e instanceof Error) return e;
-  if (e && typeof e === 'object' && e.message) {
-    const err = new Error(e.message);
-    if (e.code) (err as any).code = e.code;
+  if (e && typeof e === 'object') {
+    const code = (e as any).code || (e as any).name || 'unknown';
+    const msg  = (e as any).message || JSON.stringify(e);
+    const err = new Error(msg);
+    (err as any).code = code;
     return err;
   }
   if (typeof e === 'string') return new Error(e);
@@ -54,7 +56,7 @@ export async function uploadFile(eventId: string, file: File) {
     await new Promise<void>((resolve, reject) => {
       task.on(
         'state_changed',
-        undefined, // progress listener (optional)
+        undefined, 
         (e) => {
           const err = toError(e);
           console.error('upload state_changed error:', { code: (err as any).code, message: err.message, raw: e });
