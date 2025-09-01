@@ -42,7 +42,8 @@ export async function uploadFile(type: 'user' | 'organizer' | 'event', file: Fil
   
   let path = '';
   if (type === 'event') {
-    path = `events/${eventId}/docs/images/${Date.now()}-${safeName}`;
+    if (!eventId) throw new Error("Event ID is required for 'event' type uploads.");
+    path = `events/${eventId}/${Date.now()}-${safeName}`;
   } else if (type === 'organizer') {
     const uid = getAuth().currentUser!.uid;
     path = `public/organizers/${uid}/${Date.now()}-${safeName}`;
