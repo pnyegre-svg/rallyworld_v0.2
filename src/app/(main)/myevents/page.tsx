@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useUserStore } from '@/hooks/use-user';
 import { Eye, MapPin, PenSquare, PlusCircle, Trash2 } from 'lucide-react';
-import { getEvents, deleteEvent, type Event } from '@/lib/events';
+import { getEvents, deleteEvent as deleteEventFn, type Event } from '@/lib/events';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -73,14 +73,13 @@ export default function MyEventsPage() {
   const handleDelete = async (eventId: string) => {
     setIsDeleting(eventId);
     try {
-      await deleteEvent(eventId);
+      await deleteEventFn(eventId);
       toast({ text: 'Event deleted successfully.', kind: 'success' });
       // Refresh the list after deletion
       setEvents(prev => prev.filter(e => e.id !== eventId));
     } catch (e: any) {
-      const msg = e?.message || 'Delete failed';
-      const det = e?.details ? ` (${JSON.stringify(e.details)})` : '';
-      toast({ text: `Delete failed: ${msg}${det}`, kind: 'error' });
+      const details = e?.details ? ` (${JSON.stringify(e.details)})` : '';
+      toast({ kind:'error', text: `Delete failed: ${e?.message || 'internal'}${details}` });
     } finally {
       setIsDeleting(null);
     }
