@@ -104,6 +104,7 @@ export default function UploadsPage() {
   const [loadingFiles, setLoadingFiles] = React.useState(true);
   const [loadingEvents, setLoadingEvents] = React.useState(true);
   const [cursor, setCursor] = React.useState<any>();
+  const noEvent = !selectedEventId;
 
   // Fetch events
   React.useEffect(() => {
@@ -111,13 +112,14 @@ export default function UploadsPage() {
       setLoadingEvents(true);
       listOrganizerEvents(db, user.id).then((fetchedEvents) => {
         setEvents(fetchedEvents);
-        const storedEvent = localStorage.getItem(LS_EVENT);
-        const pickEvent =
-          storedEvent && fetchedEvents.find((e) => e.id === storedEvent)
-            ? storedEvent
-            : fetchedEvents[0]?.id;
-        if (pickEvent) {
-          setSelectedEventId(pickEvent);
+        if (!fetchedEvents.length) {
+            localStorage.removeItem(LS_EVENT);
+            setSelectedEventId('');
+        } else {
+            const storedEvent = localStorage.getItem(LS_EVENT);
+            const candidate =
+            fetchedEvents.find((e) => e.id === storedEvent)?.id || fetchedEvents[0]?.id || '';
+            setSelectedEventId(candidate);
         }
         setLoadingEvents(false);
       });
@@ -134,7 +136,7 @@ export default function UploadsPage() {
 
   const onDrop = React.useCallback(
     (acceptedFiles: File[]) => {
-      if (!selectedEventId) {
+      if (noEvent) {
         toast({
           text: 'Please select an event before uploading files.',
           kind: 'error',
@@ -143,10 +145,13 @@ export default function UploadsPage() {
       }
       addFiles(acceptedFiles);
     },
-    [addFiles, selectedEventId, toast]
+    [addFiles, noEvent, toast]
   );
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    disabled: noEvent,
+  });
 
   const fetchFiles = React.useCallback(async (nextPage = false) => {
       if (!selectedEventId || !activeTab) {
@@ -217,7 +222,7 @@ export default function UploadsPage() {
           >
             <SelectTrigger className="w-[280px]">
               <SelectValue
-                placeholder={loadingEvents ? 'Loading...' : 'Select an event'}
+                placeholder={loadingEvents ? 'Loading...' : events.length > 0 ? 'Select an event' : 'Create an event first'}
               />
             </SelectTrigger>
             <SelectContent>
@@ -257,6 +262,9 @@ export default function UploadsPage() {
                 onUploadSuccess={handleUploadSuccess}
                 loadMore={() => fetchFiles(true)}
                 hasMore={!!cursor}
+                noEvent={noEvent}
+                eventId={selectedEventId}
+                folder={activeTab}
               />
             </TabsContent>
         </Tabs>
@@ -278,6 +286,9 @@ const FileCategoryContent = ({
   onUploadSuccess,
   loadMore,
   hasMore,
+  noEvent,
+  eventId,
+  folder,
 }: any) => {
   const UploadItem = ({ upload }: { upload: Upload }) => {
     React.useEffect(() => {
@@ -364,18 +375,21 @@ const FileCategoryContent = ({
       <div>
         <div
           {...getRootProps()}
-          className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-            isDragActive
-              ? 'border-primary bg-primary/10'
-              : 'border-border hover:border-primary/50'
+          className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-lg transition-colors ${
+            noEvent ? 'border-muted bg-muted/50 cursor-not-allowed text-muted-foreground' : isDragActive
+              ? 'border-primary bg-primary/10 cursor-copy'
+              : 'border-border hover:border-primary/50 cursor-pointer'
           }`}
         >
           <input {...getInputProps()} />
-          <UploadCloud className="h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">
-            {isDragActive
-              ? 'Drop the files here...'
-              : 'Drag files here, or click to select'}
+          <UploadCloud className="h-12 w-12" />
+          <p className="mt-4 text-center">
+            {noEvent 
+                ? 'Please create or select an event to enable uploads.'
+                : isDragActive
+                ? 'Drop the files here...'
+                : 'Drag files here, or click to select'
+            }
           </p>
         </div>
         {uploads.length > 0 && (
@@ -413,7 +427,7 @@ const FileCategoryContent = ({
                 ) : (
                     <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center">
-                        No files uploaded to this category.
+                        { noEvent ? "Please select an event." : "No files uploaded to this category."}
                     </TableCell>
                     </TableRow>
                 )}
