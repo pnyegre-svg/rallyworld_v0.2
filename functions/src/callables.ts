@@ -174,7 +174,7 @@ export const deleteEvent = functions.region(region).https.onCall(async (data: an
       return { ok: true, message: "Event and all its subcollections deleted successfully." };
 
     } catch (error) {
-      console.error('Error deleting event:', error);
+      functions.logger.error('Error deleting event:', { error, uid, eventId });
       throw new functions.https.HttpsError('internal', 'Failed to delete event.');
     }
 });
