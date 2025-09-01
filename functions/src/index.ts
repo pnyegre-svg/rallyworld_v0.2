@@ -28,30 +28,30 @@ export const eventChanged = functions.firestore
 .onWrite(onEventWrite);
 
 
-export { 
+export {
     // Callables
-    approveEntry, 
-    markEntryPaid, 
-    createAnnouncement, 
-    updateAnnouncement, 
-    publishAnnouncement, 
-    pinAnnouncement, 
-    deleteAnnouncement, 
-    deleteEvent, 
+    approveEntry,
+    markEntryPaid,
+    createAnnouncement,
+    updateAnnouncement,
+    publishAnnouncement,
+    pinAnnouncement,
+    deleteAnnouncement,
+    deleteEvent,
     recomputeDashboard,
 
     // Storage Triggers
-    fileIndexed, 
-    fileDeleted, 
-    
+    fileIndexed,
+    fileDeleted,
+
     // Stage Callables
-    createStage, 
-    updateStage, 
-    deleteStage, 
-    startStage, 
-    completeStage, 
-    cancelStage, 
-    delayStage 
+    createStage,
+    updateStage,
+    deleteStage,
+    startStage,
+    completeStage,
+    cancelStage,
+    delayStage
 };
 
 
