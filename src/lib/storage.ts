@@ -1,7 +1,8 @@
+
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase.client';
+import { db, auth } from '@/lib/firebase.client';
 
 const storage = getStorage();
 
@@ -32,7 +33,7 @@ function toError(e: any): Error {
 }
 
 async function assertCanUpload(eventId: string, file: File) {
-  const uid = getAuth().currentUser?.uid;
+  const uid = auth.currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
   const ev = await getDoc(doc(db, 'events', eventId));
   if (!ev.exists()) throw new Error('Selected event no longer exists.');
