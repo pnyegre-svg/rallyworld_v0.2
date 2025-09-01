@@ -22,6 +22,7 @@ const fileSchema = z.object({
 
 export const eventFormSchema = z.object({
   title: z.string().min(3, { message: 'Event title must be at least 3 characters.' }),
+  public: z.boolean().default(false),
   dates: z.object({
     from: z.date({ required_error: 'A start date is required.' }),
     to: z.date({ required_error: 'An end date is required.' }),
@@ -67,6 +68,7 @@ const eventConverter = {
     return {
       id: snapshot.id,
       title: data.title,
+      public: data.public ?? false,
       hqLocation: data.hqLocation,
       organizerId: data.organizerId,
       dates: {

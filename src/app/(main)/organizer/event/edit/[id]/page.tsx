@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { format, subMonths, startOfYear, endOfYear, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
-import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, Text } from 'lucide-react';
+import { Calendar as CalendarIcon, Link as LinkIcon, Upload, Trash2, FileText, Globe, PlusCircle, Flag, MapPin, Route, Image as ImageIcon, Award, Text, Eye } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -41,6 +41,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { uploadFile } from '@/lib/storage';
 import { db } from '@/lib/firebase.client';
+import { Switch } from '@/components/ui/switch';
 
 export default function EditEventPage() {
   const { push: toast } = useToast();
@@ -56,6 +57,7 @@ export default function EditEventPage() {
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       title: '',
+      public: false,
       hqLocation: '',
       whatsappLink: '',
       livestreamLink: '',
@@ -458,6 +460,26 @@ export default function EditEventPage() {
                             </FormItem>
                         )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="public"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                            <div className="space-y-0.5">
+                                <FormLabel className="text-base flex items-center gap-2"><Eye className="h-4 w-4"/> Make Event Public</FormLabel>
+                                <FormDescription>
+                                When enabled, the event will be visible to the public on the main events page.
+                                </FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                />
+                            </FormControl>
+                            </FormItem>
+                        )}
+                        />
                 </div>
             </div>
             
