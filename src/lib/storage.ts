@@ -1,107 +1,66 @@
 
-
 import { getStorage, ref as sref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { doc, getDoc } from 'firebase/firestore';
-import { db, auth, storage } from '@/lib/firebase.client';
 import { getAppCheck, getToken } from 'firebase/app-check';
+import { getAuth } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase.client';
 
+const storage = getStorage();
 
-function guessMime(name: string) {
-  const ext = name.split('.').pop()?.toLowerCase();
-  const map: Record<string,string> = {
+function splitName(name: string) {
+  const idx = name.lastIndexOf('.');
+  if (idx <= 0) return { base: name, ext: '' };
+  return { base: name.slice(0, idx), ext: name.slice(idx + 1) };
+}
+function slug(s: string) {
+  // keep letters/numbers/_- and collapse runs
+  return s.normalize('NFKD').replace(/[^\w-]+/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '') || 'file';
+}
+function mimeFromExt(ext: string) {
+  const m: Record<string,string> = {
     pdf:'application/pdf',
     jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', gif:'image/gif', webp:'image/webp',
+    heic:'image/heic', heif:'image/heif',
     doc:'application/msword', docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     xls:'application/vnd.ms-excel', xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ppt:'application/vnd.ms-powerpoint', pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     txt:'text/plain'
   };
-  return (ext && map[ext]) || '';
+  return m[ext.toLowerCase()] || '';
 }
 
-function toError(e: any): Error {
-  if (e instanceof Error) return e;
-  if (e && typeof e === 'object') {
-    const code = (e as any).code || (e as any).name || 'unknown';
-    const msg  = (e as any).message || JSON.stringify(e);
-    const err = new Error(msg);
-    (err as any).code = code;
-    return err;
-  }
-  if (typeof e === 'string') return new Error(e);
-  return new Error('Unknown error');
-}
-
-async function assertCanUpload(contextId: string, file: File, category: 'event-doc' | 'user-profile') {
-  const uid = auth.currentUser?.uid;
+async function assertCanUpload(eventId: string, file: File) {
+  const uid = getAuth().currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
-  
-  if (category === 'event-doc') {
-    const ev = await getDoc(doc(db, 'events', contextId));
-    if (!ev.exists()) throw new Error('Selected event no longer exists.');
-    if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
-  } else if (category === 'user-profile') {
-    if (contextId !== uid) throw new Error('You can only upload to your own profile.');
-  }
-  
-  if (file.size > 20 * 1024 * 1024) throw new Error('File too large (20 MB limit).');
+  const ev = await getDoc(doc(db, 'events', eventId));
+  if (!ev.exists()) throw new Error('Selected event no longer exists.');
+  if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
 }
 
-export async function uploadFile(contextId: string, file: File, category: 'event-doc' | 'user-profile') {
-  // Warm up App Check token. It's ok if this fails, we still want to try.
-  try {
-    const app = auth.app;
-    const ac = getAppCheck(app);
-    await getToken(ac, true);
-  } catch {}
+export async function uploadFile(eventId: string, file: File, folder = 'docs') {
+  // Warm App Check token to avoid first-request denial when enforcement is ON
+  try { const ac = getAppCheck(); await getToken(ac, true); } catch {}
 
-  await assertCanUpload(contextId, file, category);
+  await assertCanUpload(eventId, file);
 
-  const safeName = file.name.replace(/[^A-Za-z0-9_.-]/g, '_');
-  
-  let path: string;
-  if (category === 'event-doc') {
-    path = `events/${contextId}/docs/${safeName}`;
-  } else {
-    // For user-profile, contextId is the userId
-    path = `users/${contextId}/profile/${safeName}`;
-  }
+  const { base, ext } = splitName(file.name || 'file');
+  const safeBase = slug(base);
+  const finalExt = (ext && slug(ext)) || (file.type && file.type.split('/')[1]) || 'bin';
+  const fileName = `${safeBase}.${finalExt}`;                 // ✅ always has extension
+  const path = `events/${eventId}/${folder}/${Date.now()}-${fileName}`;
 
-  const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
+  // Ensure rules see an allowed MIME even if browser sends octet-stream
+  const contentType = file.type || mimeFromExt(finalExt) || 'application/octet-stream';
   const metadata = { contentType };
 
-  console.log('upload debug', { path, fileType: file.type, name: file.name, sizeMB: (file.size/1024/1024).toFixed(1) });
+  console.log('upload debug', {
+    path, fileType: file.type, name: file.name, sizeMB: (file.size/1024/1024).toFixed(1), contentType
+  });
 
-  try {
-    const ref = sref(storage, path);
-    const task = uploadBytesResumable(ref, file, metadata);
-
-    await new Promise<void>((resolve, reject) => {
-      task.on(
-        'state_changed',
-        undefined,
-        (e) => {
-          const err = toError(e);
-          console.error('upload state_changed error:', { code: (err as any).code, message: err.message, raw: e });
-          reject(err);
-        },
-        () => resolve()
-      );
-    });
-
-    const downloadURL = await getDownloadURL(task.snapshot.ref);
-    return { path, downloadURL };
-  } catch (e: any) {
-    const err = toError(e);
-    console.error('upload failed:', { code: (err as any).code, message: err.message, raw: e });
-
-    const code = (err as any).code || '';
-    if (code === 'storage/unauthorized' || code === 'storage/unauthenticated') {
-      throw new Error('Not allowed to upload. Verify you are signed in, organizer of the selected event, file type/size allowed, and App Check origin is authorized.');
-    }
-    if (code === 'storage/canceled') {
-      throw new Error('Upload was canceled.');
-    }
-    throw err;
-  }
+  const task = uploadBytesResumable(sref(storage, path), file, metadata);
+  await new Promise<void>((resolve, reject) => {
+    task.on('state_changed', undefined, reject, () => resolve());
+  });
+  const url = await getDownloadURL(task.snapshot.ref);
+  return { path, url };
 }
