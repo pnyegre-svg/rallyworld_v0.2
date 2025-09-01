@@ -71,8 +71,8 @@ export const useUserStore = create<UserState>()(
              console.log(`Profile found for ${email}.`);
         }
         
-        if (userProfile.email === 'admin@rally.world' && !userProfile.roles.includes('organizer')) {
-            userProfile.roles.push('organizer');
+        if (userProfile.email === 'admin@rally.world' && !(userProfile.roles || []).includes('organizer')) {
+            userProfile.roles = [...(userProfile.roles || []), 'organizer'];
             userProfile.currentRole = 'organizer';
             await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
