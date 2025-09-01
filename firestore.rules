@@ -9,9 +9,6 @@ service cloud.firestore {
     function isOwner(uid) {
       return request.auth.uid == uid;
     }
-    function isEventOwner(eventId) {
-      return get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
-    }
 
     match /users/{userId} {
       allow read: if isAuthed();
@@ -24,32 +21,37 @@ service cloud.firestore {
     }
 
     match /events/{eventId} {
-      allow get: if true; // anyone can view a single event
-      allow list: if isAuthed(); // only signed-in users can list all events
-
-      // Split write into create, update, delete for clarity and correctness
-      allow create: if isAuthed() && request.resource.data.organizerId == request.auth.uid;
-      allow update: if isAuthed() && isEventOwner(eventId);
-      allow delete: if isAuthed() && isEventOwner(eventId);
+      allow get: if true; // Public can read single events
+      allow list: if isAuthed(); // Signed-in users can list events
+      
+      // Allow write if user is creating a new event under their ID,
+      // or if they are updating/deleting an existing event they own.
+      allow write: if isAuthed() && (
+        (request.resource.data.organizerId == request.auth.uid) ||
+        (get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid)
+      );
       
       match /entries/{entryId} {
-        allow read: if isEventOwner(eventId);
+        allow read: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
         allow write: if isAuthed(); // Let cloud functions handle authZ
       }
       
       match /stages/{stageId} {
         allow read: if true; // Public read access
-        allow write: if isEventOwner(eventId);
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
       
       match /announcements/{annId} {
+        // Anyone can read a published announcement
         allow read: if resource.data.status == 'published';
-        allow write: if isEventOwner(eventId);
+        
+        // Owner of the parent event can read non-published and write
+        allow read, write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
 
       match /files/{fileId} {
         allow read: if true;
-        allow write: if isEventOwner(eventId);
+        allow write: if get(/databases/$(database)/documents/events/$(eventId)).data.organizerId == request.auth.uid;
       }
     }
     
