@@ -132,10 +132,10 @@ export default function CreateEventPage() {
         let uploadedDocsFiles: any[] = [];
 
         if (coverImage instanceof File) {
-            coverImageUrl = await uploadFile(coverImage, 'event', eventId);
+            coverImageUrl = await uploadFile('event', coverImage, eventId);
         }
         if (logoImage instanceof File) {
-            logoImageUrl = await uploadFile(logoImage, 'event', eventId);
+            logoImageUrl = await uploadFile('event', logoImage, eventId);
         }
 
         if (itineraryFiles) {
@@ -144,7 +144,7 @@ export default function CreateEventPage() {
                     .filter(item => item.file instanceof File)
                     .map(async (item) => {
                         const file = item.file as File;
-                        const url = await uploadFile(file, 'event', eventId);
+                        const url = await uploadFile('event', file, eventId);
                         return { url, name: file.name, type: file.type, size: file.size };
                     })
             );
@@ -156,7 +156,7 @@ export default function CreateEventPage() {
                     .filter(item => item.file instanceof File)
                     .map(async (item) => {
                         const file = item.file as File;
-                        const url = await uploadFile(file, 'event', eventId);
+                        const url = await uploadFile('event', file, eventId);
                         return { url, name: file.name, type: file.type, size: file.size };
                     })
             );

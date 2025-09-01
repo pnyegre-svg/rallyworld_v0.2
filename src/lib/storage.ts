@@ -21,22 +21,36 @@ function guessMime(name: string) {
   return (ext && map[ext]) || '';
 }
 
-async function assertCanUpload(eventId: string, file: File) {
+async function assertCanUpload(file: File, type: 'user' | 'organizer' | 'event', eventId?: string) {
   const uid = getAuth().currentUser?.uid;
   if (!uid) throw new Error('Please sign in first.');
-  const ev = await getDoc(doc(db, 'events', eventId));
-  if (!ev.exists()) throw new Error('Selected event no longer exists.');
-  if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
+
+  if (type === 'event') {
+    if (!eventId) throw new Error('Event ID is required for event uploads.');
+    const ev = await getDoc(doc(db, 'events', eventId));
+    if (!ev.exists()) throw new Error('Selected event no longer exists.');
+    if (ev.data()?.organizerId !== uid) throw new Error('You are not the organizer for this event.');
+  }
+  
   if (file.size > 20 * 1024 * 1024) throw new Error('File too large (20 MB limit).');
 }
 
-export async function uploadFile(eventId: string, file: File) {
-  await assertCanUpload(eventId, file);
+export async function uploadFile(type: 'user' | 'organizer' | 'event', file: File, eventId?: string) {
+  await assertCanUpload(file, type, eventId);
 
   const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-  const path = `events/${eventId}/${Date.now()}-${safeName}`;
+  
+  let path = '';
+  if (type === 'event') {
+    path = `events/${eventId}/docs/images/${Date.now()}-${safeName}`;
+  } else if (type === 'organizer') {
+    const uid = getAuth().currentUser!.uid;
+    path = `public/organizers/${uid}/${Date.now()}-${safeName}`;
+  } else {
+    const uid = getAuth().currentUser!.uid;
+    path = `public/users/${uid}/${Date.now()}-${safeName}`;
+  }
 
-  // ✅ Always send a contentType that your rules allow
   const contentType = file.type || guessMime(safeName) || 'application/octet-stream';
   const metadata = { contentType };
 
@@ -53,13 +67,11 @@ export async function uploadFile(eventId: string, file: File) {
     });
 
     const downloadURL = await getDownloadURL(task.snapshot.ref);
-    return { path, downloadURL };
+    return downloadURL;
   } catch (err: any) {
-    // Surface the real reason so we can diagnose quickly
     console.error('upload error:', { code: err?.code, message: err?.message, raw: err });
 
     if (err?.code === 'storage/unauthorized' || err?.code === 'storage/unauthenticated') {
-      // App Check failures also come through as "unauthorized"
       const hint = err?.message?.toLowerCase().includes('app check')
         ? 'App Check token invalid or origin not allowed.'
         : 'Rule denied: not organizer, file type/size, or event missing.';
