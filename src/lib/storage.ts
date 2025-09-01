@@ -44,7 +44,7 @@ export const uploadFile = async (file: File, type: 'organizer' | 'user' | 'event
             throw new Error("eventId is required for 'event' type uploads.");
         }
         // This path now matches the storage rules for event-related documents.
-        folder = `events/${eventId}/docs/images`;
+        folder = `events/${eventId}`;
         break;
     default:
         throw new Error("Invalid upload type specified.");
