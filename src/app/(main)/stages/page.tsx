@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -56,6 +57,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from '@/components/ui/alert-dialog';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const LS_EVENT = 'stages:lastEvent';
 
@@ -99,6 +101,8 @@ export default function StagesPage() {
     const [editId, setEditId] = React.useState<string | undefined>();
     const fileRef = React.useRef<HTMLInputElement>(null);
     const [busyAction, setBusyAction] = React.useState('');
+    const [isPublic, setIsPublic] = React.useState<boolean>(false);
+    const [savingPublic, setSavingPublic] = React.useState(false);
 
     React.useEffect(() => {
         if (!isAuthReady) return;
@@ -116,19 +120,46 @@ export default function StagesPage() {
         });
     }, [user, isAuthReady]);
 
+    const refreshStagesAndPublicStatus = React.useCallback(async () => {
+        if (!selectedEventId) return;
+        setLoadingStages(true);
+        try {
+            const [newStages, ev] = await Promise.all([
+                listStages(selectedEventId),
+                getDoc(doc(db, 'events', selectedEventId))
+            ]);
+            setStages(newStages);
+            const data = ev.data() || {};
+            setIsPublic(!!data.public);
+        } catch (error) {
+            console.error("Error refreshing data:", error);
+            toast({ kind: 'error', text: 'Failed to refresh event data.' });
+        } finally {
+            setLoadingStages(false);
+        }
+    }, [selectedEventId, toast]);
+
     React.useEffect(() => {
         if (!selectedEventId) return;
         localStorage.setItem(LS_EVENT, selectedEventId);
-        refreshStages();
-    }, [selectedEventId]);
+        refreshStagesAndPublicStatus();
+    }, [selectedEventId, refreshStagesAndPublicStatus]);
 
-    const refreshStages = async () => {
-        if (!selectedEventId) return;
-        setLoadingStages(true);
-        const newStages = await listStages(selectedEventId);
-        setStages(newStages);
-        setLoadingStages(false);
-    };
+    async function togglePublic(value: boolean){
+      setSavingPublic(true);
+      try{
+        const evRef = doc(db, 'events', selectedEventId);
+        await updateDoc(evRef, { public: value }).catch(async () => {
+          await setDoc(evRef, { public: value }, { merge: true });
+        });
+        setIsPublic(value);
+        toast({ kind:'success', text: `Public page ${value ? 'enabled' : 'disabled'}` });
+      }catch(e:any){
+        toast({ kind:'error', text: e?.message || 'Failed to update visibility' });
+      }finally{
+        setSavingPublic(false);
+      }
+    }
 
     // --- CRUD ---
     async function createStage(values: any) {
@@ -136,7 +167,7 @@ export default function StagesPage() {
         try {
             await createStageFn({ eventId: selectedEventId, ...values });
             setShowNew(false);
-            await refreshStages();
+            await refreshStagesAndPublicStatus();
             toast({ kind: 'success', text: 'Stage created successfully.' });
         } catch (e: any) {
             toast({ kind: 'error', text: e.message || 'Failed to create stage.' });
@@ -150,7 +181,7 @@ export default function StagesPage() {
         try {
             await updateStageFn({ eventId: selectedEventId, stageId: id, ...values });
             setEditId(undefined);
-            await refreshStages();
+            await refreshStagesAndPublicStatus();
             toast({ kind: 'success', text: 'Stage updated successfully.' });
         } catch (e: any) {
             toast({ kind: 'error', text: e.message || 'Failed to update stage.' });
@@ -163,7 +194,7 @@ export default function StagesPage() {
         setBusyAction(`delete-${id}`);
         try {
             await deleteStageFn({ eventId: selectedEventId, stageId: id });
-            await refreshStages();
+            await refreshStagesAndPublicStatus();
             toast({ kind: 'success', text: 'Stage deleted successfully.' });
         } catch (e: any) {
             toast({ kind: 'error', text: e.message || 'Failed to delete stage.' });
@@ -178,7 +209,7 @@ export default function StagesPage() {
         try {
             const payload = { eventId: selectedEventId, stageId: id, ...args[0] };
             await fn(payload);
-            await refreshStages();
+            await refreshStagesAndPublicStatus();
             toast({ kind: 'success', text: successMessage });
         } catch (e: any) {
             toast({ kind: 'error', text: e.message || failMessage });
@@ -221,7 +252,7 @@ export default function StagesPage() {
                 fail++;
               }
             }
-            await refreshStages();
+            await refreshStagesAndPublicStatus();
             toast({ kind: fail ? 'info' : 'success', text: `Imported ${ok} stage(s)${fail ? `, ${fail} failed` : ''}` });
             setBusyAction('');
           }
@@ -269,6 +300,10 @@ export default function StagesPage() {
                             </SelectContent>
                         </Select>
                         <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={onCsv}/>
+                        <label className="flex items-center gap-2 text-sm text-nowrap">
+                            <input type="checkbox" checked={isPublic} disabled={savingPublic || !selectedEventId} onChange={e=>togglePublic(e.target.checked)} />
+                            <span className="text-muted-foreground">Public event page</span>
+                        </label>
                         <Button onClick={() => fileRef.current?.click()} variant="outline" disabled={!selectedEventId || busyAction === 'csv-import'}>
                             <Upload className="mr-2 h-4 w-4" />
                             {busyAction === 'csv-import' ? 'Importing...' : 'Import CSV'}
