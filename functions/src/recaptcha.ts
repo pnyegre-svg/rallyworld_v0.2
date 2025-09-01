@@ -2,8 +2,8 @@
 import * as functions from 'firebase-functions';
 import { RecaptchaEnterpriseServiceClient } from '@google-cloud/recaptcha-enterprise';
 
-const projectID = process.env.RECAPTCHA_PROJECT_ID || "rally-world-37e22";
-const recaptchaKey = process.env.RECAPTCHA_KEY || "6LdG2bQrAAAAAC0BUzZWftropwGWCkAcpCqOKhqt";
+const projectID = process.env.RECAPTCHA_PROJECT_ID;
+const recaptchaKey = process.env.RECAPTCHA_KEY;
 
 let client: RecaptchaEnterpriseServiceClient | null = null;
 const getClient = () => {
@@ -24,6 +24,10 @@ export async function createAssessment({
   token,
   recaptchaAction,
 }: {token: string, recaptchaAction: string }): Promise<number | null> {
+  if (!projectID || !recaptchaKey) {
+    throw new functions.https.HttpsError('failed-precondition', 'reCAPTCHA environment variables not set.');
+  }
+
   const recaptchaClient = getClient();
   const projectPath = recaptchaClient.projectPath(projectID);
 
