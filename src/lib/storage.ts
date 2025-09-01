@@ -25,12 +25,30 @@ export async function requireUser(): Promise<User> {
  *
  * @param file The file to upload.
  * @param type The type of upload, determines the folder path.
+ * @param eventId Optional event ID for event-specific uploads.
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
-export const uploadFile = async (file: File, type: 'organizer' | 'user'): Promise<string> => {
+export const uploadFile = async (file: File, type: 'organizer' | 'user' | 'event', eventId?: string): Promise<string> => {
   const user = await requireUser(); // <-- Guarantees request.auth != null at rules time
   
-  const folder = type === 'organizer' ? `public/organizers/${user.uid}/club-profile-picture` : `public/users/${user.uid}/profile-picture`;
+  let folder;
+  switch (type) {
+    case 'organizer':
+        folder = `public/organizers/${user.uid}/club-profile-picture`;
+        break;
+    case 'user':
+        folder = `public/users/${user.uid}/profile-picture`;
+        break;
+    case 'event':
+        if (!eventId) {
+            throw new Error("eventId is required for 'event' type uploads.");
+        }
+        folder = `events/${eventId}/assets`;
+        break;
+    default:
+        throw new Error("Invalid upload type specified.");
+  }
+  
   const path = `${folder}/${Date.now()}-${file.name}`;
   
   const storageRef = ref(storage, path);

@@ -52,16 +52,22 @@ export interface Event extends Omit<EventFormValues, 'coverImage' | 'logoImage' 
 
 // Firestore converter
 const eventConverter = {
-  toFirestore: (event: EventFormValues) => {
+  toFirestore: (event: Partial<EventFormValues>) => {
+    const dataToSave: any = { ...event };
     // Dates are converted to Timestamps when creating the document
-    const { dates, ...remainingEventData } = event;
-    return {
-      ...remainingEventData,
-      dates: {
-        from: Timestamp.fromDate(dates.from),
-        to: Timestamp.fromDate(dates.to),
-      }
-    };
+    if (event.dates?.from && event.dates?.to) {
+        dataToSave.dates = {
+            from: Timestamp.fromDate(event.dates.from),
+            to: Timestamp.fromDate(event.dates.to),
+        };
+    }
+    // Remove file objects before saving, they are handled separately
+    delete dataToSave.coverImage;
+    delete dataToSave.logoImage;
+    delete dataToSave.itineraryFiles;
+    delete dataToSave.docsFiles;
+    
+    return dataToSave;
   },
   fromFirestore: (snapshot: any, options: any): Event => {
     const data = snapshot.data(options);
@@ -89,10 +95,17 @@ const eventConverter = {
 };
 
 
-export const addEvent = async (db: Firestore, eventData: EventFormValues) => {
-  const eventsCollection = collection(db, 'events').withConverter(eventConverter as any);
+export const addEvent = async (db: Firestore, eventData: Omit<EventFormValues, 'coverImage' | 'logoImage' | 'itineraryFiles' | 'docsFiles'>) => {
+  const eventsCollection = collection(db, 'events');
   try {
-    const docRef = await addDoc(eventsCollection, eventData);
+    const dataToSave: any = { ...eventData };
+    if (eventData.dates?.from && eventData.dates?.to) {
+      dataToSave.dates = {
+        from: Timestamp.fromDate(eventData.dates.from),
+        to: Timestamp.fromDate(eventData.dates.to),
+      };
+    }
+    const docRef = await addDoc(eventsCollection, dataToSave);
     return docRef.id;
   } catch (error) {
     console.error("Error adding event: ", error);

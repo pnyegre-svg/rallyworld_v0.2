@@ -44,7 +44,7 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/toaster';
 import { useRouter } from 'next/navigation';
-import { addEvent, eventFormSchema, EventFormValues } from '@/lib/events';
+import { addEvent, eventFormSchema, EventFormValues, updateEvent } from '@/lib/events';
 import { useUserStore } from '@/hooks/use-user';
 import { Separator } from '@/components/ui/separator';
 import { ActionCard } from '@/components/ui/action-card';
@@ -120,48 +120,59 @@ export default function CreateEventPage() {
     setIsSubmitting(true);
     
     try {
+        // Step 1: Create event document without file URLs to get an ID
+        const { coverImage, logoImage, itineraryFiles, docsFiles, ...eventData } = values;
+        
+        const eventId = await addEvent(db, eventData);
+
+        // Step 2: Upload files using the new event ID
         let coverImageUrl: string | undefined = undefined;
         let logoImageUrl: string | undefined = undefined;
+        let uploadedItineraryFiles: any[] = [];
+        let uploadedDocsFiles: any[] = [];
 
-        if (values.coverImage instanceof File) {
-            coverImageUrl = await uploadFile(values.coverImage, 'organizer');
+        if (coverImage instanceof File) {
+            coverImageUrl = await uploadFile(coverImage, 'event', eventId);
         }
-        if (values.logoImage instanceof File) {
-            logoImageUrl = await uploadFile(values.logoImage, 'organizer');
+        if (logoImage instanceof File) {
+            logoImageUrl = await uploadFile(logoImage, 'event', eventId);
         }
 
-        const uploadedItineraryFiles = await Promise.all(
-            (values.itineraryFiles || [])
-                .filter(item => item.file instanceof File)
-                .map(async (item) => {
-                    const file = item.file as File;
-                    const url = await uploadFile(file, 'organizer');
-                    return { url, name: file.name, type: file.type, size: file.size };
-                })
-        );
+        if (itineraryFiles) {
+            uploadedItineraryFiles = await Promise.all(
+                itineraryFiles
+                    .filter(item => item.file instanceof File)
+                    .map(async (item) => {
+                        const file = item.file as File;
+                        const url = await uploadFile(file, 'event', eventId);
+                        return { url, name: file.name, type: file.type, size: file.size };
+                    })
+            );
+        }
         
-        const uploadedDocsFiles = await Promise.all(
-             (values.docsFiles || [])
-                .filter(item => item.file instanceof File)
-                .map(async (item) => {
-                    const file = item.file as File;
-                    const url = await uploadFile(file, 'organizer');
-                    return { url, name: file.name, type: file.type, size: file.size };
-                })
-        );
-
-        const dataToSave = {
-            ...values,
-            organizerId: user.organizerProfile.id,
-            coverImage: coverImageUrl,
-            logoImage: logoImageUrl,
-            itineraryFiles: uploadedItineraryFiles,
-            docsFiles: uploadedDocsFiles,
-            itineraryLinks: (values.itineraryLinks || []).filter(link => link.value),
-            docsLinks: (values.docsLinks || []).filter(link => link.value),
+        if (docsFiles) {
+            uploadedDocsFiles = await Promise.all(
+                docsFiles
+                    .filter(item => item.file instanceof File)
+                    .map(async (item) => {
+                        const file = item.file as File;
+                        const url = await uploadFile(file, 'event', eventId);
+                        return { url, name: file.name, type: file.type, size: file.size };
+                    })
+            );
+        }
+        
+        // Step 3: Update the event document with the file URLs
+        const finalUpdateData = {
+            ...(coverImageUrl && { coverImage: coverImageUrl }),
+            ...(logoImageUrl && { logoImage: logoImageUrl }),
+            ...(uploadedItineraryFiles.length > 0 && { itineraryFiles: uploadedItineraryFiles }),
+            ...(uploadedDocsFiles.length > 0 && { docsFiles: uploadedDocsFiles }),
         };
-        
-        await addEvent(db, dataToSave as EventFormValues);
+
+        if (Object.keys(finalUpdateData).length > 0) {
+            await updateEvent(db, eventId, finalUpdateData);
+        }
         
         toast({
             text: `The event "${values.title}" has been created.`,
@@ -623,7 +634,3 @@ export default function CreateEventPage() {
     </Card>
   );
 }
-
-    
-
-    
