@@ -77,6 +77,11 @@ export default function MyEventsPage() {
       toast({ text: 'Event deleted successfully.', kind: 'success' });
       // Refresh the list after deletion
       setEvents(prev => prev.filter(e => e.id !== eventId));
+      // Clear stale selections from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('uploads:lastEvent');
+        localStorage.removeItem('announcements:lastEvent');
+      }
     } catch (e: any) {
       const details = e?.details ? ` (${JSON.stringify(e.details)})` : '';
       toast({ kind:'error', text: `Delete failed: ${e?.message || 'internal'}${details}` });
