@@ -1,14 +1,16 @@
+
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState, createContext } from 'react';
 import { useUserStore } from '@/hooks/use-user';
 import { initializeAppCheck, getToken, ReCaptchaV3Provider } from 'firebase/app-check';
 import { ThemeProvider } from '@/components/theme-provider';
 import Toaster from '@/components/ui/toaster';
 import { getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions, connectFunctionsEmulator }from 'firebase/functions';
+import { AppReadyContext } from '@/hooks/use-app-ready';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FB_API_KEY!,
@@ -21,10 +23,14 @@ const firebaseConfig = {
 
 let appInited = false;
 export function Providers({ children }: { children: React.ReactNode }) {
-  const { initialize, isAuthReady } = useUserStore();
+  const { initialize } = useUserStore();
+  const [isAppReady, setIsAppReady] = useState(false);
   
   useEffect(() => {
-    if (appInited || isAuthReady) return;
+    if (appInited) {
+        if (!isAppReady) setIsAppReady(true);
+        return;
+    };
     appInited = true;
 
     const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -47,12 +53,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
       isTokenAutoRefreshEnabled: true,
     });
 
-    // Warm the token to avoid “first request denied” races
-    getToken(appCheck, /* forceRefresh */ true).catch(() => {/* ignore; UI will still work */});
+    getToken(appCheck, true).catch(() => {});
     
-    const unsubscribe = initialize({ auth, db, storage, functions });
-    return () => unsubscribe();
-  }, [initialize, isAuthReady]);
+    initialize({ auth, db, storage, functions });
+
+    const unsub = onAuthStateChanged(auth, (user) => {
+        // This runs after the user store's onAuthStateChanged,
+        // so we know the user state is settled.
+        setIsAppReady(true);
+    });
+
+    // Cleanup the listener on component unmount
+    return () => unsub();
+
+  }, [initialize, isAppReady]);
   
   return (
     <ThemeProvider
@@ -61,7 +75,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <Toaster>{children}</Toaster>
+      <AppReadyContext.Provider value={isAppReady}>
+        <Toaster>{children}</Toaster>
+      </AppReadyContext.Provider>
     </ThemeProvider>
   );
 }

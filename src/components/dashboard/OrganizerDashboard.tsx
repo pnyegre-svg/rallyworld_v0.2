@@ -13,15 +13,17 @@ import { TodayStages } from './TodayStages';
 import { EntriesAndPayments } from './EntriesAndPayments';
 import { UpcomingStages } from './UpcomingStages';
 import { Announcements } from './Announcements';
+import { useAppReady } from '@/hooks/use-app-ready';
 
 export function OrganizerDashboard() {
   const { user } = useUserStore();
   const { push: toast } = useToast();
   const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const isAppReady = useAppReady();
 
   React.useEffect(() => {
-    if (!user?.id || user?.currentRole !== 'organizer') {
+    if (!isAppReady || !user?.id || user?.currentRole !== 'organizer') {
         setLoading(false);
         return;
     }
@@ -33,7 +35,7 @@ export function OrganizerDashboard() {
     });
 
     return () => unsubscribe();
-  }, [user?.id, user?.currentRole]);
+  }, [isAppReady, user?.id, user?.currentRole]);
 
 
   if (loading) {

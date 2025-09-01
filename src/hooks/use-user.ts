@@ -22,7 +22,6 @@ let services: {
 
 type UserState = {
   user: User | null;
-  isAuthReady: boolean;
   initialize: (deps: typeof services) => () => void; // Returns the unsubscribe function
   signInUser: (email: string, name?: string) => Promise<void>;
   setRole: (role: UserRole) => Promise<void>;
@@ -35,7 +34,6 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       user: null,
-      isAuthReady: false,
       initialize: (deps) => {
         services = deps;
         const { auth, db } = deps;
@@ -44,20 +42,16 @@ export const useUserStore = create<UserState>()(
               if (!get().user || get().user?.email !== firebaseUser.email) {
                   console.log("Auth state changed: User is signed in. Fetching profile...");
                   await get().signInUser(firebaseUser.email!, firebaseUser.displayName || undefined);
-              } else {
-                  if (!get().isAuthReady) {
-                    set({ isAuthReady: true });
-                  }
               }
             } else {
               console.log("Auth state changed: User is signed out.");
-              set({ user: null, isAuthReady: true });
+              set({ user: null });
             }
         });
         return unsubscribe;
       },
       signOutUser: () => {
-        set({ user: null, isAuthReady: false });
+        set({ user: null });
       },
       signInUser: async (email, name) => {
         if (!services) throw new Error("Firebase services not initialized.");
@@ -89,7 +83,7 @@ export const useUserStore = create<UserState>()(
             userProfile.currentRole = 'organizer';
             await updateUser(db, userProfile.id, { roles: userProfile.roles, currentRole: userProfile.currentRole });
         }
-        set({ user: userProfile, isAuthReady: true });
+        set({ user: userProfile });
       },
       setRole: async (role: UserRole) => {
         if (!services) throw new Error("Firebase services not initialized.");

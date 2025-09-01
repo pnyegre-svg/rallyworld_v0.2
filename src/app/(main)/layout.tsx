@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -13,18 +14,20 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Bell, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useAppReady } from '@/hooks/use-app-ready';
 
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthReady } = useUserStore();
+  const { user } = useUserStore();
+  const isAppReady = useAppReady();
 
   React.useEffect(() => {
-    if (isAuthReady && !user) {
+    if (isAppReady && !user) {
         router.push('/auth/sign-in');
     }
-  }, [isAuthReady, user, router]);
+  }, [isAppReady, user, router]);
 
 
   const getTitle = (path: string) => {
@@ -51,7 +54,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return 'Rally World';
   };
   
-  if (!isAuthReady || !user) {
+  if (!isAppReady || !user) {
     return <div className="flex h-screen items-center justify-center"><Loading /></div>;
   }
   
